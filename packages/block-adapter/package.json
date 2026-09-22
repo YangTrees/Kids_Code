@@ -1,0 +1,17 @@
+{
+  "name": "@kids-code/block-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@kids-code/domain": "workspace:*",
+    "scratch-blocks": "^2.1.19"
+  }
+}

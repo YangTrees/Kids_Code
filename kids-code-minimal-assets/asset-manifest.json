@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "assets": [
+    {"id":"obj_treasure_chest","type":"sprite","path":"objects/treasure-chest.png","transparent":true},
+    {"id":"obj_star_coin","type":"sprite","path":"objects/star-coin.png","transparent":true},
+    {"id":"bg_forest_01","type":"background","path":"backgrounds/forest-960x720.webp","width":960,"height":720},
+    {"id":"bg_classroom_01","type":"background","path":"backgrounds/classroom-960x720.webp","width":960,"height":720},
+    {"id":"icon_green_flag","type":"icon","path":"icons/green-flag.svg"},
+    {"id":"icon_arrow_up","type":"icon","path":"icons/arrow-up.svg"},
+    {"id":"icon_arrow_down","type":"icon","path":"icons/arrow-down.svg"},
+    {"id":"icon_arrow_left","type":"icon","path":"icons/arrow-left.svg"},
+    {"id":"icon_arrow_right","type":"icon","path":"icons/arrow-right.svg"},
+    {"id":"icon_sound","type":"icon","path":"icons/sound.svg"},
+    {"id":"icon_speech","type":"icon","path":"icons/speech.svg"},
+    {"id":"icon_trophy","type":"icon","path":"icons/trophy.svg"},
+    {"id":"icon_play","type":"icon","path":"icons/play.svg"},
+    {"id":"icon_stop","type":"icon","path":"icons/stop.svg"}
+  ]
+}

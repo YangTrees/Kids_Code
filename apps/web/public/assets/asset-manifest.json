@@ -1,0 +1,324 @@
+{
+  "version": "1.1.0",
+  "provenanceGroups": [
+    {
+      "assetIds": [
+        "sfx_jump",
+        "sfx_bump",
+        "sfx_door_open",
+        "sfx_magic",
+        "sfx_pop",
+        "sfx_whoosh",
+        "sfx_bell",
+        "sfx_drum",
+        "sfx_splash",
+        "sfx_sparkle",
+        "sfx_countdown",
+        "sfx_game_over"
+      ],
+      "sourceType": "in-house-generated",
+      "license": "project-owned",
+      "commercialUseReview": "approved",
+      "reviewStatus": "approved",
+      "canUnpublish": true,
+      "generator": "scripts/generate_sfx.py"
+    },
+    {
+      "assetIds": ["sfx_ui_click", "sfx_collect_coin", "sfx_game_success"],
+      "sourceType": "in-house-prototype",
+      "license": "project-owned",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype",
+      "canUnpublish": true
+    }
+  ],
+  "assets": [
+    {
+      "id": "costume_liji_idle",
+      "type": "sprite",
+      "path": "characters/liji/liji-idle.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "obj_treasure_chest",
+      "type": "sprite",
+      "path": "objects/treasure-chest.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "costume_tuantuan_idle",
+      "type": "sprite",
+      "path": "characters/tuantuan/tuantuan-idle.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "costume_diandian_idle",
+      "type": "sprite",
+      "path": "characters/diandian/diandian-idle.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "costume_xiaoyong_idle",
+      "type": "sprite",
+      "path": "characters/xiaoyong/xiaoyong-idle.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "costume_feifei_idle",
+      "type": "sprite",
+      "path": "characters/feifei/feifei-idle.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "vehicle_race_car",
+      "type": "sprite",
+      "path": "vehicles/race-car.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "vehicle_rocket",
+      "type": "sprite",
+      "path": "vehicles/rocket.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "object_magic_door",
+      "type": "sprite",
+      "path": "objects/magic-door.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "object_road_cone",
+      "type": "sprite",
+      "path": "objects/road-cone.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "object_bouncy_ball",
+      "type": "sprite",
+      "path": "objects/bouncy-ball.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "obj_star_coin",
+      "type": "sprite",
+      "path": "objects/star-coin.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "bg_forest_01",
+      "type": "background",
+      "path": "backgrounds/forest-960x720.webp",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "bg_classroom_01",
+      "type": "background",
+      "path": "backgrounds/classroom-960x720.webp",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "bg_space_01",
+      "type": "background",
+      "path": "backgrounds/space-960x720.webp",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "bg_ocean_01",
+      "type": "background",
+      "path": "backgrounds/ocean-960x720.webp",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "bg_city_01",
+      "type": "background",
+      "path": "backgrounds/city-960x720.webp",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "bg_playroom_01",
+      "type": "background",
+      "path": "backgrounds/playroom-960x720.webp",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "bg_castle_01",
+      "type": "background",
+      "path": "backgrounds/castle-960x720.webp",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "bg_farm_01",
+      "type": "background",
+      "path": "backgrounds/farm-960x720.webp",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "bg_desert_01",
+      "type": "background",
+      "path": "backgrounds/desert-960x720.webp",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "bg_snow_01",
+      "type": "background",
+      "path": "backgrounds/snow-960x720.webp",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    { "id": "sfx_ui_click", "type": "audio", "path": "sounds/ui-click.wav" },
+    {
+      "id": "sfx_collect_coin",
+      "type": "audio",
+      "path": "sounds/collect-coin.wav"
+    },
+    {
+      "id": "sfx_game_success",
+      "type": "audio",
+      "path": "sounds/game-success.wav"
+    },
+    { "id": "sfx_jump", "type": "audio", "path": "sounds/jump.wav" },
+    { "id": "sfx_bump", "type": "audio", "path": "sounds/bump.wav" },
+    { "id": "sfx_door_open", "type": "audio", "path": "sounds/door-open.wav" },
+    { "id": "sfx_magic", "type": "audio", "path": "sounds/magic.wav" },
+    { "id": "sfx_pop", "type": "audio", "path": "sounds/pop.wav" },
+    { "id": "sfx_whoosh", "type": "audio", "path": "sounds/whoosh.wav" },
+    { "id": "sfx_bell", "type": "audio", "path": "sounds/bell.wav" },
+    { "id": "sfx_drum", "type": "audio", "path": "sounds/drum.wav" },
+    { "id": "sfx_splash", "type": "audio", "path": "sounds/splash.wav" },
+    { "id": "sfx_sparkle", "type": "audio", "path": "sounds/sparkle.wav" },
+    { "id": "sfx_countdown", "type": "audio", "path": "sounds/countdown.wav" },
+    { "id": "sfx_game_over", "type": "audio", "path": "sounds/game-over.wav" }
+  ]
+}

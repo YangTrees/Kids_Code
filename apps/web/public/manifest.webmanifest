@@ -1,0 +1,20 @@
+{
+  "name": "栗奇编程乐园",
+  "short_name": "栗奇编程",
+  "description": "面向儿童的无代码编程与游戏创作工具",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#f5f9fe",
+  "theme_color": "#4b9eff",
+  "icons": [
+    {
+      "src": "/assets/objects/star-coin.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
