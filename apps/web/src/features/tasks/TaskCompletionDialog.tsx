@@ -70,7 +70,16 @@ export function TaskCompletionDialog() {
       if (!nextTask) {
         stop();
         setCompletion(null);
-        navigate("/#challenges");
+        navigate("/learn");
+        return;
+      }
+      const existing = (await repository.list())
+        .filter((item) => getAssignedTaskId(item.projectId) === nextTask.taskId)
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+      if (existing) {
+        stop();
+        setCompletion(null);
+        navigate("/editor/" + existing.projectId);
         return;
       }
       const starterProject = createTaskProject(nextTask);
@@ -158,7 +167,7 @@ export function TaskCompletionDialog() {
             disabled={busy}
             onClick={() => void enterNextTask()}
           >
-            {busy ? "准备中…" : nextTask ? "进入下一任务" : "返回任务列表"}
+            {busy ? "准备中…" : nextTask ? "进入下一任务" : "返回课程地图"}
           </button>
         </div>
         {error ? <p role="alert">{error}</p> : null}

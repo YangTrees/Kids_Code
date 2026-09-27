@@ -17,8 +17,14 @@ import { useNavigate } from "react-router";
 import { TaskPanel } from "../tasks/TaskPanel";
 import { TaskCompletionDialog } from "../tasks/TaskCompletionDialog";
 import { resolveAssetUrl } from "@kids-code/stage";
-import { getMovementStep } from "@kids-code/domain";
+import {
+  getGridDimensions,
+  getMovementStep,
+  snapStagePositionToGrid,
+  stagePositionToGrid,
+} from "@kids-code/domain";
 import { CurrentTaskCard } from "../tasks/CurrentTaskCard";
+import { getAssignedTaskId } from "../tasks/task-catalog";
 import "../../styles/editor-experience.css";
 
 const assetPathBySprite: Record<string, string> = {
@@ -49,6 +55,37 @@ const commonShortcuts: Array<{
   { category: "game", icon: "⭐", label: "得分" },
 ];
 
+function GreenFlagIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M5 21V3"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M6 4.5c3-1.8 5.1 1.7 8 .1 2.2-1.2 3.9-.9 5 .2v10c-1.1-1.1-2.8-1.4-5-.2-2.9 1.6-5-1.9-8-.1v-10Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function StepIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="m5 5 10 7L5 19V5Z" fill="currentColor" />
+      <path
+        d="M19 5v14"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function EditorPage() {
   const navigate = useNavigate();
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -77,6 +114,7 @@ export function EditorPage() {
     undoProject,
     redoProject,
     updateProjectSettings,
+    updateSpritePosition,
     addSpriteFromLibrary,
     deleteSprite,
     selectScene,
@@ -85,8 +123,10 @@ export function EditorPage() {
   } = useEditorStore();
   const {
     status,
+    ready,
     errorMessage,
     run,
+    step: stepRun,
     pauseOrResume,
     stop,
     triggerKey,
@@ -97,6 +137,7 @@ export function EditorPage() {
   const { exportProject, importProject, importLocalImage, retrySave } =
     useProjectPersistence();
   const running = status === "STARTING" || status === "RUNNING";
+  const courseTaskId = getAssignedTaskId(project.projectId);
   const step = getMovementStep(project);
   const selectedSprite = project.sprites.find(
     (sprite) => sprite.spriteId === selectedSpriteId,
@@ -121,6 +162,24 @@ export function EditorPage() {
   );
   const selectedInstance = currentScene?.instances.find(
     (instance) => instance.spriteId === selectedSpriteId,
+  );
+  const selectedGridCenter = selectedInstance
+    ? snapStagePositionToGrid(
+        project,
+        selectedInstance.transform.x,
+        selectedInstance.transform.y,
+      )
+    : null;
+  const needsGridAlignment =
+    selectedInstance &&
+    selectedGridCenter &&
+    (selectedInstance.transform.x !== selectedGridCenter.x ||
+      selectedInstance.transform.y !== selectedGridCenter.y);
+  const gridSize = getGridDimensions(project);
+  const currentCell = stagePositionToGrid(
+    project,
+    livePosition?.x ?? selectedInstance?.transform.x ?? 0,
+    livePosition?.y ?? selectedInstance?.transform.y ?? 0,
   );
   const selectedBlockCount = countWorkspaceBlocks(
     project.workspaceStates[selectedSpriteId],
@@ -160,9 +219,9 @@ export function EditorPage() {
       <header className="topbar">
         <button
           className="round-button home-button toolbar-icon-button"
-          aria-label="返回首页"
-          data-hover-label="首页"
-          onClick={() => navigate("/")}
+          aria-label={courseTaskId ? "返回课程地图" : "返回首页"}
+          data-hover-label={courseTaskId ? "课程" : "首页"}
+          onClick={() => navigate(courseTaskId ? "/learn" : "/")}
         >
           <span className="toolbar-glyph">⌂</span>
         </button>
@@ -256,26 +315,58 @@ export function EditorPage() {
           </button>
         </div>
         <div className="toolbar-group toolbar-play-tools">
-          <button className="run-button" onClick={run} disabled={running}>
-            <span>▶</span> 运行
+          <button
+            className="run-button"
+            aria-label="绿旗运行"
+            title="从起点运行绿旗积木"
+            onClick={run}
+            disabled={!ready || running}
+          >
+            <span className="play-action-icon flag-icon">
+              <GreenFlagIcon />
+            </span>
+            <span>运行</span>
           </button>
           <button
-            className="round-button toolbar-icon-button pause-button"
-            aria-label={status === "PAUSED" ? "继续运行" : "暂停运行"}
-            data-hover-label={status === "PAUSED" ? "继续" : "暂停"}
-            onClick={pauseOrResume}
-            disabled={status !== "RUNNING" && status !== "PAUSED"}
+            className="step-button"
+            aria-label="单步运行"
+            title="每次执行一步，观察角色如何移动"
+            onClick={stepRun}
+            disabled={
+              !ready ||
+              (status !== "IDLE" &&
+                status !== "STOPPED" &&
+                status !== "COMPLETED" &&
+                status !== "PAUSED")
+            }
           >
-            <span className="toolbar-glyph">
-              {status === "PAUSED" ? "▶" : "Ⅱ"}
+            <span className="play-action-icon">
+              <StepIcon />
             </span>
+            <span>单步</span>
           </button>
+          {status === "RUNNING" || status === "PAUSED" ? (
+            <button
+              className="pause-button"
+              aria-label={status === "PAUSED" ? "继续运行" : "暂停运行"}
+              onClick={pauseOrResume}
+            >
+              <span className="play-action-icon" aria-hidden="true">
+                {status === "PAUSED" ? "▶" : "❚❚"}
+              </span>
+              <span>{status === "PAUSED" ? "继续" : "暂停"}</span>
+            </button>
+          ) : null}
           <button
             className="stop-button"
+            aria-label="停止运行"
             onClick={stop}
             disabled={status === "IDLE" || status === "STOPPED"}
           >
-            <span>■</span> 停止
+            <span className="play-action-icon" aria-hidden="true">
+              ■
+            </span>
+            <span>停止</span>
           </button>
         </div>
         <button
@@ -303,9 +394,9 @@ export function EditorPage() {
               className="stage-run"
               aria-label="运行作品"
               onClick={run}
-              disabled={running}
+              disabled={!ready || running}
             >
-              ▶ 运行
+              <GreenFlagIcon /> 运行
             </button>
             <button
               onClick={() => setGridVisible((value) => !value)}
@@ -405,7 +496,7 @@ export function EditorPage() {
             <strong>{step === 40 ? "大格模式" : "旧版细格"}</strong>
             <span>1 格 = {step} 像素</span>
             <span>
-              {480 / step} × {360 / step} 格
+              {gridSize.columns} × {gridSize.rows} 格 · 从 0 开始
             </span>
             {step === 10 ? (
               <button
@@ -424,11 +515,26 @@ export function EditorPage() {
             ) : (
               <button onClick={() => setSettingsOpen(true)}>调整</button>
             )}
+            {needsGridAlignment && !running ? (
+              <button
+                className="ruler-align"
+                title="将当前选中的角色移动到最近的格子中心"
+                onClick={() =>
+                  updateSpritePosition(
+                    selectedSpriteId,
+                    selectedInstance.transform.x,
+                    selectedInstance.transform.y,
+                  )
+                }
+              >
+                对齐格心
+              </button>
+            ) : null}
           </div>
           <p className="stage-interaction-note">
             {running
               ? "碰到宝箱会停下；金币可穿过并触发接触事件。"
-              : "拖动角色摆位置，靠近网格会吸附。坐标以角色定位点为准。"}
+              : `拖动角色会吸附到格子中心；X 为 0–${gridSize.columns - 1} 列，Y 为 0–${gridSize.rows - 1} 行。`}
           </p>
           <CurrentTaskCard onOpen={() => setTaskPanelOpen(true)} />
         </section>
@@ -477,14 +583,7 @@ export function EditorPage() {
               积木
             </strong>
             <span>
-              X{" "}
-              {Math.round(
-                livePosition?.x ?? selectedInstance?.transform.x ?? 0,
-              )}{" "}
-              · Y{" "}
-              {Math.round(
-                livePosition?.y ?? selectedInstance?.transform.y ?? 0,
-              )}
+              X {currentCell.x} · Y {currentCell.y}
             </span>
             <span>
               当前 {selectedBlockCount} · 全部 {totalBlockCount}/1000

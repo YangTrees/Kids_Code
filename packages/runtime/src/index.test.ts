@@ -106,6 +106,169 @@ const script: RuntimeScript = {
 };
 
 describe("RuntimeSession", () => {
+  it("walks a fixed path cell by cell and refuses to skip a corner", async () => {
+    const project = createDefaultProject();
+    project.pathMap = {
+      actorSpriteId: "spr_liji",
+      start: { column: 2, row: 6 },
+      goal: { column: 4, row: 4 },
+      tiles: [
+        { column: 2, row: 6 },
+        { column: 3, row: 6 },
+        { column: 4, row: 6 },
+        { column: 4, row: 5 },
+        { column: 4, row: 4 },
+      ],
+    };
+    const actor = project.scenes[0]!.instances[0]!;
+    actor.transform.x = 100;
+    actor.transform.y = 260;
+    const moveScript: RuntimeScript = {
+      scriptId: "scr_path",
+      ownerSpriteId: "spr_liji",
+      blocks: [
+        { id: "blk_flag", sourceBlockId: "flag", type: "EVT_FLAG" },
+        {
+          id: "blk_right",
+          sourceBlockId: "right",
+          type: "MOT_MOVE",
+          direction: "right",
+          steps: 2,
+        },
+        {
+          id: "blk_up",
+          sourceBlockId: "up",
+          type: "MOT_MOVE",
+          direction: "up",
+          steps: 2,
+        },
+      ],
+    };
+    const stage = createStage();
+    const session = new RuntimeSession(
+      project,
+      stage,
+      { highlightBlock: vi.fn(), reportError: vi.fn() },
+      new ImmediateClock(),
+    );
+    await session.start([moveScript]);
+    expect(session.report.pathReachedGoal).toBe(true);
+    expect(session.report.pathViolation).toBe(false);
+    expect(session.report.pathVisited).toHaveLength(5);
+    expect(stage.setSpritePosition).toHaveBeenLastCalledWith(
+      "spr_liji",
+      180,
+      180,
+    );
+
+    const invalid = new RuntimeSession(
+      project,
+      createStage(),
+      { highlightBlock: vi.fn(), reportError: vi.fn() },
+      new ImmediateClock(),
+    );
+    await invalid.start([
+      {
+        ...moveScript,
+        blocks: [
+          moveScript.blocks[0]!,
+          {
+            id: "blk_right",
+            sourceBlockId: "right",
+            type: "MOT_MOVE",
+            direction: "right",
+            steps: 3,
+          },
+          moveScript.blocks[2]!,
+        ],
+      },
+    ]);
+    expect(invalid.report.pathReachedGoal).toBe(true);
+    expect(invalid.report.pathViolation).toBe(true);
+    expect(invalid.report.pathVisited).toHaveLength(5);
+  });
+
+  it("checks waypoints, pickups, step limits and revisits on a map", async () => {
+    const project = createDefaultProject();
+    project.pathMap = {
+      actorSpriteId: "spr_liji",
+      start: { column: 2, row: 6 },
+      goal: { column: 4, row: 5 },
+      tiles: [
+        { column: 2, row: 6 },
+        { column: 3, row: 6 },
+        { column: 4, row: 6 },
+        { column: 4, row: 5 },
+      ],
+      checkpoints: [{ column: 3, row: 6 }],
+      collectibles: [{ column: 4, row: 6 }],
+      maxSteps: 3,
+      noRevisit: true,
+    };
+    const actor = project.scenes[0]!.instances[0]!;
+    actor.transform.x = 100;
+    actor.transform.y = 260;
+    const session = new RuntimeSession(
+      project,
+      createStage(),
+      { highlightBlock: vi.fn(), reportError: vi.fn() },
+      new ImmediateClock(),
+    );
+    const flag: RuntimeScript["blocks"][number] = {
+      id: "flag",
+      sourceBlockId: "flag",
+      type: "EVT_FLAG",
+    };
+    const move = (
+      direction: "right" | "left" | "up",
+      steps: number,
+    ): RuntimeScript["blocks"][number] => ({
+      id: direction + steps,
+      sourceBlockId: direction + steps,
+      type: "MOT_MOVE",
+      direction,
+      steps,
+    });
+    await session.start([
+      {
+        scriptId: "map_objectives",
+        ownerSpriteId: "spr_liji",
+        blocks: [flag, move("right", 2), move("up", 1)],
+      },
+    ]);
+    expect(session.report).toMatchObject({
+      pathReachedGoal: true,
+      pathObjectivesMet: true,
+      pathCheckpointCount: 1,
+      pathCollectiblesCount: 1,
+      pathSteps: 3,
+    });
+    await session.start([
+      {
+        scriptId: "map_detour",
+        ownerSpriteId: "spr_liji",
+        blocks: [
+          flag,
+          move("right", 2),
+          move("left", 1),
+          move("right", 1),
+          move("up", 1),
+        ],
+      },
+    ]);
+    expect(session.report.pathReachedGoal).toBe(true);
+    expect(session.report.pathObjectivesMet).toBe(false);
+    expect(session.report.pathSteps).toBe(5);
+    expect(session.report.pathTrace).toEqual([
+      "2:6",
+      "3:6",
+      "4:6",
+      "3:6",
+      "4:6",
+      "4:5",
+    ]);
+  });
+
   it("does not overlap different key handlers on the same sprite", async () => {
     const stage = createStage();
     const clock = new DeferredClock();
@@ -171,8 +334,8 @@ describe("RuntimeSession", () => {
     await session.start([script]);
     expect(stage.setSpritePosition).toHaveBeenLastCalledWith(
       "spr_liji",
-      110,
-      280,
+      130,
+      300,
     );
     expect(session.report.executedBlockCounts).toMatchObject({
       "source-flag": 1,
@@ -278,8 +441,8 @@ describe("RuntimeSession", () => {
 
     expect(stage.setSpritePosition).toHaveBeenLastCalledWith(
       "spr_liji",
-      200,
-      280,
+      220,
+      300,
     );
     expect(stage.showSpeech).toHaveBeenCalledWith("spr_liji", "找到啦！");
     expect(debug.highlightBlock).toHaveBeenCalledWith("source-move");
@@ -367,12 +530,12 @@ describe("RuntimeSession", () => {
 
     expect(stage.setSpritePosition).toHaveBeenLastCalledWith(
       "spr_liji",
-      480,
-      280,
+      460,
+      300,
     );
   });
 
-  it("moves directly to a stage coordinate", async () => {
+  it("moves directly to the center of a grid cell, including both edges", async () => {
     const stage: StagePort = {
       setSpritePosition: vi.fn(),
       setSpriteRotation: vi.fn(),
@@ -406,14 +569,38 @@ describe("RuntimeSession", () => {
             id: "blk_goto",
             sourceBlockId: "goto",
             type: "MOT_GOTO",
-            x: 220,
-            y: 140,
+            x: 5,
+            y: 4,
+          },
+          {
+            id: "blk_goto_first",
+            sourceBlockId: "goto_first",
+            type: "MOT_GOTO",
+            x: 0,
+            y: 0,
+          },
+          {
+            id: "blk_goto_last",
+            sourceBlockId: "goto_last",
+            type: "MOT_GOTO",
+            x: 11,
+            y: 8,
           },
         ],
       },
     ]);
 
-    expect(stage.setSpritePosition).toHaveBeenCalledWith("spr_liji", 220, 140);
+    expect(stage.setSpritePosition).toHaveBeenCalledWith("spr_liji", 220, 180);
+    expect(stage.setSpritePosition).toHaveBeenCalledWith("spr_liji", 20, 20);
+    expect(stage.setSpritePosition).toHaveBeenLastCalledWith(
+      "spr_liji",
+      460,
+      340,
+    );
+    expect(session.report.spritePositions.spr_liji).toEqual({
+      x: 460,
+      y: 340,
+    });
   });
 
   it("changes score when the sprite touches its target", async () => {

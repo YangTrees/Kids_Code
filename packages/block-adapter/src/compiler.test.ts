@@ -116,14 +116,14 @@ describe("compileBlockForRuntime", () => {
     });
   });
 
-  it("compiles stage coordinates within the supported bounds", () => {
+  it("compiles integer grid coordinates within the supported bounds", () => {
     const result = compileBlockForRuntime(
       fakeBlock("motion_gotoxy", {
         X: { NUM: 999 },
         Y: { NUM: 120 },
       }),
     );
-    expect(result).toMatchObject({ type: "MOT_GOTO", x: 480, y: 120 });
+    expect(result).toMatchObject({ type: "MOT_GOTO", x: 47, y: 35 });
   });
 
   it("reads the selected sound from its menu shadow", () => {

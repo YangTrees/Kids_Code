@@ -135,8 +135,8 @@ describe("editor store", () => {
         (item) => item.spriteId === "spr_liji",
       );
     expect(instance?.transform).toMatchObject({
-      x: 480,
-      y: 0,
+      x: 460,
+      y: 20,
       rotation: 180,
       scaleX: 0.75,
       scaleY: 0.75,

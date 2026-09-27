@@ -5,21 +5,39 @@ import type { ProjectMode } from "../projects/project-factory";
 export type TaskId =
   | "speak"
   | "move"
+  | "sequence"
   | "turn"
+  | "diagonal"
   | "repeat"
   | "collision"
+  | "collision_sound"
+  | "touch_end"
   | "collect"
   | "score"
+  | "treasure_win"
   | "scene"
   | "variable"
   | "logic"
+  | "compare_score"
+  | "logic_or"
+  | "random"
   | "keyboard"
   | "sound"
   | "magic"
   | "broadcast"
-  | "finale";
+  | "scene_story"
+  | "finale"
+  | "path_straight"
+  | "path_turn"
+  | "path_zigzag"
+  | "path_repeat"
+  | "sky_waypoint"
+  | "sky_collect"
+  | "sky_shortcut"
+  | "sky_master";
 
-export type TaskChapter = "基础入门" | "互动游戏" | "程序思维" | "进阶创作";
+export type TaskChapter =
+  "基础入门" | "互动游戏" | "程序思维" | "进阶创作" | "路线挑战" | "云岛远征";
 export type TaskBlockCategory =
   | "event"
   | "motion"
@@ -28,7 +46,8 @@ export type TaskBlockCategory =
   | "control"
   | "game"
   | "variable"
-  | "condition";
+  | "condition"
+  | "operator";
 
 export interface TaskBlockGuide {
   label: string;
@@ -131,6 +150,36 @@ export const creationTasks: CreationTask[] = [
     ],
   },
   {
+    taskId: "sequence",
+    chapter: "基础入门",
+    title: "先说再走",
+    description: "让栗奇介绍自己，然后向右走一格。",
+    projectMode: "blank",
+    blockGuide: [
+      { label: "点击开始", category: "event", shape: "hat" },
+      { label: "说 我出发啦！ 1 秒", category: "looks" },
+      { label: "向右移动 1 格", category: "motion" },
+    ],
+    rules: [
+      {
+        id: "start",
+        label: "从点击开始事件出发",
+        anyOf: ["event_whenflagclicked"],
+      },
+      { id: "say", label: "让角色说话", anyOf: ["looks_sayforsecs"] },
+      { id: "move", label: "让角色向右移动", anyOf: ["motion_movesteps"] },
+    ],
+    runtimeGoal: {
+      label: "运行后栗奇说话并向右移动",
+      check: (report) => report.status === "COMPLETED",
+    },
+    hints: [
+      "这次需要连续执行两件事。",
+      "先把紫色说话积木接到黄色事件下面。",
+      "再把蓝色向右移动积木接在说话积木后面。",
+    ],
+  },
+  {
     taskId: "turn",
     chapter: "基础入门",
     title: "转个方向",
@@ -153,13 +202,43 @@ export const creationTasks: CreationTask[] = [
       },
     ],
     runtimeGoal: {
-      label: "运行一次转向程序",
+      label: "运行后让栗奇真正改变朝向",
       check: (report) => report.status === "COMPLETED",
     },
     hints: [
       "转向积木藏在蓝色的“动作”分类里。",
       "先连接点击开始，再连接一个转向积木。",
       "可以选择左转或右转，并试试不同角度。",
+    ],
+  },
+  {
+    taskId: "diagonal",
+    chapter: "基础入门",
+    title: "走向右上角",
+    description: "组合两个方向，让栗奇走到起点的右上方。",
+    projectMode: "blank",
+    blockGuide: [
+      { label: "点击开始", category: "event", shape: "hat" },
+      { label: "向右移动 1 格", category: "motion" },
+      { label: "向上移动 1 格", category: "motion" },
+    ],
+    rules: [
+      {
+        id: "start",
+        label: "从点击开始事件出发",
+        anyOf: ["event_whenflagclicked"],
+      },
+      { id: "right", label: "向右移动", anyOf: ["motion_movesteps"] },
+      { id: "up", label: "向上移动", anyOf: ["kids_move_up"] },
+    ],
+    runtimeGoal: {
+      label: "栗奇的位置同时向右、向上改变",
+      check: (report) => report.status === "COMPLETED",
+    },
+    hints: [
+      "向右移动会改变横向位置。",
+      "向上移动会改变纵向位置。",
+      "把两个动作都接在点击开始后面，运行时看格子。",
     ],
   },
   {
@@ -228,13 +307,69 @@ export const creationTasks: CreationTask[] = [
       },
     ],
     runtimeGoal: {
-      label: "运行时真正发生一次碰撞",
-      check: (report) => report.touchedPairs.length > 0,
+      label: "运行时让栗奇碰到宝箱",
+      check: (report) =>
+        report.touchedPairs.some(
+          (pair) => pair === "spr_liji:spr_box" || pair === "spr_box:spr_liji",
+        ),
     },
     hints: [
       "可以用“碰到角色时”，也可以用“如果碰到”。",
       "在碰撞积木后连接说话、声音或得分积木。",
       "让栗奇先移动到宝箱附近，再判断是否碰到。",
+    ],
+  },
+  {
+    taskId: "collision_sound",
+    chapter: "互动游戏",
+    title: "宝箱会响",
+    description: "栗奇碰到宝箱时，播放一个声音。",
+    projectMode: "treasure-template",
+    blockGuide: [
+      { label: "碰到 宝箱 时", category: "event", shape: "hat" },
+      { label: "播放声音 叮", category: "sound" },
+    ],
+    rules: [
+      { id: "touch", label: "监听碰到宝箱", anyOf: ["kids_when_touching"] },
+      { id: "sound", label: "碰到后播放声音", anyOf: ["sound_play"] },
+    ],
+    runtimeGoal: {
+      label: "栗奇碰到宝箱并触发声音",
+      check: (report) => report.touchedPairs.includes("spr_liji:spr_box"),
+    },
+    hints: [
+      "先用方向键或移动积木接近宝箱。",
+      "给栗奇连接黄色“碰到宝箱时”事件。",
+      "在碰撞事件下面连接粉色声音积木。",
+    ],
+  },
+  {
+    taskId: "touch_end",
+    chapter: "互动游戏",
+    title: "离开宝箱",
+    description: "栗奇碰到宝箱后退开，让栗奇在离开时说再见。",
+    projectMode: "treasure-template",
+    blockGuide: [
+      { label: "离开 宝箱 时", category: "event", shape: "hat" },
+      { label: "说 再见！ 1 秒", category: "looks" },
+    ],
+    rules: [
+      {
+        id: "leave",
+        label: "使用离开碰撞事件",
+        anyOf: ["kids_when_touch_end"],
+      },
+      { id: "say", label: "离开后让角色说话", anyOf: ["looks_sayforsecs"] },
+    ],
+    runtimeGoal: {
+      label: "接触宝箱再退开，真正触发离开事件",
+      check: (report) =>
+        report.status === "RUNNING" || report.status === "COMPLETED",
+    },
+    hints: [
+      "离开事件要先接触，再向反方向退开才会发生。",
+      "在黄色事件分类找到“离开角色时”。",
+      "把紫色说话积木接到离开事件下面。",
     ],
   },
   {
@@ -270,28 +405,65 @@ export const creationTasks: CreationTask[] = [
   {
     taskId: "score",
     chapter: "互动游戏",
-    title: "得到五分",
-    description: "设计一个程序，让作品得分达到 5 分。",
+    title: "累计三分",
+    description: "点击金币后，用重复积木连续加分，让得分达到 3 分。",
     projectMode: "coin-template",
     blockGuide: [
-      { label: "点击开始", category: "event", shape: "hat" },
-      { label: "将得分设为 5", category: "game" },
+      { label: "点击这个角色时", category: "event", shape: "hat" },
+      { label: "重复 3 次", category: "control", shape: "loop" },
+      { label: "将得分增加 1", category: "game" },
     ],
     rules: [
       {
+        id: "click",
+        label: "点击金币时开始",
+        anyOf: ["event_whenthisspriteclicked"],
+      },
+      {
+        id: "repeat",
+        label: "使用重复积木",
+        anyOf: ["control_repeat"],
+      },
+      {
         id: "score",
-        label: "使用设置或增加得分积木",
-        anyOf: ["kids_score_set", "kids_score_change"],
+        label: "重复增加得分",
+        anyOf: ["kids_score_change"],
       },
     ],
     runtimeGoal: {
-      label: "运行后得分达到 5 分",
-      check: (report) => report.score >= 5,
+      label: "运行后累计达到 3 分",
+      check: (report) => report.score >= 3,
     },
     hints: [
-      "绿色的“游戏”分类里有得分积木。",
-      "可以一次设为 5，也可以多次增加得分。",
-      "别忘了把得分积木连接在事件积木下面。",
+      "先选中金币，把“点击这个角色时”放进工作区。",
+      "在事件下面连接橙色“重复 3 次”积木。",
+      "把绿色“将得分增加 1”放进重复积木里面，再点击金币。",
+    ],
+  },
+  {
+    taskId: "treasure_win",
+    chapter: "互动游戏",
+    title: "打开胜利宝箱",
+    description: "碰到宝箱时宣布游戏成功。",
+    projectMode: "treasure-template",
+    blockGuide: [
+      { label: "碰到 宝箱 时", category: "event", shape: "hat" },
+      { label: "游戏 成功", category: "game" },
+    ],
+    rules: [
+      { id: "touch", label: "碰到宝箱时开始", anyOf: ["kids_when_touching"] },
+      { id: "win", label: "宣布游戏成功", anyOf: ["kids_result"] },
+    ],
+    runtimeGoal: {
+      label: "栗奇碰到宝箱并获得成功结果",
+      check: (report) =>
+        report.result === "success" &&
+        report.touchedPairs.includes("spr_liji:spr_box"),
+    },
+    hints: [
+      "先让栗奇能够走到宝箱旁边。",
+      "用“碰到宝箱时”作为胜利条件。",
+      "把绿色“游戏成功”连接在碰撞事件下面。",
     ],
   },
   {
@@ -386,16 +558,116 @@ export const creationTasks: CreationTask[] = [
           "kids_logic_not",
         ],
       },
+      {
+        id: "action",
+        label: "条件成立时执行一个动作",
+        anyOf: ["looks_sayforsecs", "sound_play", "kids_score_change"],
+      },
     ],
     runtimeGoal: {
-      label: "运行一次带条件的程序",
+      label: "让条件成立并执行动作",
       check: (report) =>
-        report.status === "COMPLETED" || report.result !== null,
+        report.status === "COMPLETED" || report.status === "RUNNING",
     },
     hints: [
       "先从“控制”分类拖出“如果”。",
       "把六边形条件积木放进“如果”的空位。",
       "在“那么”里面放入说话、声音或得分积木。",
+    ],
+  },
+  {
+    taskId: "compare_score",
+    chapter: "程序思维",
+    title: "分数达标才说话",
+    description: "先得到 2 分，只有分数超过 1 时才让栗奇说话。",
+    projectMode: "blank",
+    blockGuide: [
+      { label: "将得分设为 2", category: "game" },
+      { label: "如果…那么", category: "control", shape: "loop" },
+      { label: "得分 大于 1？", category: "operator", shape: "condition" },
+      { label: "说 达标啦！", category: "looks" },
+    ],
+    rules: [
+      {
+        id: "score",
+        label: "设置或增加得分",
+        anyOf: ["kids_score_set", "kids_score_change"],
+      },
+      { id: "if", label: "使用如果判断", anyOf: ["kids_if"] },
+      { id: "compare", label: "比较当前得分", anyOf: ["kids_score_compare"] },
+      { id: "say", label: "分数达标后说话", anyOf: ["looks_sayforsecs"] },
+    ],
+    runtimeGoal: {
+      label: "得分至少为 2，判断成立并说话",
+      check: (report) => report.status === "COMPLETED" && report.score >= 2,
+    },
+    hints: [
+      "先用绿色积木把得分设为 2。",
+      "在橙色“如果”里放入得分比较条件。",
+      "条件选“大于 1”，再把说话积木放进“那么”里面。",
+    ],
+  },
+  {
+    taskId: "logic_or",
+    chapter: "程序思维",
+    title: "两个办法都可以",
+    description: "用“或者”连接两个条件，满足其中一个就让栗奇回应。",
+    projectMode: "treasure-template",
+    blockGuide: [
+      { label: "如果…那么", category: "control", shape: "loop" },
+      {
+        label: "条件 A 或者 条件 B",
+        category: "operator",
+        shape: "condition",
+      },
+      { label: "说 我想到办法啦！", category: "looks" },
+    ],
+    rules: [
+      { id: "if", label: "使用如果判断", anyOf: ["kids_if"] },
+      { id: "or", label: "用或者连接两个条件", anyOf: ["kids_logic_or"] },
+      { id: "say", label: "条件成立时让角色说话", anyOf: ["looks_sayforsecs"] },
+    ],
+    runtimeGoal: {
+      label: "让至少一个条件成立并触发回应",
+      check: (report) => report.status === "COMPLETED",
+    },
+    hints: [
+      "“或者”只要一边成立，整个条件就成立。",
+      "在“控制”分类找到绿色“或者”，放进“如果”的六边形空位。",
+      "可以在两边试试“得分比较”或“碰到角色”条件。",
+    ],
+  },
+  {
+    taskId: "random",
+    chapter: "程序思维",
+    title: "抽一个幸运数字",
+    description: "创建一个变量，把 1 到 6 的随机数存进去。",
+    projectMode: "blank",
+    blockGuide: [
+      { label: "点击开始", category: "event", shape: "hat" },
+      { label: "将 幸运数字 设为…", category: "variable" },
+      { label: "随机数 1 到 6", category: "operator" },
+    ],
+    rules: [
+      {
+        id: "start",
+        label: "从点击开始事件出发",
+        anyOf: ["event_whenflagclicked"],
+      },
+      { id: "variable", label: "设置一个变量", anyOf: ["kids_variable_set"] },
+      { id: "random", label: "使用随机数积木", anyOf: ["kids_random_number"] },
+    ],
+    runtimeGoal: {
+      label: "变量获得 1 到 6 之间的数字",
+      check: (report) =>
+        Object.values(report.variables).some(
+          (value) => value >= 1 && value <= 6,
+        ),
+    },
+    hints: [
+      "先在“游戏”分类创建变量“幸运数字”。",
+      "把设置变量积木接在点击开始下面。",
+      "在“控制”分类找到绿色“随机数”，设为 1 到 6，再放进变量积木的数字空位。",
     ],
   },
   {
@@ -526,6 +798,46 @@ export const creationTasks: CreationTask[] = [
     ],
   },
   {
+    taskId: "scene_story",
+    chapter: "进阶创作",
+    title: "跨场景对话",
+    description: "从教室切换到森林，让新场景里的角色开口说话。",
+    projectMode: "dialogue-template",
+    blockGuide: [
+      { label: "点击开始", category: "event", shape: "hat" },
+      { label: "切换到下一个场景", category: "game" },
+      { label: "当场景开始时", category: "event", shape: "hat" },
+      { label: "说 欢迎来到森林！", category: "looks" },
+    ],
+    rules: [
+      {
+        id: "start",
+        label: "用点击开始事件启动",
+        anyOf: ["event_whenflagclicked"],
+      },
+      {
+        id: "switch",
+        label: "切换到第二个场景",
+        anyOf: ["kids_switch_scene", "kids_next_scene"],
+      },
+      {
+        id: "scene_start",
+        label: "响应场景开始事件",
+        anyOf: ["kids_when_scene_starts"],
+      },
+      { id: "say", label: "在新场景里说话", anyOf: ["looks_sayforsecs"] },
+    ],
+    runtimeGoal: {
+      label: "真正切换场景并让角色开口",
+      check: (report) => (report.sceneChanges ?? 0) > 0,
+    },
+    hints: [
+      "这一关已准备好教室和森林两个场景。",
+      "第一段程序：点击开始 → 切换到下一个场景。",
+      "第二段程序：当场景开始时 → 说“欢迎来到森林”。",
+    ],
+  },
+  {
     taskId: "finale",
     chapter: "进阶创作",
     title: "森林大冒险",
@@ -570,7 +882,426 @@ export const creationTasks: CreationTask[] = [
       "把绿色“游戏成功”积木接在碰撞事件下面。",
     ],
   },
+  {
+    taskId: "path_straight",
+    chapter: "路线挑战",
+    title: "走过小木桥",
+    description: "让栗奇从绿色起点沿着道路走 3 格，到达黄色终点。",
+    projectMode: "blank",
+    blockGuide: [
+      { label: "点击开始", category: "event", shape: "hat" },
+      { label: "向右移动 3 格", category: "motion" },
+    ],
+    rules: [
+      {
+        id: "start",
+        label: "用点击开始事件启动",
+        anyOf: ["event_whenflagclicked"],
+      },
+      { id: "move", label: "向右前进", anyOf: ["motion_movesteps"] },
+    ],
+    runtimeGoal: {
+      label: "沿道路逐格到达终点，途中不能走出道路",
+      check: (report) =>
+        report.status === "COMPLETED" &&
+        Boolean(report.pathReachedGoal) &&
+        !report.pathViolation,
+    },
+    hints: [
+      "道路上的每一个浅色方格就是 1 格，绿色是起点，黄色是终点。",
+      "从起点数到终点，一共需要向右走 3 格。",
+      "把“向右移动 3 格”接在“点击开始”下面，再运行。",
+    ],
+  },
+  {
+    taskId: "path_turn",
+    chapter: "路线挑战",
+    title: "拐弯找终点",
+    description: "先向右走，再向上走；拐角处要换方向。",
+    projectMode: "blank",
+    blockGuide: [
+      { label: "点击开始", category: "event", shape: "hat" },
+      { label: "向右移动 2 格", category: "motion" },
+      { label: "向上移动 2 格", category: "motion" },
+    ],
+    rules: [
+      {
+        id: "start",
+        label: "用点击开始事件启动",
+        anyOf: ["event_whenflagclicked"],
+      },
+      { id: "right", label: "让栗奇向右走", anyOf: ["motion_movesteps"] },
+      { id: "up", label: "在拐角向上走", anyOf: ["kids_move_up"] },
+    ],
+    runtimeGoal: {
+      label: "沿道路转弯并到达终点",
+      check: (report) =>
+        report.status === "COMPLETED" &&
+        Boolean(report.pathReachedGoal) &&
+        !report.pathViolation,
+    },
+    hints: [
+      "先观察路的方向：它先向右，再向上。",
+      "右边走 2 格会到拐角，接着向上走 2 格。",
+      "按顺序连接两块蓝色移动积木，不能跨过拐角。",
+    ],
+  },
+  {
+    taskId: "path_zigzag",
+    chapter: "路线挑战",
+    title: "穿过折线森林",
+    description: "跟着折线道路，依次向右、向上、向右、向下。",
+    projectMode: "blank",
+    blockGuide: [
+      { label: "点击开始", category: "event", shape: "hat" },
+      { label: "向右移动 2 格", category: "motion" },
+      { label: "向上移动 2 格", category: "motion" },
+      { label: "向右移动 2 格", category: "motion" },
+      { label: "向下移动 2 格", category: "motion" },
+    ],
+    rules: [
+      {
+        id: "start",
+        label: "用点击开始事件启动",
+        anyOf: ["event_whenflagclicked"],
+      },
+      { id: "right", label: "让栗奇向右走", anyOf: ["motion_movesteps"] },
+      { id: "up", label: "让栗奇向上走", anyOf: ["kids_move_up"] },
+      { id: "down", label: "让栗奇向下走", anyOf: ["kids_move_down"] },
+    ],
+    runtimeGoal: {
+      label: "依次经过每个拐角并抵达终点",
+      check: (report) =>
+        report.status === "COMPLETED" &&
+        Boolean(report.pathReachedGoal) &&
+        !report.pathViolation,
+    },
+    hints: [
+      "用手指沿着浅色道路描一遍，数数有几个拐角。",
+      "每一段都是 2 格：右 → 上 → 右 → 下。",
+      "把四块移动积木按道路顺序接在开始事件下面。",
+    ],
+  },
+  {
+    taskId: "path_repeat",
+    chapter: "路线挑战",
+    title: "重复登高",
+    description: "用重复积木让栗奇向上走 4 次，抵达山顶终点。",
+    projectMode: "blank",
+    blockGuide: [
+      { label: "点击开始", category: "event", shape: "hat" },
+      { label: "重复执行 4 次", category: "control", shape: "loop" },
+      { label: "向上移动 1 格", category: "motion" },
+    ],
+    rules: [
+      {
+        id: "start",
+        label: "用点击开始事件启动",
+        anyOf: ["event_whenflagclicked"],
+      },
+      { id: "repeat", label: "使用重复积木", anyOf: ["control_repeat"] },
+      { id: "up", label: "在循环里向上走", anyOf: ["kids_move_up"] },
+    ],
+    runtimeGoal: {
+      label: "重复走过道路并抵达山顶",
+      check: (report) =>
+        report.status === "COMPLETED" &&
+        Boolean(report.pathReachedGoal) &&
+        !report.pathViolation,
+    },
+    hints: [
+      "一共有 4 个向上的步长，每一步都是 1 格。",
+      "把向上移动 1 格放进橙色“重复执行”里面。",
+      "把重复次数改成 4，并接在点击开始下面。",
+    ],
+  },
+  {
+    taskId: "sky_waypoint",
+    chapter: "云岛远征",
+    title: "经过紫色路标",
+    description: "不要直接冲向终点，先绕到紫色 1 号路标，再抵达出口。",
+    projectMode: "blank",
+    blockGuide: [
+      { label: "点击开始", category: "event", shape: "hat" },
+      { label: "向右移动 2 格", category: "motion" },
+      { label: "向上移动 2 格", category: "motion" },
+      { label: "继续沿路到终点", category: "motion" },
+    ],
+    rules: [
+      {
+        id: "start",
+        label: "用绿旗启动路线",
+        anyOf: ["event_whenflagclicked"],
+      },
+      { id: "right", label: "使用向右移动", anyOf: ["motion_movesteps"] },
+      { id: "up", label: "使用向上移动", anyOf: ["kids_move_up"] },
+      { id: "down", label: "使用向下移动", anyOf: ["kids_move_down"] },
+    ],
+    runtimeGoal: {
+      label: "经过 1 号路标后抵达终点，不能离开道路",
+      check: (report) =>
+        report.status === "COMPLETED" &&
+        Boolean(report.pathReachedGoal && report.pathObjectivesMet) &&
+        !report.pathViolation,
+    },
+    hints: [
+      "紫色方格里的数字 1 是必须经过的路标；直接走中间会漏掉它。",
+      "先右 2 格、上 2 格到紫色路标，再右 2 格、下 2 格回到主路。",
+      "最后再右 2 格到黄色终点：右 2 → 上 2 → 右 2 → 下 2 → 右 2。",
+    ],
+  },
+  {
+    taskId: "sky_collect",
+    chapter: "云岛远征",
+    title: "收集两颗星石",
+    description: "沿岔路找到两枚金色菱形，再回到主路抵达终点。",
+    projectMode: "blank",
+    blockGuide: [
+      { label: "点击开始", category: "event", shape: "hat" },
+      { label: "向右移动 2 格", category: "motion" },
+      { label: "向上移动 3 格", category: "motion" },
+      { label: "向下移动 3 格", category: "motion" },
+      { label: "向右移动 4 格", category: "motion" },
+    ],
+    rules: [
+      {
+        id: "start",
+        label: "用绿旗启动路线",
+        anyOf: ["event_whenflagclicked"],
+      },
+      { id: "right", label: "使用向右移动", anyOf: ["motion_movesteps"] },
+      { id: "up", label: "走上岔路", anyOf: ["kids_move_up"] },
+      { id: "down", label: "从岔路返回", anyOf: ["kids_move_down"] },
+    ],
+    runtimeGoal: {
+      label: "收齐两颗星石后抵达终点",
+      check: (report) =>
+        report.status === "COMPLETED" &&
+        Boolean(report.pathReachedGoal && report.pathObjectivesMet) &&
+        !report.pathViolation,
+    },
+    hints: [
+      "金色菱形是星石；一颗在上方岔路尽头，一颗在通向终点的路上。",
+      "先向右 2 格到岔口，向上 3 格拾取星石，再向下 3 格回到岔口。",
+      "最后向右 4 格会经过第二颗星石并到达终点。",
+    ],
+  },
+  {
+    taskId: "sky_shortcut",
+    chapter: "云岛远征",
+    title: "八步找捷径",
+    description: "地图有两条路，只能用最多 8 步到达终点。",
+    projectMode: "blank",
+    blockGuide: [
+      { label: "点击开始", category: "event", shape: "hat" },
+      { label: "向右移动 6 格", category: "motion" },
+      { label: "向上移动 2 格", category: "motion" },
+    ],
+    rules: [
+      {
+        id: "start",
+        label: "用绿旗启动路线",
+        anyOf: ["event_whenflagclicked"],
+      },
+      { id: "right", label: "使用向右移动", anyOf: ["motion_movesteps"] },
+      { id: "up", label: "使用向上移动", anyOf: ["kids_move_up"] },
+    ],
+    runtimeGoal: {
+      label: "不离开道路，用不超过 8 步抵达终点",
+      check: (report) =>
+        report.status === "COMPLETED" &&
+        Boolean(report.pathReachedGoal && report.pathObjectivesMet) &&
+        !report.pathViolation,
+    },
+    hints: [
+      "上方看起来很美，但绕远路会超过 8 步；试着数一数两条路的长度。",
+      "最短路沿下方横向道路走，再从右端向上。",
+      "向右 6 格、向上 2 格，刚好走 8 步。",
+    ],
+  },
+  {
+    taskId: "sky_master",
+    chapter: "云岛远征",
+    title: "云岛终极远征",
+    description: "依次经过 1、2 号路标，收齐星石，使用循环且不走回头路。",
+    projectMode: "blank",
+    blockGuide: [
+      { label: "点击开始", category: "event", shape: "hat" },
+      { label: "重复执行 3 次", category: "control", shape: "loop" },
+      { label: "向右移动 1 格", category: "motion" },
+      { label: "向上移动 3 格", category: "motion" },
+      { label: "沿路抵达终点", category: "motion" },
+    ],
+    rules: [
+      {
+        id: "start",
+        label: "用绿旗启动路线",
+        anyOf: ["event_whenflagclicked"],
+      },
+      {
+        id: "repeat",
+        label: "用重复积木减少重复指令",
+        anyOf: ["control_repeat"],
+      },
+      { id: "right", label: "使用向右移动", anyOf: ["motion_movesteps"] },
+      { id: "up", label: "使用向上移动", anyOf: ["kids_move_up"] },
+    ],
+    runtimeGoal: {
+      label: "12 步内按顺序经过路标、收齐星石，不走回头路并抵达终点",
+      check: (report) =>
+        report.status === "COMPLETED" &&
+        Boolean(report.pathReachedGoal && report.pathObjectivesMet) &&
+        !report.pathViolation,
+    },
+    hints: [
+      "数字 1、2 是有顺序的路标；金色菱形也都要经过，不能走重复的格子。",
+      "路线分成四段：右 3、上 3、右 4、上 2，一共正好 12 步。",
+      "把“向右移动 1 格”放进“重复 3 次”，其余三段接在后面。",
+    ],
+  },
 ];
+
+interface TaskBlockNode {
+  type?: string;
+  disabled?: boolean;
+  next?: { block?: TaskBlockNode };
+  inputs?: Record<string, { block?: TaskBlockNode; shadow?: TaskBlockNode }>;
+}
+
+const taskInput = (block: TaskBlockNode, name: string) => {
+  const input = block.inputs?.[name];
+  return input?.block ?? input?.shadow;
+};
+
+const stackHas = (
+  start: TaskBlockNode | undefined,
+  predicate: (block: TaskBlockNode) => boolean,
+): boolean => {
+  let block = start;
+  while (block) {
+    if (!block.disabled && predicate(block)) return true;
+    block = block.next?.block;
+  }
+  return false;
+};
+
+function taskConnectionGoal(
+  project: Project,
+  taskId: TaskId,
+): { label: string; complete: boolean } | null {
+  const roots = Object.entries(project.workspaceStates).flatMap(
+    ([spriteId, workspace]) =>
+      (
+        (workspace as { blocks?: { blocks?: TaskBlockNode[] } } | null)?.blocks
+          ?.blocks ?? []
+      ).map((root) => ({ spriteId, root })),
+  );
+  const anyStack = (predicate: (block: TaskBlockNode) => boolean) =>
+    roots.some(({ root }) => stackHas(root, predicate));
+  if (taskId === "sequence")
+    return {
+      label: "把说话接在开始下面，再把移动接在说话下面",
+      complete: roots.some(
+        ({ root }) =>
+          root.type === "event_whenflagclicked" &&
+          root.next?.block?.type === "looks_sayforsecs" &&
+          root.next.block.next?.block?.type === "motion_movesteps",
+      ),
+    };
+  if (taskId === "score")
+    return {
+      label: "把加分积木放进金币点击事件下的重复积木里",
+      complete: roots.some(
+        ({ spriteId, root }) =>
+          spriteId === "spr_coin" &&
+          root.type === "event_whenthisspriteclicked" &&
+          stackHas(
+            root.next?.block,
+            (block) =>
+              block.type === "control_repeat" &&
+              stackHas(
+                taskInput(block, "SUBSTACK"),
+                (child) => child.type === "kids_score_change",
+              ),
+          ),
+      ),
+    };
+  if (
+    taskId === "logic" ||
+    taskId === "compare_score" ||
+    taskId === "logic_or"
+  ) {
+    const conditionType =
+      taskId === "compare_score"
+        ? "kids_score_compare"
+        : taskId === "logic_or"
+          ? "kids_logic_or"
+          : null;
+    return {
+      label: "把条件放进“如果”，把动作放进“那么”",
+      complete: anyStack((block) => {
+        if (block.type !== "kids_if" && block.type !== "kids_if_else")
+          return false;
+        const condition = taskInput(block, "CONDITION");
+        if (!condition || (conditionType && condition.type !== conditionType))
+          return false;
+        if (
+          taskId === "logic_or" &&
+          (!taskInput(condition, "LEFT") || !taskInput(condition, "RIGHT"))
+        )
+          return false;
+        return stackHas(
+          taskInput(block, "SUBSTACK"),
+          (child) =>
+            child.type === "looks_sayforsecs" ||
+            (taskId === "logic" &&
+              (child.type === "sound_play" ||
+                child.type === "kids_score_change")),
+        );
+      }),
+    };
+  }
+  if (taskId === "random")
+    return {
+      label: "把随机数放进设置变量的数字空位",
+      complete: anyStack(
+        (block) =>
+          block.type === "kids_variable_set" &&
+          taskInput(block, "VALUE")?.type === "kids_random_number",
+      ),
+    };
+  if (taskId.startsWith("path_") || taskId.startsWith("sky_"))
+    return {
+      label:
+        taskId === "path_repeat" || taskId === "sky_master"
+          ? "把移动积木放进开始事件下的重复积木里"
+          : "把移动积木依次接在点击开始事件下面",
+      complete: roots.some(({ spriteId, root }) => {
+        if (spriteId !== "spr_liji" || root.type !== "event_whenflagclicked")
+          return false;
+        if (taskId === "path_repeat" || taskId === "sky_master")
+          return stackHas(
+            root.next?.block,
+            (block) =>
+              block.type === "control_repeat" &&
+              stackHas(taskInput(block, "SUBSTACK"), (child) =>
+                taskId === "path_repeat"
+                  ? child.type === "kids_move_up"
+                  : child.type === "motion_movesteps" ||
+                    child.type === "kids_move_up",
+              ),
+          );
+        return stackHas(
+          root.next?.block,
+          (block) =>
+            block.type === "motion_movesteps" ||
+            block.type === "kids_move_up" ||
+            block.type === "kids_move_down",
+        );
+      }),
+    };
+  return null;
+}
 
 export function collectWorkspaceBlockTypes(
   project: Project,
@@ -643,12 +1374,21 @@ export function evaluateCreationTask(
     (item) => item.spriteId === "spr_box",
   )?.transform;
   const end = report?.spritePositions.spr_liji;
+  const endRotation = report?.spriteRotations?.spr_liji;
+  const turnedFromStart =
+    start && endRotation !== undefined
+      ? Math.abs((endRotation - start.rotation) % 360) > 1
+      : false;
   const movedTowardTarget = Boolean(
     start &&
     target &&
     end &&
     Math.hypot(end.x - target.x, end.y - target.y) <
       Math.hypot(start.x - target.x, start.y - target.y) - 1,
+  );
+  const movedRight = Boolean(start && end && end.x - start.x > 20);
+  const movedUpAndRight = Boolean(
+    start && end && end.x - start.x > 20 && start.y - end.y > 20,
   );
   const repeatedTypes = collectWorkspaceBlockTypes(
     project,
@@ -663,11 +1403,52 @@ export function evaluateCreationTask(
     "kids_turn_left",
     "motion_turnright",
   ].some((type) => repeatedTypes.has(type));
+  const repeatedScore = collectWorkspaceBlockTypes(
+    project,
+    Object.fromEntries(
+      Object.entries(report?.executedBlockCounts ?? {}).filter(
+        ([, count]) => count >= 3,
+      ),
+    ),
+  ).has("kids_score_change");
+  const secondSceneId = project.scenes[1]?.sceneId;
+  const spokeInSecondScene = Boolean(
+    secondSceneId &&
+    Object.values(project.workspaceStates).some((workspace) => {
+      const roots =
+        (
+          workspace as {
+            blocks?: { blocks?: (TaskBlockNode & { id?: string })[] };
+          } | null
+        )?.blocks?.blocks ?? [];
+      const visit = (
+        block: (TaskBlockNode & { id?: string }) | undefined,
+      ): boolean => {
+        if (!block || block.disabled) return false;
+        if (
+          block.type === "looks_sayforsecs" &&
+          block.id &&
+          report?.executedBlockScenes?.[block.id]?.includes(secondSceneId)
+        )
+          return true;
+        return (
+          Object.values(block.inputs ?? {}).some((input) =>
+            visit(input.block ?? input.shadow),
+          ) || visit(block.next?.block)
+        );
+      };
+      return roots.some(visit);
+    }),
+  );
+  const connectionGoal = taskConnectionGoal(project, task.taskId);
   const rules = [
     ...task.rules.map((rule) => ({
       ...rule,
       complete: rule.anyOf.some((type) => blockTypes.has(type)),
     })),
+    ...(connectionGoal
+      ? [{ id: "connection", ...connectionGoal, anyOf: [] }]
+      : []),
     {
       id: "runtime",
       label: task.runtimeGoal.label,
@@ -675,9 +1456,15 @@ export function evaluateCreationTask(
       complete: Boolean(
         validRun &&
         executedGoals &&
+        (!connectionGoal || connectionGoal.complete) &&
         task.runtimeGoal.check(report) &&
         (task.taskId !== "move" || movedTowardTarget) &&
+        (task.taskId !== "sequence" || movedRight) &&
+        (task.taskId !== "diagonal" || movedUpAndRight) &&
+        (task.taskId !== "turn" || turnedFromStart) &&
         (task.taskId !== "repeat" || repeatedAction) &&
+        (task.taskId !== "score" || repeatedScore) &&
+        (task.taskId !== "scene_story" || spokeInSecondScene) &&
         (task.taskId !== "scene" || (report.sceneChanges ?? 0) > 0),
       ),
     },
@@ -762,7 +1549,12 @@ export function isTaskUnlocked(
   completedIds = getCompletedTaskIds(),
 ): boolean {
   const index = creationTasks.findIndex((task) => task.taskId === taskId);
-  return index <= 0 || completedIds.includes(creationTasks[index - 1]!.taskId);
+  if (taskId === "path_straight" || taskId === "sky_waypoint") return true;
+  return (
+    index <= 0 ||
+    completedIds.includes(taskId) ||
+    completedIds.includes(creationTasks[index - 1]!.taskId)
+  );
 }
 
 export function markTaskCompleted(taskId: TaskId, stars: 1 | 2 | 3 = 3): void {

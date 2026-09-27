@@ -155,7 +155,7 @@ test("creates a project variable and exposes all variable blocks", async ({
 test("shows editor status, common shortcuts, and a grid toggle", async ({
   page,
 }) => {
-  await expect(page.getByLabel("工作区状态")).toContainText("X 80 · Y 280");
+  await expect(page.getByLabel("工作区状态")).toContainText("X 2 · Y 7");
   await expect(page.getByLabel("工作区状态")).toContainText(/全部 \d+\/1000/);
   await expect(page.getByLabel("常用积木入口").locator("button")).toHaveCount(
     5,
@@ -182,15 +182,67 @@ test("shows editor status, common shortcuts, and a grid toggle", async ({
   ).toBeVisible();
 });
 
-test("shows fifteen sequential tasks with locked progression", async ({
+test("snaps a dragged sprite to the first and last grid cells", async ({
   page,
 }) => {
+  const canvas = (await page.locator(".pixi-stage-canvas").boundingBox())!;
+  const point = (x: number, y: number) => ({
+    x: canvas.x + (x / 480) * canvas.width,
+    y: canvas.y + (y / 360) * canvas.height,
+  });
+  const drag = async (
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+  ) => {
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    await page.mouse.move(to.x, to.y, { steps: 12 });
+    await page.mouse.up();
+  };
+
+  await drag(point(100, 300), point(20, 20));
+  await expect(page.getByLabel("工作区状态")).toContainText("X 0 · Y 0");
+  await drag(point(20, 20), point(460, 340));
+  await expect(page.getByLabel("工作区状态")).toContainText("X 11 · Y 8");
+
+  await page.getByRole("button", { name: "➜ 动作" }).click();
+  await expect(page.locator(".motion_gotoxy")).toContainText("列");
+  await expect(page.locator(".motion_gotoxy")).toContainText("行");
+});
+
+test("steps through blocks and then continues the program", async ({
+  page,
+}) => {
+  const stepButton = page.getByRole("button", { name: "单步运行" });
+  await expect(page.getByRole("button", { name: "绿旗运行" })).toBeVisible();
+  await expect(page.locator(".topbar .run-button svg")).toBeVisible();
+  await expect(stepButton).toContainText("单步");
+  await expect(page.getByRole("button", { name: "暂停运行" })).toHaveCount(0);
+  await stepButton.click();
+  await expect(page.locator(".runtime-status")).toHaveText("已暂停");
+  await expect(page.getByRole("button", { name: "继续运行" })).toBeVisible();
+  await expect(page.getByLabel("工作区状态")).toContainText("X 2 · Y 7");
+
+  await stepButton.click();
+  await expect(page.locator(".runtime-status")).toHaveText("已暂停");
+  await expect(page.getByLabel("工作区状态")).toContainText("X 5 · Y 7");
+
+  await page.getByRole("button", { name: "继续运行" }).click();
+  await expect(page.locator(".runtime-status")).toHaveText("运行完成");
+  await expect(page.getByRole("button", { name: "继续运行" })).toHaveCount(0);
+});
+
+test("shows thirty-two tasks with two open path branches", async ({ page }) => {
   await page.getByRole("button", { name: "打开创作任务" }).click();
   const tasks = page.locator(".task-panel-body > nav button");
-  await expect(tasks).toHaveCount(15);
+  await expect(tasks).toHaveCount(32);
   await expect(tasks.nth(0)).toBeEnabled();
   await expect(tasks.nth(1)).toBeDisabled();
-  await expect(tasks.nth(14)).toContainText("完成上一关后解锁");
+  await expect(tasks.nth(23)).toContainText("完成上一关后解锁");
+  await expect(tasks.nth(24)).toBeEnabled();
+  await expect(tasks.nth(25)).toBeDisabled();
+  await expect(tasks.nth(28)).toBeEnabled();
+  await expect(tasks.nth(29)).toBeDisabled();
   await expect(page.getByText("基础入门", { exact: true })).toBeVisible();
   const guideBlocks = page.locator(".task-block-sample");
   await expect(guideBlocks).toHaveCount(2);

@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
+import { IndexedDbProjectRepository } from "@kids-code/persistence";
 import { useEditorStore } from "../editor/editor-store";
 import { useEditorRuntime } from "../editor/EditorRuntimeContext";
+import { useProjectPersistence } from "../editor/ProjectPersistenceContext";
+import { createTaskProject } from "./task-project";
 import {
   creationTasks,
   evaluateCreationTask,
@@ -23,11 +27,16 @@ const categoryLabels = {
   game: "游戏",
   variable: "变量",
   condition: "条件",
+  operator: "运算",
 } as const;
 
+const repository = new IndexedDbProjectRepository();
+
 export function TaskPanel({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate();
   const project = useEditorStore((state) => state.project);
   const { lastRunReport } = useEditorRuntime();
+  const { saveNow } = useProjectPersistence();
   const [taskId, setTaskId] = useState<TaskId>(() => {
     const assigned = getAssignedTaskId(project.projectId);
     return assigned && isTaskUnlocked(assigned) ? assigned : "speak";
@@ -37,6 +46,8 @@ export function TaskPanel({ onClose }: { onClose: () => void }) {
   );
   const [completedIds, setCompletedIds] = useState(getCompletedTaskIds);
   const [progress, setProgress] = useState(getTaskProgress);
+  const [openingTaskId, setOpeningTaskId] = useState<TaskId | null>(null);
+  const [openError, setOpenError] = useState<string | null>(null);
   const task = creationTasks.find((item) => item.taskId === taskId)!;
   const taskIndex = creationTasks.indexOf(task);
   const chapterGroups = useMemo(
@@ -60,11 +71,6 @@ export function TaskPanel({ onClose }: { onClose: () => void }) {
   );
 
   useEffect(() => {
-    if (!getAssignedTaskId(project.projectId))
-      setAssignedTaskId(project.projectId, taskId);
-  }, [project.projectId, taskId]);
-
-  useEffect(() => {
     const refresh = () => {
       setCompletedIds(getCompletedTaskIds());
       setProgress(getTaskProgress());
@@ -73,10 +79,34 @@ export function TaskPanel({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener("kids-code:task-change", refresh);
   }, []);
 
-  const selectTask = (nextTaskId: TaskId) => {
-    setTaskId(nextTaskId);
-    setAssignedTaskId(project.projectId, nextTaskId);
-    setHintLevel(getTaskHintLevel(project.projectId, nextTaskId));
+  const selectTask = async (nextTaskId: TaskId) => {
+    if (openingTaskId) return;
+    if (getAssignedTaskId(project.projectId) === nextTaskId) {
+      setTaskId(nextTaskId);
+      return;
+    }
+    setOpeningTaskId(nextTaskId);
+    setOpenError(null);
+    try {
+      await saveNow();
+      const existing = (await repository.list())
+        .filter((item) => getAssignedTaskId(item.projectId) === nextTaskId)
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+      if (existing) {
+        navigate("/editor/" + existing.projectId);
+        return;
+      }
+      const nextTask = creationTasks.find(
+        (item) => item.taskId === nextTaskId,
+      )!;
+      const starter = createTaskProject(nextTask);
+      await repository.save(starter, Date.now());
+      setAssignedTaskId(starter.projectId, nextTaskId);
+      navigate("/editor/" + starter.projectId);
+    } catch {
+      setOpenError("关卡暂时无法打开，请稍后重试。当前作品仍保存在这里。");
+      setOpeningTaskId(null);
+    }
   };
 
   return (
@@ -118,8 +148,8 @@ export function TaskPanel({ onClose }: { onClose: () => void }) {
                       key={item.taskId}
                       data-active={item.taskId === taskId}
                       data-locked={!unlocked}
-                      disabled={!unlocked}
-                      onClick={() => selectTask(item.taskId)}
+                      disabled={!unlocked || Boolean(openingTaskId)}
+                      onClick={() => void selectTask(item.taskId)}
                     >
                       <span className="task-number">
                         {String(creationTasks.indexOf(item) + 1).padStart(
@@ -151,6 +181,7 @@ export function TaskPanel({ onClose }: { onClose: () => void }) {
             ))}
           </nav>
           <article className="task-detail">
+            {openError ? <p role="alert">{openError}</p> : null}
             <div className="task-heading">
               <span>{String(taskIndex + 1).padStart(2, "0")}</span>
               <div>

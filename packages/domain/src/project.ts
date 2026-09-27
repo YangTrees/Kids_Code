@@ -4,6 +4,75 @@ export const MOVEMENT_GRID_SIZE = 40;
 export const getMovementStep = (project: Project): number =>
   project.settings.movementStep ?? 10;
 
+export function getGridDimensions(project: Project) {
+  const step = getMovementStep(project);
+  return {
+    columns: project.settings.stageWidth / step,
+    rows: project.settings.stageHeight / step,
+  };
+}
+
+export function stagePositionToGrid(project: Project, x: number, y: number) {
+  const step = getMovementStep(project);
+  const { columns, rows } = getGridDimensions(project);
+  return {
+    x: Math.max(0, Math.min(columns - 1, Math.round((x - step / 2) / step))),
+    y: Math.max(0, Math.min(rows - 1, Math.round((y - step / 2) / step))),
+  };
+}
+
+export function gridPositionToStage(project: Project, x: number, y: number) {
+  const step = getMovementStep(project);
+  const { columns, rows } = getGridDimensions(project);
+  return {
+    x: (Math.max(0, Math.min(columns - 1, Math.round(x))) + 0.5) * step,
+    y: (Math.max(0, Math.min(rows - 1, Math.round(y))) + 0.5) * step,
+  };
+}
+
+export function snapStagePositionToGrid(
+  project: Project,
+  x: number,
+  y: number,
+) {
+  const cell = stagePositionToGrid(project, x, y);
+  return gridPositionToStage(project, cell.x, cell.y);
+}
+
+const pathCellSchema = z.object({
+  column: z.number().int().min(0).max(11),
+  row: z.number().int().min(0).max(8),
+});
+
+export const pathMapSchema = z.object({
+  actorSpriteId: z.string().startsWith("spr_"),
+  tiles: z.array(pathCellSchema).min(2).max(108),
+  start: pathCellSchema,
+  goal: pathCellSchema,
+  theme: z.enum(["forest", "sky"]).optional(),
+  checkpoints: z.array(pathCellSchema).max(8).optional(),
+  collectibles: z.array(pathCellSchema).max(8).optional(),
+  maxSteps: z.number().int().positive().optional(),
+  noRevisit: z.boolean().optional(),
+});
+
+export type PathCell = z.infer<typeof pathCellSchema>;
+export type PathMap = z.infer<typeof pathMapSchema>;
+export const pathCellKey = (cell: PathCell): string =>
+  `${cell.column}:${cell.row}`;
+export const pathCellPosition = (cell: PathCell) => ({
+  x: cell.column * MOVEMENT_GRID_SIZE + MOVEMENT_GRID_SIZE / 2,
+  y: cell.row * MOVEMENT_GRID_SIZE + MOVEMENT_GRID_SIZE / 2,
+});
+export function pathCellAtPosition(x: number, y: number): PathCell | null {
+  const column = Math.round((x - MOVEMENT_GRID_SIZE / 2) / MOVEMENT_GRID_SIZE);
+  const row = Math.round((y - MOVEMENT_GRID_SIZE / 2) / MOVEMENT_GRID_SIZE);
+  const center = pathCellPosition({ column, row });
+  return Math.abs(center.x - x) < 1 && Math.abs(center.y - y) < 1
+    ? { column, row }
+    : null;
+}
+
 export const transformSchema = z.object({
   x: z.number().min(0).max(480),
   y: z.number().min(0).max(360),
@@ -258,10 +327,13 @@ export const projectSchema = z
       locale: z.string(),
       // Missing in older works: preserve their original 10-pixel movement.
       movementStep: z.union([z.literal(10), z.literal(40)]).default(10),
+      // Old works used pixels in the `motion_gotoxy` block.
+      coordinateVersion: z.union([z.literal(1), z.literal(2)]).default(1),
       geometryVersion: z
         .union([z.literal(1), z.literal(2), z.literal(3)])
         .default(1),
     }),
+    pathMap: pathMapSchema.optional(),
     scenes: z
       .array(
         z.object({
@@ -345,6 +417,52 @@ export type Project = z.infer<typeof projectSchema>;
 export type Transform = z.infer<typeof transformSchema>;
 export type Script = z.infer<typeof scriptSchema>;
 
+export function upgradeProjectCoordinates(project: Project): Project {
+  if (project.settings.coordinateVersion === 2) return project;
+  const convertInput = (input: unknown, axis: "x" | "y") => {
+    if (!input || typeof input !== "object") return;
+    const record = input as Record<string, unknown>;
+    for (const key of ["block", "shadow"]) {
+      const numberBlock = record[key] as
+        { fields?: Record<string, unknown> } | undefined;
+      if (!numberBlock?.fields) continue;
+      const field = "NUM" in numberBlock.fields ? "NUM" : "VALUE";
+      const pixels = Number(numberBlock.fields[field]);
+      if (!Number.isFinite(pixels)) continue;
+      const grid = stagePositionToGrid(
+        project,
+        axis === "x" ? pixels : 0,
+        axis === "y" ? pixels : 0,
+      );
+      numberBlock.fields[field] = grid[axis];
+    }
+  };
+  const migrate = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(migrate);
+    if (!value || typeof value !== "object") return value;
+    const original = value as Record<string, unknown>;
+    const copy = Object.fromEntries(
+      Object.entries(original).map(([key, child]) => [key, migrate(child)]),
+    );
+    if (copy.type === "motion_gotoxy") {
+      const inputs = copy.inputs as Record<string, unknown> | undefined;
+      convertInput(inputs?.X, "x");
+      convertInput(inputs?.Y, "y");
+    }
+    return copy;
+  };
+  return {
+    ...project,
+    settings: { ...project.settings, coordinateVersion: 2 },
+    workspaceStates: Object.fromEntries(
+      Object.entries(project.workspaceStates).map(([spriteId, workspace]) => [
+        spriteId,
+        migrate(workspace),
+      ]),
+    ),
+  };
+}
+
 const legacyBaseScaleByCostume: Record<string, number> = {
   costume_liji_idle: 0.46,
   obj_treasure_chest: 0.14,
@@ -406,6 +524,7 @@ export function createDefaultProject(now = new Date()): Project {
       locale: "zh-CN",
       geometryVersion: 3,
       movementStep: MOVEMENT_GRID_SIZE,
+      coordinateVersion: 2,
     },
     scenes: [
       {
@@ -417,8 +536,8 @@ export function createDefaultProject(now = new Date()): Project {
             instanceId: "ins_liji",
             spriteId: "spr_liji",
             transform: {
-              x: 80,
-              y: 280,
+              x: 100,
+              y: 300,
               rotation: 0,
               scaleX: 1,
               scaleY: 1,
@@ -430,8 +549,8 @@ export function createDefaultProject(now = new Date()): Project {
             instanceId: "ins_box",
             spriteId: "spr_box",
             transform: {
-              x: 400,
-              y: 280,
+              x: 420,
+              y: 300,
               rotation: 0,
               scaleX: 1,
               scaleY: 1,
@@ -443,8 +562,8 @@ export function createDefaultProject(now = new Date()): Project {
             instanceId: "ins_coin",
             spriteId: "spr_coin",
             transform: {
-              x: 320,
-              y: 160,
+              x: 340,
+              y: 180,
               rotation: 0,
               scaleX: 1,
               scaleY: 1,

@@ -1,5 +1,10 @@
 import { useState } from "react";
 import {
+  getGridDimensions,
+  gridPositionToStage,
+  stagePositionToGrid,
+} from "@kids-code/domain";
+import {
   countSpriteReferences,
   countWorkspaceBlocks,
   useEditorStore,
@@ -38,8 +43,14 @@ export function AssetManagerDialog({
           .find((scene) => scene.sceneId === project.currentSceneId)
           ?.instances.find((instance) => instance.spriteId === entityId)
       : undefined;
-  const [x, setX] = useState(spriteInstance?.transform.x ?? 240);
-  const [y, setY] = useState(spriteInstance?.transform.y ?? 180);
+  const initialCell = stagePositionToGrid(
+    project,
+    spriteInstance?.transform.x ?? 240,
+    spriteInstance?.transform.y ?? 180,
+  );
+  const { columns, rows } = getGridDimensions(project);
+  const [x, setX] = useState(initialCell.x);
+  const [y, setY] = useState(initialCell.y);
   const [rotation, setRotation] = useState(
     spriteInstance?.transform.rotation ?? 0,
   );
@@ -63,8 +74,7 @@ export function AssetManagerDialog({
     else renameScene(entityId, name);
     if (kind === "sprite" && spriteInstance) {
       updateSpriteProperties(entityId, {
-        x,
-        y,
+        ...gridPositionToStage(project, x, y),
         rotation,
         scale: scalePercent / 100,
         visible,
@@ -134,21 +144,23 @@ export function AssetManagerDialog({
         {kind === "sprite" && spriteInstance ? (
           <div className="sprite-property-grid">
             <label>
-              X 位置
+              X 列（0–{columns - 1}）
               <input
                 type="number"
                 min={0}
-                max={480}
+                max={columns - 1}
+                step={1}
                 value={x}
                 onChange={(event) => setX(Number(event.target.value))}
               />
             </label>
             <label>
-              Y 位置
+              Y 行（0–{rows - 1}）
               <input
                 type="number"
                 min={0}
-                max={360}
+                max={rows - 1}
+                step={1}
                 value={y}
                 onChange={(event) => setY(Number(event.target.value))}
               />

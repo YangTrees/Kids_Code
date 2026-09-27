@@ -21,6 +21,41 @@ export function CurrentTaskCard({ onOpen }: { onOpen: () => void }) {
   );
   const report = lastRunReport?.taskId === task?.taskId ? lastRunReport : null;
   const evaluation = task ? evaluateCreationTask(project, task, report) : null;
+  const nextGoal = evaluation?.rules.find((rule) => !rule.complete);
+  const map = project.pathMap;
+  const pathProgress =
+    map &&
+    report &&
+    (map.checkpoints?.length || map.collectibles?.length || map.maxSteps)
+      ? [
+          map.checkpoints?.length
+            ? `路标 ${report.pathCheckpointCount ?? 0}/${map.checkpoints.length}`
+            : null,
+          map.collectibles?.length
+            ? `星石 ${report.pathCollectiblesCount ?? 0}/${map.collectibles.length}`
+            : null,
+          map.maxSteps ? `步数 ${report.pathSteps ?? 0}/${map.maxSteps}` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ")
+      : null;
+  const pathFeedback =
+    map && report?.status === "COMPLETED"
+      ? report.pathViolation
+        ? "刚才走出了浅色道路。检查拐角处的方向和步数，再运行一次。"
+        : (report.pathCheckpointCount ?? 0) < (map.checkpoints?.length ?? 0)
+          ? "还没按顺序经过所有紫色路标，看看地图上的数字。"
+          : (report.pathCollectiblesCount ?? 0) <
+              (map.collectibles?.length ?? 0)
+            ? "还有金色星石没有收集，试试地图上的岔路。"
+            : map.maxSteps && (report.pathSteps ?? 0) > map.maxSteps
+              ? `用了 ${report.pathSteps} 步，目标是不超过 ${map.maxSteps} 步。试试更短的路线。`
+              : map.noRevisit &&
+                  new Set(report.pathTrace ?? []).size !==
+                    (report.pathTrace?.length ?? 0)
+                ? "这次走了回头路，试试每个格子只经过一次。"
+                : null
+      : null;
   return (
     <section
       className="current-task-card"
@@ -41,14 +76,27 @@ export function CurrentTaskCard({ onOpen }: { onOpen: () => void }) {
           "给选中的角色连接积木，点击运行观察结果。停止后可以继续摆放角色。"}
       </p>
       {evaluation ? (
-        <ul>
-          {evaluation.rules.map((rule) => (
-            <li key={rule.id} data-complete={rule.complete}>
-              <span aria-hidden="true">{rule.complete ? "✓" : "○"}</span>
-              {rule.label}
-            </li>
-          ))}
-        </ul>
+        <>
+          {pathProgress ? (
+            <p className="current-task-path-progress" role="status">
+              {pathProgress}
+            </p>
+          ) : null}
+          <ul>
+            {evaluation.rules.map((rule) => (
+              <li key={rule.id} data-complete={rule.complete}>
+                <span aria-hidden="true">{rule.complete ? "✓" : "○"}</span>
+                {rule.label}
+              </li>
+            ))}
+          </ul>
+          {report?.status === "COMPLETED" && nextGoal ? (
+            <p className="current-task-feedback" role="status">
+              {pathFeedback ??
+                `这次还差一步：${nextGoal.label}。可以打开提示，再试一次。`}
+            </p>
+          ) : null}
+        </>
       ) : (
         <div className="creation-steps">
           <span>选角色</span>

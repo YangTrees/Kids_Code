@@ -2,8 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   getSpriteBaseScale,
   getMovementStep,
+  getGridDimensions,
+  gridPositionToStage,
+  snapStagePositionToGrid,
+  stagePositionToGrid,
   createDefaultProject,
   projectSchema,
+  upgradeProjectCoordinates,
   upgradeProjectGeometry,
 } from "./project";
 
@@ -14,6 +19,69 @@ describe("project schema", () => {
     expect(getSpriteBaseScale("obj_treasure_chest", 512) * 512).toBe(38);
     expect(getSpriteBaseScale("obj_star_coin", 512) * 512).toBe(26);
     expect(getMovementStep(createDefaultProject())).toBe(40);
+  });
+
+  it("maps every zero-based grid cell to its center", () => {
+    const project = createDefaultProject();
+    expect(getGridDimensions(project)).toEqual({ columns: 12, rows: 9 });
+    expect(gridPositionToStage(project, 0, 0)).toEqual({ x: 20, y: 20 });
+    expect(gridPositionToStage(project, 11, 8)).toEqual({ x: 460, y: 340 });
+    expect(gridPositionToStage(project, 99, -2)).toEqual({ x: 460, y: 20 });
+    expect(stagePositionToGrid(project, 100, 300)).toEqual({ x: 2, y: 7 });
+    expect(snapStagePositionToGrid(project, 479, 359)).toEqual({
+      x: 460,
+      y: 340,
+    });
+  });
+
+  it("converts old pixel-based goto blocks without moving saved sprites", () => {
+    const project = createDefaultProject();
+    project.settings.coordinateVersion = 1;
+    const originalPosition = { ...project.scenes[0]!.instances[0]!.transform };
+    project.workspaceStates.spr_liji = {
+      blocks: {
+        blocks: [
+          {
+            type: "event_whenflagclicked",
+            next: {
+              block: {
+                type: "motion_gotoxy",
+                inputs: {
+                  X: { shadow: { type: "math_number", fields: { NUM: 240 } } },
+                  Y: { shadow: { type: "math_number", fields: { NUM: 180 } } },
+                },
+              },
+            },
+          },
+        ],
+      },
+    };
+    const upgraded = upgradeProjectCoordinates(project);
+    const workspace = upgraded.workspaceStates.spr_liji as {
+      blocks: {
+        blocks: Array<{
+          next: {
+            block: {
+              inputs: {
+                X: { shadow: { fields: { NUM: number } } };
+                Y: { shadow: { fields: { NUM: number } } };
+              };
+            };
+          };
+        }>;
+      };
+    };
+    expect(upgraded.settings.coordinateVersion).toBe(2);
+    expect(
+      workspace.blocks.blocks[0]!.next.block.inputs.X.shadow.fields.NUM,
+    ).toBe(6);
+    expect(
+      workspace.blocks.blocks[0]!.next.block.inputs.Y.shadow.fields.NUM,
+    ).toBe(4);
+    expect(upgraded.scenes[0]!.instances[0]!.transform).toEqual(
+      originalPosition,
+    );
+    expect(upgradeProjectCoordinates(upgraded)).toBe(upgraded);
   });
 
   it("preserves the movement distance of old projects without a step setting", () => {

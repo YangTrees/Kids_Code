@@ -5,7 +5,13 @@ import type {
   RuntimeNumberExpression,
   RuntimeScript,
 } from "@kids-code/domain";
-import { getMovementStep } from "@kids-code/domain";
+import {
+  getMovementStep,
+  gridPositionToStage,
+  pathCellAtPosition,
+  pathCellKey,
+  pathCellPosition,
+} from "@kids-code/domain";
 
 export type RuntimeStatus =
   | "IDLE"
@@ -129,13 +135,23 @@ export interface RuntimeReport {
   score: number;
   result: "success" | "failure" | null;
   spritePositions: Record<string, { x: number; y: number }>;
+  spriteRotations?: Record<string, number>;
   touchedPairs: string[];
   variables: Record<string, number>;
   projectId?: string;
   taskId?: string;
   executedBlockCounts?: Record<string, number>;
+  executedBlockScenes?: Record<string, string[]>;
   sceneId?: string;
   sceneChanges?: number;
+  pathVisited?: string[];
+  pathTrace?: string[];
+  pathSteps?: number;
+  pathCheckpointCount?: number;
+  pathCollectiblesCount?: number;
+  pathObjectivesMet?: boolean;
+  pathViolation?: boolean;
+  pathReachedGoal?: boolean;
 }
 
 export type RuntimeStatusListener = (
@@ -171,7 +187,11 @@ export class RuntimeSession {
   #scripts: RuntimeScript[] = [];
   #currentSceneId: string;
   readonly #executedBlockCounts = new Map<string, number>();
+  readonly #executedBlockScenes = new Map<string, Set<string>>();
   #sceneChanges = 0;
+  readonly #pathVisited = new Set<string>();
+  readonly #pathTrace: string[] = [];
+  #pathViolation = false;
   readonly #inputScripts = new Set<string>();
   constructor(
     project: Project,
@@ -194,6 +214,19 @@ export class RuntimeSession {
     return this.#status;
   }
   get report(): RuntimeReport {
+    const map = this.#project.pathMap;
+    let checkpointCount = 0;
+    for (const key of this.#pathTrace) {
+      if (
+        map?.checkpoints?.[checkpointCount] &&
+        key === pathCellKey(map.checkpoints[checkpointCount]!)
+      )
+        checkpointCount += 1;
+    }
+    const collectibleCount = (map?.collectibles ?? []).filter((cell) =>
+      this.#pathVisited.has(pathCellKey(cell)),
+    ).length;
+    const pathSteps = Math.max(0, this.#pathTrace.length - 1);
     return {
       status: this.#status,
       score: this.#score,
@@ -204,12 +237,50 @@ export class RuntimeSession {
           { x: state.x, y: state.y },
         ]),
       ),
+      spriteRotations: Object.fromEntries(
+        [...this.#state].map(([spriteId, state]) => [spriteId, state.rotation]),
+      ),
       touchedPairs: [...this.#touchedPairs],
       variables: Object.fromEntries(this.#variables),
       projectId: this.#project.projectId,
       executedBlockCounts: Object.fromEntries(this.#executedBlockCounts),
+      executedBlockScenes: Object.fromEntries(
+        [...this.#executedBlockScenes].map(([blockId, scenes]) => [
+          blockId,
+          [...scenes],
+        ]),
+      ),
       sceneId: this.#currentSceneId,
       sceneChanges: this.#sceneChanges,
+      pathVisited: [...this.#pathVisited],
+      pathTrace: [...this.#pathTrace],
+      pathSteps,
+      pathCheckpointCount: checkpointCount,
+      pathCollectiblesCount: collectibleCount,
+      pathObjectivesMet: map
+        ? checkpointCount === (map.checkpoints?.length ?? 0) &&
+          collectibleCount === (map.collectibles?.length ?? 0) &&
+          (!map.maxSteps || pathSteps <= map.maxSteps) &&
+          (!map.noRevisit ||
+            new Set(this.#pathTrace).size === this.#pathTrace.length)
+        : false,
+      pathViolation: this.#pathViolation,
+      pathReachedGoal: Boolean(
+        this.#project.pathMap &&
+        (() => {
+          const position = this.#state.get(
+            this.#project.pathMap!.actorSpriteId,
+          );
+          const cell = position
+            ? pathCellAtPosition(position.x, position.y)
+            : null;
+          return (
+            cell &&
+            pathCellKey(cell) === pathCellKey(this.#project.pathMap!.goal) &&
+            this.#pathVisited.has(pathCellKey(cell))
+          );
+        })(),
+      ),
     };
   }
   async start(scripts: RuntimeScript[]): Promise<void> {
@@ -237,8 +308,27 @@ export class RuntimeSession {
     this.#result = null;
     this.#touchedPairs.clear();
     this.#executedBlockCounts.clear();
+    this.#executedBlockScenes.clear();
     this.#inputScripts.clear();
     this.#sceneChanges = 0;
+    this.#pathVisited.clear();
+    this.#pathTrace.length = 0;
+    this.#pathViolation = false;
+    if (this.#project.pathMap) {
+      const position = this.#state.get(this.#project.pathMap.actorSpriteId);
+      const startCell = position
+        ? pathCellAtPosition(position.x, position.y)
+        : null;
+      if (
+        !startCell ||
+        pathCellKey(startCell) !== pathCellKey(this.#project.pathMap.start)
+      )
+        this.#pathViolation = true;
+      else {
+        this.#pathVisited.add(pathCellKey(startCell));
+        this.#pathTrace.push(pathCellKey(startCell));
+      }
+    }
     this.#steps = 0;
     this.#activeTasks = 0;
     this.#stage.setScore(0);
@@ -454,13 +544,66 @@ export class RuntimeSession {
       case "EVT_SCENE_START":
         return;
       case "MOT_MOVE": {
-        const delta = block.steps * getMovementStep(this.#project);
+        if (this.#project.pathMap?.actorSpriteId === spriteId) {
+          const map = this.#project.pathMap;
+          const allowed = new Set(map.tiles.map(pathCellKey));
+          if (!Number.isInteger(block.steps)) {
+            this.#pathViolation = true;
+            return;
+          }
+          this.#stage.clearSpeech(spriteId);
+          for (let step = 0; step < block.steps; step += 1) {
+            const current = pathCellAtPosition(state.x, state.y);
+            const next = current && {
+              column:
+                current.column +
+                (block.direction === "right"
+                  ? 1
+                  : block.direction === "left"
+                    ? -1
+                    : 0),
+              row:
+                current.row +
+                (block.direction === "down"
+                  ? 1
+                  : block.direction === "up"
+                    ? -1
+                    : 0),
+            };
+            if (!next || !allowed.has(pathCellKey(next))) {
+              this.#pathViolation = true;
+              this.#stage.showSpeech(spriteId, "前面没有路啦！换个方向试试。");
+              return;
+            }
+            const from = { x: state.x, y: state.y };
+            const target = pathCellPosition(next);
+            await this.#clock.tween(
+              260,
+              (progress) => {
+                const x = from.x + (target.x - from.x) * progress;
+                const y = from.y + (target.y - from.y) * progress;
+                this.#stage.setSpritePosition(spriteId, x, y);
+                this.#state.set(spriteId, { ...state, x, y });
+              },
+              cancellation,
+            );
+            state.x = target.x;
+            state.y = target.y;
+            this.#pathVisited.add(pathCellKey(next));
+            this.#pathTrace.push(pathCellKey(next));
+          }
+          return;
+        }
+        const movementStep = getMovementStep(this.#project);
+        const delta = block.steps * movementStep;
+        const margin =
+          this.#project.settings.coordinateVersion === 2 ? movementStep / 2 : 0;
         const requested = {
           ...state,
           x: Math.max(
-            0,
+            margin,
             Math.min(
-              480,
+              this.#project.settings.stageWidth - margin,
               state.x +
                 (block.direction === "right"
                   ? delta
@@ -470,9 +613,9 @@ export class RuntimeSession {
             ),
           ),
           y: Math.max(
-            0,
+            margin,
             Math.min(
-              360,
+              this.#project.settings.stageHeight - margin,
               state.y +
                 (block.direction === "down"
                   ? delta
@@ -507,6 +650,13 @@ export class RuntimeSession {
       case "MOT_GOTO_START": {
         const initial = this.#initial.get(spriteId);
         if (!initial) return;
+        if (
+          this.#project.pathMap?.actorSpriteId === spriteId &&
+          (state.x !== initial.x || state.y !== initial.y)
+        ) {
+          this.#pathViolation = true;
+          return;
+        }
         const start = { x: state.x, y: state.y };
         let resolved = start;
         await this.#clock.tween(
@@ -528,6 +678,17 @@ export class RuntimeSession {
         return;
       }
       case "MOT_GOTO": {
+        if (this.#project.pathMap?.actorSpriteId === spriteId) {
+          this.#pathViolation = true;
+          return;
+        }
+        if (this.#project.settings.coordinateVersion === 2) {
+          const target = gridPositionToStage(this.#project, block.x, block.y);
+          state.x = target.x;
+          state.y = target.y;
+          this.#stage.setSpritePosition(spriteId, target.x, target.y);
+          return;
+        }
         const resolved = this.#stage.resolveSpritePosition?.(
           spriteId,
           block.x,
@@ -763,6 +924,10 @@ export class RuntimeSession {
       block.sourceBlockId,
       (this.#executedBlockCounts.get(block.sourceBlockId) ?? 0) + 1,
     );
+    const scenes =
+      this.#executedBlockScenes.get(block.sourceBlockId) ?? new Set<string>();
+    scenes.add(this.#currentSceneId);
+    this.#executedBlockScenes.set(block.sourceBlockId, scenes);
     this.#listener?.(this.#status, this.report);
   }
   async #triggerInput(scripts: RuntimeScript[]): Promise<void> {

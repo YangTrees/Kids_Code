@@ -7,6 +7,7 @@ import {
 } from "react";
 import { Navigate, Route, Routes } from "react-router";
 import { ProjectsPage } from "../features/projects/ProjectsPage";
+import { CoursePage } from "../features/tasks/CoursePage";
 
 const EditorRoute = lazy(() => import("../features/editor/EditorRoute"));
 
@@ -55,6 +56,7 @@ export function App() {
   return (
     <Routes>
       <Route path="/" element={<ProjectsPage />} />
+      <Route path="/learn" element={<CoursePage />} />
       <Route
         path="/editor/:projectId"
         element={

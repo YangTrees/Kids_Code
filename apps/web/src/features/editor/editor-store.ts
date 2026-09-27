@@ -1,6 +1,8 @@
 import {
   createDefaultProject,
   getMovementStep,
+  snapStagePositionToGrid,
+  upgradeProjectCoordinates,
   type Project,
 } from "@kids-code/domain";
 import { create } from "zustand";
@@ -21,10 +23,12 @@ interface EditorSnapshot {
 let applyingHistory = false;
 let lastTransformHistoryAt = 0;
 
-const getNewScenePosition = (index: number) => ({
-  x: 80 + (index % 5) * 80,
-  y: 280 - Math.floor(index / 5) * 40,
-});
+const getNewScenePosition = (project: Project, index: number) =>
+  snapStagePositionToGrid(
+    project,
+    80 + (index % 5) * 80,
+    280 - Math.floor(index / 5) * 40,
+  );
 
 interface EditorState {
   project: Project;
@@ -95,7 +99,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   selectCategory: (selectedCategory) => set({ selectedCategory }),
   hydrateProject: (project) =>
     set({
-      project,
+      project: upgradeProjectCoordinates(project),
       selectedSpriteId: project.sprites[0]?.spriteId ?? "",
       saveStatus: "saved",
       isHydrated: true,
@@ -107,7 +111,7 @@ export const useEditorStore = create<EditorState>((set) => ({
     }),
   replaceProject: (project) =>
     set({
-      project,
+      project: upgradeProjectCoordinates(project),
       selectedSpriteId: project.sprites[0]?.spriteId ?? "",
       saveStatus: "dirty",
       isHydrated: true,
@@ -305,8 +309,11 @@ export const useEditorStore = create<EditorState>((set) => ({
                       instanceId: `ins_${suffix}`,
                       spriteId,
                       transform: {
-                        x: 240,
-                        y: step === 40 ? 200 : 180,
+                        ...snapStagePositionToGrid(
+                          state.project,
+                          240,
+                          step === 40 ? 200 : 180,
+                        ),
                         rotation: 0,
                         scaleX: 1,
                         scaleY: 1,
@@ -369,8 +376,11 @@ export const useEditorStore = create<EditorState>((set) => ({
                       instanceId: `ins_${suffix}`,
                       spriteId,
                       transform: {
-                        x: 240,
-                        y: step === 40 ? 200 : 180,
+                        ...snapStagePositionToGrid(
+                          state.project,
+                          240,
+                          step === 40 ? 200 : 180,
+                        ),
                         rotation: 0,
                         scaleX: asset.scale,
                         scaleY: asset.scale,
@@ -423,13 +433,16 @@ export const useEditorStore = create<EditorState>((set) => ({
                       spriteId: copyId,
                       transform: {
                         ...sourceInstance.transform,
-                        x: Math.min(
-                          state.project.settings.stageWidth - offset,
-                          sourceInstance.transform.x + offset,
-                        ),
-                        y: Math.min(
-                          state.project.settings.stageHeight - offset,
-                          sourceInstance.transform.y + offset,
+                        ...snapStagePositionToGrid(
+                          state.project,
+                          Math.min(
+                            state.project.settings.stageWidth - offset,
+                            sourceInstance.transform.x + offset,
+                          ),
+                          Math.min(
+                            state.project.settings.stageHeight - offset,
+                            sourceInstance.transform.y + offset,
+                          ),
                         ),
                       },
                     },
@@ -521,7 +534,7 @@ export const useEditorStore = create<EditorState>((set) => ({
                 instanceId: `ins_${suffix}_${index}`,
                 spriteId: sprite.spriteId,
                 transform: {
-                  ...getNewScenePosition(index),
+                  ...getNewScenePosition(state.project, index),
                   rotation: 0,
                   scaleX: 1,
                   scaleY: 1,
@@ -568,7 +581,7 @@ export const useEditorStore = create<EditorState>((set) => ({
                 instanceId: `ins_${suffix}_${index}`,
                 spriteId: sprite.spriteId,
                 transform: {
-                  ...getNewScenePosition(index),
+                  ...getNewScenePosition(state.project, index),
                   rotation: 0,
                   scaleX: 1,
                   scaleY: 1,
@@ -676,8 +689,7 @@ export const useEditorStore = create<EditorState>((set) => ({
                         ...instance,
                         transform: {
                           ...instance.transform,
-                          x: Math.max(0, Math.min(480, x)),
-                          y: Math.max(0, Math.min(360, y)),
+                          ...snapStagePositionToGrid(state.project, x, y),
                         },
                       }
                     : instance,
@@ -705,8 +717,11 @@ export const useEditorStore = create<EditorState>((set) => ({
                         visible: properties.visible,
                         transform: {
                           ...instance.transform,
-                          x: Math.max(0, Math.min(480, properties.x)),
-                          y: Math.max(0, Math.min(360, properties.y)),
+                          ...snapStagePositionToGrid(
+                            state.project,
+                            properties.x,
+                            properties.y,
+                          ),
                           rotation: Math.max(
                             -180,
                             Math.min(180, properties.rotation),

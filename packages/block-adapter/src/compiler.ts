@@ -265,8 +265,8 @@ export const compileBlockForRuntime = (
       return {
         ...base,
         type: "MOT_GOTO",
-        x: numberInput(block, "X", 0, 480, 240),
-        y: numberInput(block, "Y", 0, 360, 180),
+        x: Math.round(numberInput(block, "X", 0, 47, 5)),
+        y: Math.round(numberInput(block, "Y", 0, 35, 4)),
       };
     case "kids_goto_start":
       return { ...base, type: "MOT_GOTO_START" };

@@ -2,6 +2,9 @@ import {
   getSpritePresentationProfile,
   getSpriteBaseScale,
   getMovementStep,
+  snapStagePositionToGrid,
+  pathCellKey,
+  pathCellPosition,
   type Project,
   type SpritePresentationProfile,
 } from "@kids-code/domain";
@@ -226,6 +229,7 @@ export class StageController implements StagePort {
     );
     this.#world.addChild(this.#movementGrid);
     this.#movementGrid.visible = this.#gridVisible;
+    if (project.pathMap) this.#world.addChild(this.#createPathMap(project));
 
     this.#alignmentGuides = new Graphics();
     this.#alignmentGuides.label = "sprite-alignment-guides";
@@ -252,7 +256,10 @@ export class StageController implements StagePort {
       const sprite = new Sprite(texture);
       const profile = getSpritePresentationProfile(asset.assetId);
       sprite.label = instance.spriteId;
-      sprite.anchor.set(profile.anchorX, profile.anchorY);
+      sprite.anchor.set(
+        profile.anchorX,
+        project.settings.coordinateVersion === 2 ? 0.5 : profile.anchorY,
+      );
       sprite.position.set(instance.transform.x, instance.transform.y);
       sprite.rotation = (instance.transform.rotation * Math.PI) / 180;
       sprite.scale.set(
@@ -284,6 +291,7 @@ export class StageController implements StagePort {
         };
         sprite.on("pointerdown", (event: FederatedPointerEvent) => {
           if (!this.#editingEnabled) return;
+          if (project.pathMap?.actorSpriteId === instance.spriteId) return;
           const position = event.getLocalPosition(this.#world);
           offset = { x: position.x - sprite.x, y: position.y - sprite.y };
           dragging = true;
@@ -389,17 +397,38 @@ export class StageController implements StagePort {
     const checkerboard = new Graphics();
     const columns = Math.ceil(stageWidth / MOVEMENT_STEP_SIZE);
     const rows = Math.ceil(stageHeight / MOVEMENT_STEP_SIZE);
+    const largeCells = MOVEMENT_STEP_SIZE === 40;
+    if (largeCells)
+      checkerboard
+        .rect(0, 0, stageWidth, stageHeight)
+        .fill({ color: 0x173a50, alpha: 0.06 });
     for (let row = 0; row < rows; row += 1) {
       for (let column = 0; column < columns; column += 1) {
-        if ((row + column) % 2 === 0) continue;
-        checkerboard
-          .rect(
-            column * MOVEMENT_STEP_SIZE,
-            row * MOVEMENT_STEP_SIZE,
-            MOVEMENT_STEP_SIZE,
-            MOVEMENT_STEP_SIZE,
-          )
-          .fill({ color: 0x244b72, alpha: 0.055 });
+        const oddCell = (row + column) % 2 !== 0;
+        if (largeCells) {
+          checkerboard
+            .roundRect(
+              column * MOVEMENT_STEP_SIZE + 2,
+              row * MOVEMENT_STEP_SIZE + 2,
+              MOVEMENT_STEP_SIZE - 4,
+              MOVEMENT_STEP_SIZE - 4,
+              6,
+            )
+            .fill({
+              color: oddCell ? 0x173e55 : 0xffffff,
+              alpha: oddCell ? 0.1 : 0.04,
+            })
+            .stroke({ color: 0xffffff, width: 1, alpha: 0.3 });
+        } else if (oddCell) {
+          checkerboard
+            .rect(
+              column * MOVEMENT_STEP_SIZE,
+              row * MOVEMENT_STEP_SIZE,
+              MOVEMENT_STEP_SIZE,
+              MOVEMENT_STEP_SIZE,
+            )
+            .fill({ color: 0x244b72, alpha: 0.065 });
+        }
       }
     }
 
@@ -412,7 +441,8 @@ export class StageController implements StagePort {
       if (y % (MOVEMENT_STEP_SIZE * MAJOR_GRID_INTERVAL) === 0) continue;
       minorLines.moveTo(0, y).lineTo(stageWidth, y);
     }
-    minorLines.stroke({ color: 0xffffff, width: 0.5, alpha: 0.16 });
+    if (!largeCells)
+      minorLines.stroke({ color: 0xffffff, width: 0.5, alpha: 0.2 });
 
     const majorLines = new Graphics();
     for (
@@ -429,10 +459,105 @@ export class StageController implements StagePort {
     ) {
       majorLines.moveTo(0, y).lineTo(stageWidth, y);
     }
-    majorLines.stroke({ color: 0xffffff, width: 1, alpha: 0.3 });
+    majorLines.stroke({
+      color: 0xffffff,
+      width: 1,
+      alpha: largeCells ? 0.36 : 0.34,
+    });
 
     grid.addChild(checkerboard, minorLines, majorLines);
     return grid;
+  }
+
+  #createPathMap(project: Project): Container {
+    const map = project.pathMap!;
+    const layer = new Container();
+    layer.label = "fixed-path-map";
+    layer.zIndex = 0.7;
+    layer.eventMode = "none";
+    const shade = new Graphics()
+      .rect(0, 0, project.settings.stageWidth, project.settings.stageHeight)
+      .fill({
+        color: map.theme === "sky" ? 0x39749b : 0x183d3a,
+        alpha: map.theme === "sky" ? 0.25 : 0.58,
+      });
+    layer.addChild(shade);
+    const emptyCells = new Graphics();
+    for (let row = 1; row < 8; row += 1) {
+      for (let column = 1; column < 11; column += 1) {
+        const { x, y } = pathCellPosition({ column, row });
+        emptyCells
+          .roundRect(x - 18, y - 18, 36, 36, 8)
+          .fill({ color: 0x0e3433, alpha: 0.12 })
+          .stroke({ color: 0xe8fff2, width: 1, alpha: 0.12 });
+      }
+    }
+    layer.addChild(emptyCells);
+    const tiles = new Graphics();
+    for (const cell of map.tiles) {
+      const { x, y } = pathCellPosition(cell);
+      const key = pathCellKey(cell);
+      const isStart = key === pathCellKey(map.start);
+      const isGoal = key === pathCellKey(map.goal);
+      const isCheckpoint = map.checkpoints?.some(
+        (checkpoint) => pathCellKey(checkpoint) === key,
+      );
+      const isCollectible = map.collectibles?.some(
+        (collectible) => pathCellKey(collectible) === key,
+      );
+      const color = isStart
+        ? 0x9ce8c3
+        : isGoal
+          ? 0xffcf80
+          : isCheckpoint
+            ? 0xd7c5fa
+            : isCollectible
+              ? 0xffeca8
+              : 0xfff3d9;
+      tiles
+        .roundRect(x - 18, y - 18, 36, 36, 8)
+        .fill({ color, alpha: 0.96 })
+        .stroke({ color: 0xffffff, width: 2, alpha: 0.9 });
+    }
+    layer.addChild(tiles);
+    for (const [index, cell] of (map.checkpoints ?? []).entries()) {
+      const { x, y } = pathCellPosition(cell);
+      const marker = new Text({
+        text: String(index + 1),
+        style: { fill: 0x5b378b, fontSize: 17, fontWeight: "900" },
+      });
+      marker.anchor.set(0.5);
+      marker.position.set(x, y);
+      layer.addChild(marker);
+    }
+    for (const cell of map.collectibles ?? []) {
+      const { x, y } = pathCellPosition(cell);
+      const marker = new Text({
+        text: "◆",
+        style: { fill: 0x9a6715, fontSize: 19, fontWeight: "900" },
+      });
+      marker.anchor.set(0.5);
+      marker.position.set(x, y);
+      layer.addChild(marker);
+    }
+    for (const [label, cell] of [
+      ["起点", map.start],
+      ["终点", map.goal],
+    ] as const) {
+      const { x, y } = pathCellPosition(cell);
+      const text = new Text({
+        text: label,
+        style: {
+          fill: 0x174a46,
+          fontSize: 11,
+          fontWeight: "900",
+        },
+      });
+      text.anchor.set(0.5);
+      text.position.set(x, y + 10);
+      layer.addChild(text);
+    }
+    return layer;
   }
 
   setSpriteRotation(spriteId: string, degrees: number): void {
@@ -815,6 +940,22 @@ export class StageController implements StagePort {
     stageWidth: number,
     stageHeight: number,
   ): { x: number; y: number } {
+    if (this.#project?.settings.coordinateVersion === 2) {
+      const snapped = snapStagePositionToGrid(
+        this.#project,
+        requestedX,
+        requestedY,
+      );
+      const guides = this.#alignmentGuides;
+      guides
+        ?.clear()
+        .moveTo(snapped.x, 0)
+        .lineTo(snapped.x, stageHeight)
+        .moveTo(0, snapped.y)
+        .lineTo(stageWidth, snapped.y)
+        .stroke({ color: 0x2f8cff, width: 1.5, alpha: 0.75 });
+      return snapped;
+    }
     const tolerance = 5;
     const step = this.#project ? getMovementStep(this.#project) : 40;
     const xCandidates = [Math.round(requestedX / step) * step, stageWidth / 2];
@@ -854,6 +995,19 @@ export class StageController implements StagePort {
     requestedY: number,
   ): { x: number; y: number } {
     if (!this.#project) return { x: requestedX, y: requestedY };
+    if (this.#project.settings.coordinateVersion === 2) {
+      const halfStep = getMovementStep(this.#project) / 2;
+      return {
+        x: Math.max(
+          halfStep,
+          Math.min(this.#project.settings.stageWidth - halfStep, requestedX),
+        ),
+        y: Math.max(
+          halfStep,
+          Math.min(this.#project.settings.stageHeight - halfStep, requestedY),
+        ),
+      };
+    }
     const width = Math.abs(sprite.texture.width * sprite.scale.x);
     const height = Math.abs(sprite.texture.height * sprite.scale.y);
     const bounds = rotatedBounds(

@@ -5,7 +5,6 @@ import {
 } from "@kids-code/persistence";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { createTaskProject } from "../tasks/task-project";
 import {
   createProjectForMode,
   duplicateProject,
@@ -18,31 +17,41 @@ import {
 import {
   creationTasks,
   getCompletedTaskIds,
-  getTaskProgress,
-  isTaskUnlocked,
-  setAssignedTaskId,
-  type CreationTask,
+  type TaskChapter,
 } from "../tasks/task-catalog";
 
 const repository = new IndexedDbProjectRepository();
 
-const taskArtwork: Record<CreationTask["taskId"], string> = {
-  speak: "/assets/ui/home-dialogue.png",
-  move: "/assets/ui/home-treasure.png",
-  turn: "/assets/ui/home-blocks.png",
-  repeat: "/assets/ui/home-blocks.png",
-  collision: "/assets/ui/home-treasure.png",
-  collect: "/assets/ui/home-coin.png",
-  score: "/assets/ui/home-coin.png",
-  scene: "/assets/ui/home-treasure.png",
-  variable: "/assets/ui/home-blocks.png",
-  logic: "/assets/ui/home-blocks.png",
-  keyboard: "/assets/ui/home-treasure.png",
-  sound: "/assets/ui/home-dialogue.png",
-  magic: "/assets/ui/home-dialogue.png",
-  broadcast: "/assets/ui/home-dialogue.png",
-  finale: "/assets/ui/home-treasure.png",
+const chapterCards: Record<
+  TaskChapter,
+  { image: string; description: string }
+> = {
+  基础入门: {
+    image: "/assets/ui/home-blocks.png",
+    description: "事件、移动、转向和重复，迈出编程第一步。",
+  },
+  互动游戏: {
+    image: "/assets/ui/home-treasure.png",
+    description: "让角色碰撞、收集金币，做出胜利反馈。",
+  },
+  程序思维: {
+    image: "/assets/ui/home-coin.png",
+    description: "用场景、变量和条件，让程序自己判断。",
+  },
+  进阶创作: {
+    image: "/assets/ui/home-dialogue.png",
+    description: "加入键盘、声音与故事，完成冒险小游戏。",
+  },
+  路线挑战: {
+    image: "/assets/ui/home-route.png",
+    description: "看地图写程序，沿固定道路逐格走到终点。",
+  },
+  云岛远征: {
+    image: "/assets/ui/home-sky-island.png",
+    description: "经过路标、收集星石，并在限定步数内找到捷径。",
+  },
 };
+const chapters = Array.from(new Set(creationTasks.map((task) => task.chapter)));
 
 function relativeUpdatedAt(value: string): string {
   const elapsed = Math.max(0, Date.now() - Date.parse(value));
@@ -72,7 +81,6 @@ export function ProjectsPage() {
     {},
   );
   const [completedTasks] = useState(getCompletedTaskIds);
-  const [taskProgress] = useState(getTaskProgress);
   const importInputRef = useRef<HTMLInputElement>(null);
   const thumbnailUrlsRef = useRef<string[]>([]);
   const refresh = () => {
@@ -130,12 +138,6 @@ export function ProjectsPage() {
     await repository.save(nextProject, Date.now());
     navigate(`/editor/${nextProject.projectId}`);
   };
-  const openTask = async (task: CreationTask) => {
-    const starterProject = createTaskProject(task);
-    setAssignedTaskId(starterProject.projectId, task.taskId);
-    await repository.save(starterProject, Date.now());
-    navigate(`/editor/${starterProject.projectId}`);
-  };
   const exportLocalProject = async (project: Project) => {
     setExportingProjectId(project.projectId);
     setImportError(null);
@@ -170,8 +172,9 @@ export function ProjectsPage() {
           </span>
         </div>
         <nav className="projects-nav-links" aria-label="首页导航">
+          <a href="/learn">学习课程</a>
           <a href="#templates">灵感模板</a>
-          <a href="#challenges">任务挑战</a>
+          <a href="#challenges">课程概览</a>
           <a href="#works">我的作品</a>
         </nav>
         <div className="projects-local-status">
@@ -191,6 +194,12 @@ export function ProjectsPage() {
           <div className="hero-actions">
             <button
               className="create-project"
+              onClick={() => navigate("/learn")}
+            >
+              ▶ 开始学习
+            </button>
+            <button
+              className="import-project"
               onClick={() => void openNew("blank")}
             >
               ＋ 开始空白创作
@@ -310,34 +319,40 @@ export function ProjectsPage() {
       <section className="task-challenges" id="challenges">
         <header>
           <div>
-            <h2>任务挑战</h2>
-            <p>跟着目标认识积木，也可以随时回到自由创作。</p>
+            <h2>课程挑战</h2>
+            <p>六个单元，从第一块积木走到云岛路线挑战。</p>
           </div>
-          <span>
-            已完成 {completedTasks.length} / {creationTasks.length}
-          </span>
+          <button className="import-project" onClick={() => navigate("/learn")}>
+            查看课程地图 · 已完成 {completedTasks.length} /{" "}
+            {creationTasks.length} →
+          </button>
         </header>
         <div>
-          {creationTasks.map((task, index) => (
-            <button
-              key={task.taskId}
-              data-locked={!isTaskUnlocked(task.taskId, completedTasks)}
-              disabled={!isTaskUnlocked(task.taskId, completedTasks)}
-              onClick={() => void openTask(task)}
-            >
-              <img className="task-art" src={taskArtwork[task.taskId]} alt="" />
-              <small>任务 {index + 1}</small>
-              <strong>{task.title}</strong>
-              <p>{task.description}</p>
-              <b>
-                {completedTasks.includes(task.taskId)
-                  ? `${taskProgress.find((item) => item.taskId === task.taskId)?.stars ?? 1} 星 · 再玩一次`
-                  : isTaskUnlocked(task.taskId, completedTasks)
-                    ? "开始挑战 →"
-                    : "完成上一关后解锁"}
-              </b>
-            </button>
-          ))}
+          {chapters.map((chapter, index) => {
+            const tasks = creationTasks.filter(
+              (task) => task.chapter === chapter,
+            );
+            const finished = tasks.filter((task) =>
+              completedTasks.includes(task.taskId),
+            ).length;
+            return (
+              <button key={chapter} onClick={() => navigate("/learn")}>
+                <img
+                  className="task-art"
+                  src={chapterCards[chapter].image}
+                  alt=""
+                />
+                <small>
+                  第 {index + 1} 单元 · {tasks.length} 关
+                </small>
+                <strong>{chapter}</strong>
+                <p>{chapterCards[chapter].description}</p>
+                <b>
+                  {finished}/{tasks.length} 已完成 · 查看课程 →
+                </b>
+              </button>
+            );
+          })}
         </div>
       </section>
       <section className="projects-list" id="works">
