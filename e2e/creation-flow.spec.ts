@@ -10,8 +10,8 @@ test("opens the course map and resumes the current level", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "小小程序员的冒险地图" }),
   ).toBeVisible();
-  await expect(page.locator(".course-chapter")).toHaveCount(6);
-  await expect(page.locator(".course-level")).toHaveCount(32);
+  await expect(page.locator(".course-chapter")).toHaveCount(10);
+  await expect(page.locator(".course-level")).toHaveCount(64);
   await expect(page.locator(".course-level").first()).toBeEnabled();
   await expect(page.locator(".course-level").nth(1)).toBeDisabled();
 

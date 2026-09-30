@@ -34,6 +34,10 @@ export function StageHost({ gridVisible = true }: { gridVisible?: boolean }) {
     const controller = new StageController();
     const abortController = new AbortController();
     let cancelled = false;
+    // 17.5：只记录性能事件代码，不采集作品内容。
+    controller.setPerformanceWarningHandler((code) => {
+      console.warn(`[kids-code][performance] ${code}`);
+    });
     const mountTimer = window.setTimeout(() => {
       if (cancelled) return;
       void controller

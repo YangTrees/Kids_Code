@@ -105,10 +105,39 @@ const pathLayouts: Partial<
   },
 };
 
+/**
+ * 后四个单元围绕“数据”展开：先给作品准备好一个名字叫“数据”的变量，
+ * 孩子一打开就能在变量分类里看到它，不必先学会创建变量。
+ */
+const dataVariableTasks = new Set<CreationTask["taskId"]>([
+  "data_count",
+  "data_show",
+  "data_record",
+  "data_reset",
+  "data_compare",
+  "data_label",
+  "data_sort",
+  "data_chart",
+  "pattern_predict",
+  "think_if",
+  "think_else",
+  "think_threshold",
+  "think_train",
+  "think_check",
+  "ai_quiz",
+  "ai_limit",
+  "ai_fair",
+]);
+
 export function createTaskProject(task: CreationTask) {
   const project = createProjectForMode(task.projectMode);
   project.name = `挑战 · ${task.title}`;
   project.workspaceStates = {};
+  if (dataVariableTasks.has(task.taskId)) {
+    project.variables = [
+      { variableId: "var_1", name: "数据", initialValue: 0, visible: true },
+    ];
+  }
   const pathLayout = pathLayouts[task.taskId];
   if (pathLayout) {
     project.settings.movementStep = 40;
@@ -130,14 +159,18 @@ export function createTaskProject(task: CreationTask) {
     actor.transform.x = pathCellPosition(pathLayout.start).x;
     actor.transform.y = pathCellPosition(pathLayout.start).y;
   }
-  if (task.taskId === "scene" || task.taskId === "scene_story") {
+  if (
+    task.taskId === "scene" ||
+    task.taskId === "scene_story" ||
+    task.taskId === "ai_story"
+  ) {
     const first = project.scenes[0]!;
     project.scenes.push({
       ...structuredClone(first),
       sceneId: "scn_task_second",
-      name: task.taskId === "scene_story" ? "魔法森林" : "故事教室",
+      name: task.taskId === "scene" ? "故事教室" : "魔法森林",
       backdropAssetId:
-        task.taskId === "scene_story" ? "bg_forest_01" : "bg_classroom_01",
+        task.taskId === "scene" ? "bg_classroom_01" : "bg_forest_01",
       instances: first.instances.map((instance) => ({
         ...structuredClone(instance),
         instanceId: instance.instanceId + "_second",

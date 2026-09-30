@@ -450,7 +450,9 @@
   display: none;
 }
 .editor-page .asset-tray {
-  grid-template-columns: 44px minmax(0, 1.3fr) 1px 44px minmax(0, 1fr);
+  grid-template-columns:
+    44px minmax(0, 1.3fr) 1px 44px minmax(0, 1fr)
+    1px 44px minmax(0, 0.8fr);
   gap: 12px;
   padding: 10px 16px;
 }

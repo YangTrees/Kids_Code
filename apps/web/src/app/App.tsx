@@ -8,6 +8,7 @@ import {
 import { Navigate, Route, Routes } from "react-router";
 import { ProjectsPage } from "../features/projects/ProjectsPage";
 import { CoursePage } from "../features/tasks/CoursePage";
+import { ParentPage } from "../features/parent/ParentPage";
 
 const EditorRoute = lazy(() => import("../features/editor/EditorRoute"));
 
@@ -57,6 +58,7 @@ export function App() {
     <Routes>
       <Route path="/" element={<ProjectsPage />} />
       <Route path="/learn" element={<CoursePage />} />
+      <Route path="/parent" element={<ParentPage />} />
       <Route
         path="/editor/:projectId"
         element={

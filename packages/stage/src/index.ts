@@ -129,6 +129,10 @@ export class StageController implements StagePort {
   #editingEnabled = true;
   #playInputEnabled = false;
   #muted = false;
+  #volume = 1;
+  #effectsEnabled = true;
+  #lowFpsMs = 0;
+  #onPerformanceWarning?: (code: string) => void;
   #onSpriteMoved:
     ((spriteId: string, x: number, y: number) => void) | undefined;
   #onSpriteSelected: ((spriteId: string) => void) | undefined;
@@ -164,6 +168,7 @@ export class StageController implements StagePort {
     this.#application.canvas.className = "pixi-stage-canvas";
     this.#world.sortableChildren = true;
     this.#application.stage.addChild(this.#world);
+    this.#application.ticker.add(this.#watchFrameRate);
     await this.renderProject(project, onSpriteMoved, onSpriteSelected);
     if (signal?.aborted) {
       this.destroy();
@@ -659,6 +664,7 @@ export class StageController implements StagePort {
     const path = this.#soundPaths.get(soundId);
     if (!path) return;
     const audio = new Audio(resolveAssetUrl(path));
+    audio.volume = this.#volume;
     this.#activeAudio.add(audio);
     const release = () => this.#activeAudio.delete(audio);
     audio.addEventListener("ended", release, { once: true });
@@ -678,6 +684,21 @@ export class StageController implements StagePort {
   setMuted(muted: boolean): void {
     this.#muted = muted;
     for (const audio of this.#activeAudio) audio.muted = muted;
+  }
+
+  setVolume(volume: number): void {
+    this.#volume = Math.min(1, Math.max(0, volume));
+    for (const audio of this.#activeAudio) audio.volume = this.#volume;
+  }
+
+  /** 注册性能事件回调（9.4：帧率过低时上报，不采集作品内容）。 */
+  setPerformanceWarningHandler(handler: (code: string) => void): void {
+    this.#onPerformanceWarning = handler;
+  }
+
+  setEffectsEnabled(enabled: boolean): void {
+    this.#effectsEnabled = enabled;
+    if (!enabled) this.#clearEffects();
   }
 
   stopAllSounds(): void {
@@ -731,6 +752,7 @@ export class StageController implements StagePort {
   }
 
   playCollisionEffect(spriteId: string, targetSpriteId: string): void {
+    if (!this.#effectsEnabled) return;
     const sprite = this.#sprites.get(spriteId);
     const target = this.#sprites.get(targetSpriteId);
     if (!sprite || !target) return;
@@ -742,6 +764,7 @@ export class StageController implements StagePort {
   }
 
   playCollectEffect(spriteId: string): void {
+    if (!this.#effectsEnabled) return;
     const sprite = this.#sprites.get(spriteId);
     if (!sprite) return;
     this.#playRingEffect(sprite.x, sprite.y, 0x75d84a);
@@ -1117,6 +1140,22 @@ export class StageController implements StagePort {
     this.#application.ticker.add(animate);
   }
 
+  /** 9.4：连续 3 秒低于 20FPS 时关闭装饰特效并上报一次性能事件。 */
+  readonly #watchFrameRate = (ticker: Ticker): void => {
+    const fps = ticker.FPS;
+    if (!Number.isFinite(fps) || fps <= 0 || fps >= 20) {
+      this.#lowFpsMs = 0;
+      return;
+    }
+    this.#lowFpsMs += ticker.deltaMS;
+    if (this.#lowFpsMs < 3_000) return;
+    this.#lowFpsMs = 0;
+    if (!this.#effectsEnabled) return;
+    this.#effectsEnabled = false;
+    this.#clearEffects();
+    this.#onPerformanceWarning?.("LOW_FRAME_RATE");
+  };
+
   #clearEffects(): void {
     for (const [effect, animate] of this.#effects) {
       this.#application.ticker.remove(animate);
@@ -1129,6 +1168,7 @@ export class StageController implements StagePort {
     if (!this.#initialized) return;
     this.stopAllSounds();
     this.#clearEffects();
+    this.#application.ticker.remove(this.#watchFrameRate);
     this.#application.destroy({ removeView: true }, { children: true });
     this.#sprites.clear();
     this.#profiles.clear();

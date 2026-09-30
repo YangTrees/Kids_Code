@@ -6,6 +6,7 @@ import {
 } from "./asset-catalog";
 import { useRef, useState } from "react";
 import { DrawingCanvasDialog } from "./DrawingCanvasDialog";
+import { useSettingsStore } from "../../shared/settings-store";
 
 interface AssetLibraryDialogProps {
   kind: "sprite" | "background";
@@ -29,6 +30,7 @@ export function AssetLibraryDialog({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [drawingOpen, setDrawingOpen] = useState(false);
+  const allowUploads = useSettingsStore((state) => state.allowUploads);
 
   const saveLocalImage = async (file: File) => {
     setUploading(true);
@@ -74,37 +76,43 @@ export function AssetLibraryDialog({
             ×
           </button>
         </header>
-        <div className="library-upload-row">
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            hidden
-            onChange={(event) => {
-              const file = event.currentTarget.files?.[0];
-              event.currentTarget.value = "";
-              if (!file) return;
-              void saveLocalImage(file);
-            }}
-          />
-          <button
-            className="library-upload-button"
-            disabled={uploading}
-            onClick={() => inputRef.current?.click()}
-          >
-            {uploading
-              ? "正在导入…"
-              : `＋ 上传${kind === "sprite" ? "角色" : "背景"}图片`}
-          </button>
-          <button
-            className="library-draw-button"
-            disabled={uploading}
-            onClick={() => setDrawingOpen(true)}
-          >
-            ✎ 直接绘制
-          </button>
-          <small>支持 PNG、JPG、WebP，最大 10MB</small>
-        </div>
+        {allowUploads ? (
+          <div className="library-upload-row">
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              hidden
+              onChange={(event) => {
+                const file = event.currentTarget.files?.[0];
+                event.currentTarget.value = "";
+                if (!file) return;
+                void saveLocalImage(file);
+              }}
+            />
+            <button
+              className="library-upload-button"
+              disabled={uploading}
+              onClick={() => inputRef.current?.click()}
+            >
+              {uploading
+                ? "正在导入…"
+                : `＋ 上传${kind === "sprite" ? "角色" : "背景"}图片`}
+            </button>
+            <button
+              className="library-draw-button"
+              disabled={uploading}
+              onClick={() => setDrawingOpen(true)}
+            >
+              ✎ 直接绘制
+            </button>
+            <small>支持 PNG、JPG、WebP，最大 10MB</small>
+          </div>
+        ) : (
+          <p className="library-upload-error" role="status">
+            家长已关闭图片上传，可以在家长区重新打开。
+          </p>
+        )}
         {uploadError ? (
           <p className="library-upload-error" role="alert">
             {uploadError}

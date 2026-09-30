@@ -79,6 +79,8 @@ export interface ProjectRepository {
   listThumbnails(): Promise<ProjectThumbnail[]>;
   saveAsset(path: string, blob: Blob): Promise<void>;
   getAsset(path: string): Promise<Blob | undefined>;
+  /** 家长区“删除全部数据”：清空本机作品、回收站、缩略图与本地素材。 */
+  clearAll(): Promise<void>;
 }
 
 export class IndexedDbProjectRepository implements ProjectRepository {
@@ -227,6 +229,24 @@ export class IndexedDbProjectRepository implements ProjectRepository {
     return record
       ? new Blob([Uint8Array.from(record.bytes)], { type: record.mimeType })
       : undefined;
+  }
+
+  async clearAll(): Promise<void> {
+    await this.#db.transaction(
+      "rw",
+      this.#db.projects,
+      this.#db.trash,
+      this.#db.thumbnails,
+      this.#db.localAssets,
+      async () => {
+        await Promise.all([
+          this.#db.projects.clear(),
+          this.#db.trash.clear(),
+          this.#db.thumbnails.clear(),
+          this.#db.localAssets.clear(),
+        ]);
+      },
+    );
   }
 
   #toThumbnail(record: ProjectThumbnailRecord): ProjectThumbnail {

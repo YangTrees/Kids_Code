@@ -14,6 +14,8 @@ import {
   createProjectPackage,
   readProjectPackageContents,
 } from "../editor/project-package";
+import { HelpDialog } from "../help/HelpDialog";
+import { useTranslate } from "../../shared/use-translate";
 import {
   creationTasks,
   getCompletedTaskIds,
@@ -50,6 +52,22 @@ const chapterCards: Record<
     image: "/assets/ui/home-sky-island.png",
     description: "经过路标、收集星石，并在限定步数内找到捷径。",
   },
+  数据小侦探: {
+    image: "/assets/ui/home-coin.png",
+    description: "记录、显示和比较数据，认识人工智能的燃料。",
+  },
+  规律与模式: {
+    image: "/assets/ui/home-blocks.png",
+    description: "用循环表达节拍、形状和节奏里重复的规律。",
+  },
+  会判断的程序: {
+    image: "/assets/ui/home-dialogue.png",
+    description: "看特征、定分界线，搭出“如果…那么”的决策模型。",
+  },
+  "AI 小创客": {
+    image: "/assets/ui/home-treasure.png",
+    description: "做出会提醒、会回答的小助手，也看看它何时出错。",
+  },
 };
 const chapters = Array.from(new Set(creationTasks.map((task) => task.chapter)));
 
@@ -81,6 +99,8 @@ export function ProjectsPage() {
     {},
   );
   const [completedTasks] = useState(getCompletedTaskIds);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const t = useTranslate();
   const importInputRef = useRef<HTMLInputElement>(null);
   const thumbnailUrlsRef = useRef<string[]>([]);
   const refresh = () => {
@@ -167,42 +187,44 @@ export function ProjectsPage() {
         <div className="projects-brand">
           <span className="projects-brand-mark">栗</span>
           <span>
-            <strong>栗奇编程乐园</strong>
-            <small>儿童创意编程工作室</small>
+            <strong>{t("brand.title")}</strong>
+            <small>{t("brand.subtitle")}</small>
           </span>
         </div>
         <nav className="projects-nav-links" aria-label="首页导航">
-          <a href="/learn">学习课程</a>
-          <a href="#templates">灵感模板</a>
-          <a href="#challenges">课程概览</a>
-          <a href="#works">我的作品</a>
+          <a href="/learn">{t("home.nav.learn")}</a>
+          <a href="#templates">{t("home.nav.templates")}</a>
+          <a href="#challenges">{t("home.nav.challenges")}</a>
+          <a href="#works">{t("home.nav.works")}</a>
+          <button type="button" onClick={() => setHelpOpen(true)}>
+            {t("home.nav.help")}
+          </button>
+          <a href="/parent">{t("home.nav.parent")}</a>
         </nav>
         <div className="projects-local-status">
-          <span /> 本地创作 · 自动保存
+          <span /> {t("home.localStatus")}
         </div>
       </header>
       <section className="projects-hero">
         <div className="projects-hero-copy">
-          <span className="projects-eyebrow">CREATE · PLAY · LEARN</span>
+          <span className="projects-eyebrow">{t("home.hero.eyebrow")}</span>
           <h1>
-            把想象，变成
-            <em>会动的故事</em>
+            {t("home.hero.titleLead")}
+            <em>{t("home.hero.titleEm")}</em>
           </h1>
-          <p>
-            拖动积木、设计角色、搭建关卡，从第一个动作开始创造自己的小游戏。
-          </p>
+          <p>{t("home.hero.desc")}</p>
           <div className="hero-actions">
             <button
               className="create-project"
               onClick={() => navigate("/learn")}
             >
-              ▶ 开始学习
+              {t("home.hero.startLearning")}
             </button>
             <button
               className="import-project"
               onClick={() => void openNew("blank")}
             >
-              ＋ 开始空白创作
+              {t("home.hero.startBlank")}
             </button>
             <input
               ref={importInputRef}
@@ -461,6 +483,7 @@ export function ProjectsPage() {
           ))}
         </section>
       ) : null}
+      {helpOpen ? <HelpDialog onClose={() => setHelpOpen(false)} /> : null}
     </main>
   );
 }

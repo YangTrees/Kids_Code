@@ -42,6 +42,7 @@ export interface StagePort {
   pauseAllSounds?(): void;
   resumeAllSounds?(): void;
   setMuted?(muted: boolean): void;
+  setVolume?(volume: number): void;
   stopAllSounds(): void;
   showResult?(result: "success" | "failure", message: string): void;
   clearResult?(): void;

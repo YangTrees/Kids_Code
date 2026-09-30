@@ -266,4 +266,78 @@ describe("editor store", () => {
 
     expect(countSpriteReferences(project, "spr_box")).toBe(2);
   });
+
+  it("creates broadcast messages with stable ids", () => {
+    const state = useEditorStore.getState();
+    state.hydrateProject(createDefaultProject());
+    state.addMessage("开始游戏");
+    state.addMessage("开始游戏");
+
+    const messages = useEditorStore.getState().project.messages;
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toMatchObject({ name: "开始游戏" });
+    expect(messages[0]?.messageId).toMatch(/^msg_/);
+  });
+
+  // 7.2：被脚本引用的消息不能删除。
+  it("refuses to delete a message that blocks still use", () => {
+    const state = useEditorStore.getState();
+    state.hydrateProject(createDefaultProject());
+    state.addMessage("找到宝箱");
+    state.setWorkspaceState("spr_liji", {
+      blocks: {
+        blocks: [
+          {
+            type: "kids_broadcast",
+            fields: { MESSAGE: "找到宝箱" },
+          },
+        ],
+      },
+    });
+
+    const messageId = useEditorStore.getState().project.messages[0]!.messageId;
+    useEditorStore.getState().removeMessage(messageId);
+    expect(useEditorStore.getState().project.messages).toHaveLength(1);
+
+    useEditorStore.getState().setWorkspaceState("spr_liji", {
+      blocks: { blocks: [] },
+    });
+    useEditorStore.getState().removeMessage(messageId);
+    expect(useEditorStore.getState().project.messages).toHaveLength(0);
+  });
+
+  it("registers custom recorded sounds as project audio assets", () => {
+    const state = useEditorStore.getState();
+    state.hydrateProject(createDefaultProject());
+    state.addSoundAsset({
+      assetId: "sfx_custom_1",
+      name: "我的录音",
+      path: "uploads/1.webm",
+    });
+
+    expect(useEditorStore.getState().project.assets).toContainEqual({
+      assetId: "sfx_custom_1",
+      type: "audio",
+      path: "uploads/1.webm",
+      name: "我的录音",
+    });
+
+    useEditorStore.getState().removeSoundAsset("sfx_custom_1");
+    expect(
+      useEditorStore
+        .getState()
+        .project.assets.some((asset) => asset.assetId === "sfx_custom_1"),
+    ).toBe(false);
+  });
+
+  it("never removes built-in sounds through the asset manager", () => {
+    const state = useEditorStore.getState();
+    state.hydrateProject(createDefaultProject());
+    useEditorStore.getState().removeSoundAsset("sfx_ui_click");
+    expect(
+      useEditorStore
+        .getState()
+        .project.assets.some((asset) => asset.assetId === "sfx_ui_click"),
+    ).toBe(true);
+  });
 });

@@ -51,6 +51,15 @@ interface EditorState {
   undoProject: () => void;
   redoProject: () => void;
   addVariable: (name: string) => void;
+  addMessage: (name: string) => void;
+  removeMessage: (messageId: string) => void;
+  addSoundAsset: (sound: {
+    assetId: string;
+    name: string;
+    path: string;
+  }) => void;
+  renameSoundAsset: (assetId: string, name: string) => void;
+  removeSoundAsset: (assetId: string) => void;
   addSprite: () => void;
   addSpriteFromLibrary: (asset: SpriteLibraryAsset) => void;
   duplicateSprite: (spriteId: string) => void;
@@ -272,6 +281,137 @@ export const useEditorStore = create<EditorState>((set) => ({
               visible: true,
             },
           ],
+        },
+        projectHistory: [
+          ...state.projectHistory,
+          { project: state.project, selectedSpriteId: state.selectedSpriteId },
+        ].slice(-30),
+        projectFuture: [],
+        historyRevision: state.historyRevision + 1,
+        saveStatus: "dirty" as const,
+      };
+    }),
+  addMessage: (name) =>
+    set((state) => {
+      const normalized = name.trim().slice(0, 16);
+      if (
+        !normalized ||
+        state.project.messages.length >= 20 ||
+        state.project.messages.some((message) => message.name === normalized)
+      )
+        return state;
+      return {
+        project: {
+          ...state.project,
+          updatedAt: new Date().toISOString(),
+          messages: [
+            ...state.project.messages,
+            {
+              messageId: `msg_${crypto.randomUUID().slice(0, 8)}`,
+              name: normalized,
+            },
+          ],
+        },
+        projectHistory: [
+          ...state.projectHistory,
+          { project: state.project, selectedSpriteId: state.selectedSpriteId },
+        ].slice(-30),
+        projectFuture: [],
+        historyRevision: state.historyRevision + 1,
+        saveStatus: "dirty" as const,
+      };
+    }),
+  removeMessage: (messageId) =>
+    set((state) => {
+      const message = state.project.messages.find(
+        (item) => item.messageId === messageId,
+      );
+      if (!message) return state;
+      // 7.2：被脚本引用的消息不能直接删除。
+      if (messageIsReferenced(state.project, message.name)) return state;
+      return {
+        project: {
+          ...state.project,
+          updatedAt: new Date().toISOString(),
+          messages: state.project.messages.filter(
+            (item) => item.messageId !== messageId,
+          ),
+        },
+        projectHistory: [
+          ...state.projectHistory,
+          { project: state.project, selectedSpriteId: state.selectedSpriteId },
+        ].slice(-30),
+        projectFuture: [],
+        historyRevision: state.historyRevision + 1,
+        saveStatus: "dirty" as const,
+      };
+    }),
+  addSoundAsset: (sound) =>
+    set((state) => {
+      const name = sound.name.trim().slice(0, 20) || "我的声音";
+      if (state.project.assets.some((item) => item.assetId === sound.assetId))
+        return {
+          project: {
+            ...state.project,
+            updatedAt: new Date().toISOString(),
+            assets: state.project.assets.map((item) =>
+              item.assetId === sound.assetId ? { ...item, name } : item,
+            ),
+          },
+          saveStatus: "dirty" as const,
+        };
+      return {
+        project: {
+          ...state.project,
+          updatedAt: new Date().toISOString(),
+          assets: [
+            ...state.project.assets,
+            {
+              assetId: sound.assetId,
+              type: "audio" as const,
+              path: sound.path,
+              name,
+            },
+          ],
+        },
+        projectHistory: [
+          ...state.projectHistory,
+          { project: state.project, selectedSpriteId: state.selectedSpriteId },
+        ].slice(-30),
+        projectFuture: [],
+        historyRevision: state.historyRevision + 1,
+        saveStatus: "dirty" as const,
+      };
+    }),
+  renameSoundAsset: (assetId, name) =>
+    set((state) => {
+      const normalized = name.trim().slice(0, 20);
+      if (!normalized) return state;
+      return {
+        project: {
+          ...state.project,
+          updatedAt: new Date().toISOString(),
+          assets: state.project.assets.map((item) =>
+            item.assetId === assetId ? { ...item, name: normalized } : item,
+          ),
+        },
+        saveStatus: "dirty" as const,
+      };
+    }),
+  removeSoundAsset: (assetId) =>
+    set((state) => {
+      if (
+        !assetId.startsWith("sfx_custom_") &&
+        !assetId.startsWith("sfx_upload_")
+      )
+        return state;
+      return {
+        project: {
+          ...state.project,
+          updatedAt: new Date().toISOString(),
+          assets: state.project.assets.filter(
+            (item) => item.assetId !== assetId,
+          ),
         },
         projectHistory: [
           ...state.projectHistory,
@@ -837,6 +977,30 @@ useEditorStore.subscribe((state, previous) => {
     projectFuture: [],
   });
 });
+
+/** 判断某个消息名是否正被积木引用（7.2：被引用时阻止删除）。 */
+export function messageIsReferenced(project: Project, name: string): boolean {
+  const visit = (value: unknown): boolean => {
+    if (!value || typeof value !== "object") return false;
+    if (Array.isArray(value)) return value.some(visit);
+    const record = value as Record<string, unknown>;
+    const fields = record.fields;
+    if (fields && typeof fields === "object") {
+      const message = (fields as Record<string, unknown>).MESSAGE;
+      if (message === name) return true;
+    }
+    return Object.values(record).some(visit);
+  };
+  for (const workspace of Object.values(project.workspaceStates))
+    if (visit(workspace)) return true;
+  for (const script of project.scripts) {
+    for (const block of script.blocks) {
+      if ((block.params as Record<string, unknown>).message === name)
+        return true;
+    }
+  }
+  return false;
+}
 
 export function countWorkspaceBlocks(workspaceState: unknown): number {
   if (!workspaceState || typeof workspaceState !== "object") return 0;

@@ -7,23 +7,7 @@ import { countWorkspaceBlocks, useEditorStore } from "./editor-store";
 import { useEditorRuntime } from "./EditorRuntimeContext";
 import { getAssignedTaskId } from "../tasks/task-catalog";
 
-const builtInSoundNames: Record<string, string> = {
-  sfx_ui_click: "按钮声",
-  sfx_collect_coin: "收集金币",
-  sfx_game_success: "闯关成功",
-  sfx_jump: "跳跃",
-  sfx_bump: "碰撞",
-  sfx_door_open: "开门",
-  sfx_magic: "魔法",
-  sfx_pop: "弹出",
-  sfx_whoosh: "飞过",
-  sfx_bell: "铃铛",
-  sfx_drum: "鼓点",
-  sfx_splash: "水花",
-  sfx_sparkle: "闪光",
-  sfx_countdown: "倒计时",
-  sfx_game_over: "挑战结束",
-};
+import { builtInSoundNames } from "./asset-catalog";
 
 export function BlockWorkspaceHost() {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -63,7 +47,7 @@ export function BlockWorkspaceHost() {
         .filter((asset) => asset.type === "audio")
         .map((asset) => ({
           assetId: asset.assetId,
-          name: builtInSoundNames[asset.assetId] ?? asset.assetId,
+          name: asset.name ?? builtInSoundNames[asset.assetId] ?? asset.assetId,
         })),
       messages,
       variables: variables.map(({ variableId, name }) => ({

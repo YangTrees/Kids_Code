@@ -20,6 +20,7 @@ import type {
   BackgroundLibraryAsset,
   SpriteLibraryAsset,
 } from "./asset-catalog";
+import { localUploadProvenance } from "./asset-catalog";
 import {
   createProjectPackage,
   readProjectPackageContents,
@@ -36,6 +37,12 @@ interface ProjectPersistenceContextValue {
     file: File,
     kind: "sprite" | "background",
   ) => Promise<SpriteLibraryAsset | BackgroundLibraryAsset>;
+  /** 把一段音频（录音或上传文件）存入作品，返回可在积木里引用的音效。 */
+  importLocalAudio: (
+    blob: Blob,
+    name: string,
+    source: "recording" | "upload",
+  ) => Promise<{ assetId: string; name: string; path: string }>;
 }
 
 const ProjectPersistenceContext =
@@ -276,8 +283,43 @@ export function ProjectPersistenceProvider({
           .replace(/\.[^.]+$/, "")
           .trim()
           .slice(0, 20) || "我的图片";
-      const common = { assetId: `upload_${kind}_${suffix}`, name, path };
+      const common = {
+        assetId: `upload_${kind}_${suffix}`,
+        name,
+        path,
+        provenance: localUploadProvenance(path),
+      };
       return kind === "sprite" ? { ...common, scale: 1 } : common;
+    },
+    [],
+  );
+
+  const importLocalAudio = useCallback(
+    async (
+      blob: Blob,
+      name: string,
+      source: "recording" | "upload",
+    ): Promise<{ assetId: string; name: string; path: string }> => {
+      if (blob.size > 5 * 1024 * 1024) throw new Error("AUDIO_TOO_LARGE");
+      const suffix = crypto.randomUUID();
+      const extension =
+        blob.type.includes("mp4") || blob.type.includes("m4a")
+          ? "m4a"
+          : blob.type.includes("ogg")
+            ? "ogg"
+            : blob.type.includes("mpeg") || blob.type.includes("mp3")
+              ? "mp3"
+              : blob.type.includes("wav")
+                ? "wav"
+                : "webm";
+      const path = `uploads/${suffix}.${extension}`;
+      await repositoryRef.current.saveAsset(path, blob);
+      registerLocalAssetUrl(path, URL.createObjectURL(blob));
+      return {
+        assetId: `sfx_${source === "recording" ? "custom" : "upload"}_${suffix}`,
+        name: name.trim().slice(0, 20) || "我的声音",
+        path,
+      };
     },
     [],
   );
@@ -291,9 +333,11 @@ export function ProjectPersistenceProvider({
       saveNow,
       saveThumbnail,
       importLocalImage,
+      importLocalAudio,
     }),
     [
       exportProject,
+      importLocalAudio,
       importLocalImage,
       importProject,
       isHydrated,

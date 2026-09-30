@@ -10,11 +10,13 @@ import {
   getNextCreationTask,
   getTaskHintLevel,
   getTaskProgress,
+  isChapterFirstTask,
   isTaskUnlocked,
   markTaskCompleted,
   setAssignedTaskId,
   setTaskHintLevel,
 } from "./task-catalog";
+import type { TaskId } from "./task-catalog";
 
 describe("creation tasks", () => {
   beforeEach(() => {
@@ -277,17 +279,22 @@ describe("creation tasks", () => {
     ).toBe(true);
   });
 
-  it("provides four core units and two open four-level map branches", () => {
-    expect(creationTasks).toHaveLength(32);
-    expect(new Set(creationTasks.map((task) => task.chapter)).size).toBe(6);
+  it("provides six coding units and four AI-themed units", () => {
+    expect(creationTasks).toHaveLength(64);
+    expect(new Set(creationTasks.map((task) => task.chapter)).size).toBe(10);
     expect(
       [...new Set(creationTasks.map((task) => task.chapter))].map(
         (chapter) =>
           creationTasks.filter((task) => task.chapter === chapter).length,
       ),
-    ).toEqual([6, 6, 6, 6, 4, 4]);
+    ).toEqual([6, 6, 6, 6, 4, 4, 8, 8, 8, 8]);
     expect(creationTasks.every((task) => task.blockGuide.length >= 2)).toBe(
       true,
+    );
+    expect(creationTasks.every((task) => task.rules.length >= 2)).toBe(true);
+    expect(creationTasks.every((task) => task.hints.length === 3)).toBe(true);
+    expect(new Set(creationTasks.map((task) => task.taskId)).size).toBe(
+      creationTasks.length,
     );
     expect(isTaskUnlocked("speak", [])).toBe(true);
     expect(isTaskUnlocked("move", [])).toBe(false);
@@ -302,7 +309,168 @@ describe("creation tasks", () => {
     expect(isTaskUnlocked("sky_waypoint", [])).toBe(true);
     expect(isTaskUnlocked("sky_collect", [])).toBe(false);
     expect(isTaskUnlocked("sky_collect", ["sky_waypoint"])).toBe(true);
-    expect(getNextCreationTask("sky_master")).toBeUndefined();
+    expect(getNextCreationTask("sky_master")?.taskId).toBe("data_count");
+    expect(getNextCreationTask("ai_final")).toBeUndefined();
+  });
+
+  it("unlocks the first level of every unit by default", () => {
+    const firstLevelOfEachUnit: TaskId[] = [
+      "speak", // 基础入门
+      "collision", // 互动游戏
+      "scene", // 程序思维
+      "keyboard", // 进阶创作
+      "path_straight", // 路线挑战
+      "sky_waypoint", // 云岛远征
+      "data_count", // 数据小侦探
+      "pattern_beat", // 规律与模式
+      "think_if", // 会判断的程序
+      "ai_helper", // AI 小创客
+    ];
+    for (const taskId of firstLevelOfEachUnit) {
+      expect(isChapterFirstTask(taskId)).toBe(true);
+      expect(isTaskUnlocked(taskId, [])).toBe(true);
+    }
+    // 非首节在无完成记录时仍保持锁定，需先完成前一关。
+    expect(isTaskUnlocked("move", [])).toBe(false);
+    expect(isTaskUnlocked("data_show", [])).toBe(false);
+  });
+
+  it("seeds a data variable only for the AI levels that need one", () => {
+    expect(
+      createTaskProject(
+        creationTasks.find((task) => task.taskId === "data_record")!,
+      ).variables,
+    ).toEqual([
+      { variableId: "var_1", name: "数据", initialValue: 0, visible: true },
+    ]);
+    expect(
+      createTaskProject(
+        creationTasks.find((task) => task.taskId === "pattern_beat")!,
+      ).variables,
+    ).toEqual([]);
+  });
+
+  it("gives the AI story level a second scene to switch to", () => {
+    const project = createTaskProject(
+      creationTasks.find((task) => task.taskId === "ai_story")!,
+    );
+    expect(project.scenes).toHaveLength(2);
+    expect(project.scenes[0]?.sceneId).not.toBe(project.scenes[1]?.sceneId);
+    expect(project.scenes[1]?.name).toBe("魔法森林");
+  });
+
+  it("requires a real condition inside the AI decision levels", () => {
+    const task = creationTasks.find((item) => item.taskId === "think_if")!;
+    const project = createTaskProject(task);
+    const report = {
+      status: "COMPLETED",
+      score: 0,
+      result: null,
+      spritePositions: {},
+      touchedPairs: [],
+      variables: { var_1: 5 },
+      executedBlockCounts: { flag: 1, set: 1, branch: 1, compare: 1, say: 1 },
+    } as unknown as RuntimeReport;
+    const buildWorkspace = (condition: unknown) => ({
+      blocks: {
+        blocks: [
+          {
+            type: "event_whenflagclicked",
+            id: "flag",
+            next: {
+              block: {
+                type: "kids_variable_set",
+                id: "set",
+                inputs: {
+                  VALUE: {
+                    shadow: { type: "math_number", fields: { NUM: "5" } },
+                  },
+                },
+                next: {
+                  block: {
+                    type: "kids_if",
+                    id: "branch",
+                    inputs: {
+                      CONDITION: condition
+                        ? { block: condition }
+                        : { block: null },
+                      SUBSTACK: {
+                        block: { type: "looks_sayforsecs", id: "say" },
+                      },
+                    },
+                    next: { block: null },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+    project.workspaceStates.spr_liji = buildWorkspace({
+      type: "kids_variable_compare",
+      id: "compare",
+      inputs: {
+        RIGHT: { shadow: { type: "math_number", fields: { NUM: "3" } } },
+      },
+    });
+    expect(evaluateCreationTask(project, task, report).complete).toBe(true);
+
+    project.workspaceStates.spr_liji = buildWorkspace(null);
+    expect(evaluateCreationTask(project, task, report).complete).toBe(false);
+  });
+
+  it("only awards the data challenge when the variable really grows", () => {
+    const task = creationTasks.find((item) => item.taskId === "data_record")!;
+    const project = createTaskProject(task);
+    project.workspaceStates.spr_liji = {
+      blocks: {
+        blocks: [
+          {
+            type: "event_whenflagclicked",
+            id: "flag",
+            next: {
+              block: {
+                type: "control_repeat",
+                id: "loop",
+                inputs: {
+                  SUBSTACK: {
+                    block: {
+                      type: "kids_variable_increase",
+                      id: "inc",
+                      next: {
+                        block: { type: "control_wait", id: "wait" },
+                      },
+                    },
+                  },
+                },
+                next: { block: null },
+              },
+            },
+          },
+        ],
+      },
+    };
+    const base = {
+      status: "COMPLETED",
+      score: 0,
+      result: null,
+      spritePositions: {},
+      touchedPairs: [],
+      executedBlockCounts: { flag: 1, loop: 1, inc: 3, wait: 3 },
+    };
+    expect(
+      evaluateCreationTask(project, task, {
+        ...base,
+        variables: { var_1: 1 },
+      } as unknown as RuntimeReport).complete,
+    ).toBe(false);
+    expect(
+      evaluateCreationTask(project, task, {
+        ...base,
+        variables: { var_1: 3 },
+      } as unknown as RuntimeReport).complete,
+    ).toBe(true);
   });
 
   it("builds the dedicated sky maps with distinct objectives", () => {

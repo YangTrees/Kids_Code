@@ -21,6 +21,8 @@ import {
 } from "react";
 import { BrowserRuntimeClock } from "./browser-clock";
 import { useEditorStore } from "./editor-store";
+import { PROJECT_LIMITS } from "@kids-code/domain";
+import { useSettingsStore } from "../../shared/settings-store";
 import { getAssignedTaskId } from "../tasks/task-catalog";
 
 interface EditorRuntimeContextValue {
@@ -86,6 +88,7 @@ export function EditorRuntimeProvider({ children }: { children: ReactNode }) {
     stageRef.current = stage;
     setReady(Boolean(stageRef.current && workspaceRef.current));
     stage?.setMuted?.(mutedRef.current);
+    stage?.setVolume?.(useSettingsStore.getState().volume);
     stage?.setSpriteClickHandler((spriteId) => {
       void sessionRef.current?.triggerSpriteClick(spriteId);
     });
@@ -167,14 +170,32 @@ export function EditorRuntimeProvider({ children }: { children: ReactNode }) {
         stepCountRef.current = 0;
         setLastRunReport(null);
         const scripts = workspace.compile(selectedSpriteId);
+        const scriptCounts = new Map<string, number>([
+          [selectedSpriteId, scripts.length],
+        ]);
         for (const sprite of project.sprites) {
           if (sprite.spriteId === selectedSpriteId) continue;
           const workspaceState = project.workspaceStates[sprite.spriteId];
           if (workspaceState && typeof workspaceState === "object") {
-            scripts.push(
-              ...compileSerializedWorkspace(sprite.spriteId, workspaceState),
+            const compiled = compileSerializedWorkspace(
+              sprite.spriteId,
+              workspaceState,
             );
+            scripts.push(...compiled);
+            scriptCounts.set(sprite.spriteId, compiled.length);
           }
+        }
+        // 8.6：单个角色最多 50 条脚本，超限时阻止运行并提示。
+        for (const [spriteId, count] of scriptCounts) {
+          if (count <= PROJECT_LIMITS.maxScriptsPerSprite) continue;
+          const name =
+            project.sprites.find((sprite) => sprite.spriteId === spriteId)
+              ?.name ?? "这个角色";
+          setStatus("ERROR");
+          setErrorMessage(
+            `“${name}”的脚本太多了（最多 ${PROJECT_LIMITS.maxScriptsPerSprite} 条）。把几段合并一下，或者删掉不用的再运行。`,
+          );
+          return;
         }
         if (scripts.length === 0) {
           setErrorMessage("先放入一个“点击开始”积木吧！");

@@ -51,6 +51,29 @@ const chapterDetails: Record<
     description: "在专属云岛地图上找路标、收星石、选捷径，挑战更聪明的程序。",
     image: "/assets/ui/home-sky-island.png",
   },
+  数据小侦探: {
+    number: "07",
+    description:
+      "用变量把发生的事情记下来、显示出来、比一比，认识人工智能的燃料：数据。",
+    image: "/assets/ui/home-coin.png",
+  },
+  规律与模式: {
+    number: "08",
+    description: "把重复的东西交给循环，找出节拍、形状和节奏里藏着的规律。",
+    image: "/assets/ui/home-blocks.png",
+  },
+  会判断的程序: {
+    number: "09",
+    description:
+      "看特征、定分界线、做判断，亲手搭出“如果…那么”这样的小小决策模型。",
+    image: "/assets/ui/home-dialogue.png",
+  },
+  "AI 小创客": {
+    number: "10",
+    description:
+      "做出会提醒、会回答、会作曲的小助手，也看看人工智能什么时候会出错。",
+    image: "/assets/ui/home-treasure.png",
+  },
 };
 
 export function CoursePage() {

@@ -12,7 +12,9 @@ import { useEffect, useRef, useState } from "react";
 import { TutorialOverlay } from "./TutorialOverlay";
 import { AssetManagerDialog } from "./AssetManagerDialog";
 import { AssetLibraryDialog } from "./AssetLibraryDialog";
+import { SoundLibraryDialog, type SoundAssetRef } from "./SoundLibraryDialog";
 import { ProjectSettingsDialog } from "./ProjectSettingsDialog";
+import { useSettingsStore } from "../../shared/settings-store";
 import { useNavigate } from "react-router";
 import { TaskPanel } from "../tasks/TaskPanel";
 import { TaskCompletionDialog } from "../tasks/TaskCompletionDialog";
@@ -25,6 +27,9 @@ import {
 } from "@kids-code/domain";
 import { CurrentTaskCard } from "../tasks/CurrentTaskCard";
 import { getAssignedTaskId } from "../tasks/task-catalog";
+import { HelpDialog } from "../help/HelpDialog";
+import { TouchDpad } from "./TouchDpad";
+import { useTranslate } from "../../shared/use-translate";
 import "../../styles/editor-experience.css";
 
 const assetPathBySprite: Record<string, string> = {
@@ -102,6 +107,22 @@ export function EditorPage() {
     kind: "sprite" | "scene";
     id: string;
   } | null>(null);
+  const [soundPickerOpen, setSoundPickerOpen] = useState(false);
+  const [soundNotice, setSoundNotice] = useState<string | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const t = useTranslate();
+  const [coarsePointer, setCoarsePointer] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(pointer: coarse)").matches,
+  );
+
+  useEffect(() => {
+    const query = window.matchMedia("(pointer: coarse)");
+    const onChange = () => setCoarsePointer(query.matches);
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, []);
   const {
     project,
     selectedSpriteId,
@@ -134,8 +155,17 @@ export function EditorPage() {
     toggleMuted,
     lastRunReport,
   } = useEditorRuntime();
-  const { exportProject, importProject, importLocalImage, retrySave } =
-    useProjectPersistence();
+  const {
+    exportProject,
+    importProject,
+    importLocalImage,
+    importLocalAudio,
+    retrySave,
+  } = useProjectPersistence();
+  const allowRecording = useSettingsStore((state) => state.allowRecording);
+  const allowUploads = useSettingsStore((state) => state.allowUploads);
+  const addSoundAsset = useEditorStore((state) => state.addSoundAsset);
+  const removeSoundAsset = useEditorStore((state) => state.removeSoundAsset);
   const running = status === "STARTING" || status === "RUNNING";
   const courseTaskId = getAssignedTaskId(project.projectId);
   const step = getMovementStep(project);
@@ -149,13 +179,13 @@ export function EditorPage() {
       ? lastRunReport.spritePositions[selectedSpriteId]
       : undefined;
   const statusLabel = {
-    IDLE: "编辑中",
-    STARTING: "准备运行",
-    RUNNING: "运行中",
-    PAUSED: "已暂停",
-    COMPLETED: "运行完成",
-    STOPPED: "已回到起点",
-    ERROR: "请检查积木",
+    IDLE: t("editor.status.IDLE"),
+    STARTING: t("editor.status.STARTING"),
+    RUNNING: t("editor.status.RUNNING"),
+    PAUSED: t("editor.status.PAUSED"),
+    COMPLETED: t("editor.status.COMPLETED"),
+    STOPPED: t("editor.status.STOPPED"),
+    ERROR: t("editor.status.ERROR"),
   }[status];
   const currentScene = project.scenes.find(
     (scene) => scene.sceneId === project.currentSceneId,
@@ -188,6 +218,16 @@ export function EditorPage() {
     (total, workspace) => total + countWorkspaceBlocks(workspace),
     0,
   );
+  const customSounds = project.assets.filter(
+    (asset) =>
+      asset.type === "audio" &&
+      (asset.assetId.startsWith("sfx_custom_") ||
+        asset.assetId.startsWith("sfx_upload_")),
+  );
+  const rememberSound = (sound: SoundAssetRef) => {
+    addSoundAsset(sound);
+    setSoundNotice(`已添加声音“${sound.name}”，可以在“播放声音”积木里找到它。`);
+  };
 
   useEffect(() => {
     const handleHistoryShortcut = (event: KeyboardEvent) => {
@@ -282,15 +322,15 @@ export function EditorPage() {
         <div className="save-state" data-state={saveStatus}>
           <span>{saveStatus === "error" ? "!" : "✓"}</span>
           {saveStatus === "saved"
-            ? "已保存"
+            ? t("editor.save.saved")
             : saveStatus === "error"
-              ? "保存失败"
+              ? t("editor.save.error")
               : saveStatus === "dirty"
-                ? "待保存"
-                : "保存中…"}
+                ? t("editor.save.dirty")
+                : t("editor.save.saving")}
           {saveStatus === "error" ? (
             <button type="button" onClick={retrySave}>
-              重试
+              {t("editor.save.retry")}
             </button>
           ) : null}
         </div>
@@ -325,7 +365,7 @@ export function EditorPage() {
             <span className="play-action-icon flag-icon">
               <GreenFlagIcon />
             </span>
-            <span>运行</span>
+            <span>{t("editor.action.run")}</span>
           </button>
           <button
             className="step-button"
@@ -343,7 +383,7 @@ export function EditorPage() {
             <span className="play-action-icon">
               <StepIcon />
             </span>
-            <span>单步</span>
+            <span>{t("editor.action.step")}</span>
           </button>
           {status === "RUNNING" || status === "PAUSED" ? (
             <button
@@ -354,7 +394,11 @@ export function EditorPage() {
               <span className="play-action-icon" aria-hidden="true">
                 {status === "PAUSED" ? "▶" : "❚❚"}
               </span>
-              <span>{status === "PAUSED" ? "继续" : "暂停"}</span>
+              <span>
+                {status === "PAUSED"
+                  ? t("editor.action.resume")
+                  : t("editor.action.pause")}
+              </span>
             </button>
           ) : null}
           <button
@@ -366,7 +410,7 @@ export function EditorPage() {
             <span className="play-action-icon" aria-hidden="true">
               ■
             </span>
-            <span>停止</span>
+            <span>{t("editor.action.stop")}</span>
           </button>
         </div>
         <button
@@ -374,7 +418,14 @@ export function EditorPage() {
           aria-label="打开创作任务"
           onClick={() => setTaskPanelOpen(true)}
         >
-          <span aria-hidden="true">★</span> 任务
+          <span aria-hidden="true">★</span> {t("editor.action.task")}
+        </button>
+        <button
+          className="task-button help-button"
+          aria-label="打开帮助中心"
+          onClick={() => setHelpOpen(true)}
+        >
+          <span aria-hidden="true">?</span> {t("editor.action.help")}
         </button>
       </header>
 
@@ -419,6 +470,7 @@ export function EditorPage() {
           </div>
           <div className="stage-frame">
             <StageHost gridVisible={gridVisible} />
+            <TouchDpad visible={playMode || coarsePointer} />
             <button
               className="stage-tool stage-expand"
               aria-label="退出舞台试玩"
@@ -726,7 +778,52 @@ export function EditorPage() {
             <span>＋</span>添加场景
           </button>
         </div>
+        <div className="tray-divider" />
+        <div className="tray-label">
+          <span>♪</span>
+          <strong>声音</strong>
+        </div>
+        <div className="scene-list">
+          {customSounds.map((sound) => (
+            <button
+              key={sound.assetId}
+              className="scene-card sound-card-chip"
+              aria-label={`播放${sound.name ?? "我的声音"}`}
+              onClick={() => {
+                const audio = new Audio(resolveAssetUrl(sound.path));
+                void audio.play().catch(() => undefined);
+              }}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                if (
+                  window.confirm(
+                    `删除声音“${sound.name ?? "我的声音"}”？删除后可点击“撤销”恢复。`,
+                  )
+                )
+                  removeSoundAsset(sound.assetId);
+              }}
+            >
+              <span className="sound-chip-glyph" aria-hidden="true">
+                ♪
+              </span>
+              <span>{sound.name ?? "我的声音"}</span>
+            </button>
+          ))}
+          <button className="add-card" onClick={() => setSoundPickerOpen(true)}>
+            <span>＋</span>
+            {allowRecording ? "添加声音" : "选择声音"}
+          </button>
+        </div>
       </footer>
+
+      {soundNotice ? (
+        <div className="runtime-message" role="status">
+          {soundNotice}
+          <button type="button" onClick={() => setSoundNotice(null)}>
+            知道了
+          </button>
+        </div>
+      ) : null}
 
       {errorMessage || importError ? (
         <div className="runtime-message" role="status">
@@ -734,9 +831,7 @@ export function EditorPage() {
         </div>
       ) : null}
 
-      <aside className="portrait-warning">
-        请将设备横屏使用，创作空间会更宽敞。
-      </aside>
+      <aside className="portrait-warning">{t("editor.portraitWarning")}</aside>
       <TutorialOverlay />
       {managedAsset ? (
         <AssetManagerDialog
@@ -771,6 +866,32 @@ export function EditorPage() {
           onClose={() => setAssetPicker(null)}
         />
       ) : null}
+      {soundPickerOpen ? (
+        <SoundLibraryDialog
+          recordingEnabled={allowRecording}
+          uploadEnabled={allowUploads}
+          onSelect={rememberSound}
+          onRecord={async (blob, name) => {
+            const sound = await importLocalAudio(blob, name, "recording");
+            addSoundAsset(sound);
+            return sound;
+          }}
+          onUpload={async (file) => {
+            const sound = await importLocalAudio(
+              file,
+              file.name
+                .replace(/\.[^.]+$/, "")
+                .trim()
+                .slice(0, 20) || "我的音频",
+              "upload",
+            );
+            addSoundAsset(sound);
+            return sound;
+          }}
+          onClose={() => setSoundPickerOpen(false)}
+        />
+      ) : null}
+      {helpOpen ? <HelpDialog onClose={() => setHelpOpen(false)} /> : null}
       {settingsOpen ? (
         <ProjectSettingsDialog onClose={() => setSettingsOpen(false)} />
       ) : null}

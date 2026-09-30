@@ -232,10 +232,10 @@ test("steps through blocks and then continues the program", async ({
   await expect(page.getByRole("button", { name: "继续运行" })).toHaveCount(0);
 });
 
-test("shows thirty-two tasks with two open path branches", async ({ page }) => {
+test("shows sixty-four tasks with two open path branches", async ({ page }) => {
   await page.getByRole("button", { name: "打开创作任务" }).click();
   const tasks = page.locator(".task-panel-body > nav button");
-  await expect(tasks).toHaveCount(32);
+  await expect(tasks).toHaveCount(64);
   await expect(tasks.nth(0)).toBeEnabled();
   await expect(tasks.nth(1)).toBeDisabled();
   await expect(tasks.nth(23)).toContainText("完成上一关后解锁");

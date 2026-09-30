@@ -370,6 +370,7 @@ export const projectSchema = z
         assetId: z.string().min(1),
         type: z.enum(["sprite", "background", "icon", "audio"]),
         path: z.string().min(1),
+        name: z.string().min(1).max(20).optional(),
       }),
     ),
     messages: z.array(
@@ -416,6 +417,66 @@ export const projectSchema = z
 export type Project = z.infer<typeof projectSchema>;
 export type Transform = z.infer<typeof transformSchema>;
 export type Script = z.infer<typeof scriptSchema>;
+
+/** 第 8.6 节定义的项目规模上限，超限时编辑器阻止新增并提示。 */
+export const PROJECT_LIMITS = {
+  maxScenes: 5,
+  maxSprites: 20,
+  maxScriptsPerSprite: 50,
+  maxBlocksPerScript: 200,
+  maxBlocksPerProject: 1_000,
+} as const;
+
+/** 统计一个角色工作区里的脚本条数（顶层帽子积木数量）。 */
+export function countWorkspaceScripts(workspaceState: unknown): number {
+  if (!workspaceState || typeof workspaceState !== "object") return 0;
+  const root = workspaceState as { blocks?: { blocks?: unknown } };
+  const list = root.blocks?.blocks;
+  if (!Array.isArray(list)) return 0;
+  let count = 0;
+  for (const entry of list) {
+    if (!entry || typeof entry !== "object") continue;
+    const block = entry as { parent?: unknown; type?: unknown };
+    if (typeof block.type !== "string") continue;
+    if (block.parent === undefined || block.parent === null) count += 1;
+  }
+  return count;
+}
+
+/** 统计项目里某个角色的脚本条数（工作区优先，兼容旧版 scripts 字段）。 */
+export function countSpriteScripts(project: Project, spriteId: string): number {
+  const fromWorkspace = countWorkspaceScripts(
+    project.workspaceStates[spriteId],
+  );
+  if (fromWorkspace > 0) return fromWorkspace;
+  return project.scripts.filter((script) => script.ownerSpriteId === spriteId)
+    .length;
+}
+
+/** 统计项目全部积木数量。 */
+export function countProjectBlocks(project: Project): number {
+  let total = 0;
+  for (const workspace of Object.values(project.workspaceStates))
+    total += countWorkspaceBlocksInTree(workspace);
+  for (const script of project.scripts) total += script.blocks.length;
+  return total;
+}
+
+function countWorkspaceBlocksInTree(workspaceState: unknown): number {
+  if (!workspaceState || typeof workspaceState !== "object") return 0;
+  let count = 0;
+  const visit = (value: unknown): void => {
+    if (!value || typeof value !== "object") return;
+    if (
+      "type" in value &&
+      typeof (value as { type?: unknown }).type === "string"
+    )
+      count += 1;
+    for (const child of Object.values(value)) visit(child);
+  };
+  visit(workspaceState);
+  return count;
+}
 
 export function upgradeProjectCoordinates(project: Project): Project {
   if (project.settings.coordinateVersion === 2) return project;
