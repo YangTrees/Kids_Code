@@ -6,7 +6,7 @@ test("home page jumps straight to the chosen unit on the course map", async ({
   await page.addInitScript(() =>
     localStorage.setItem("kids-code-tutorial-step", "3"),
   );
-  await page.goto("/");
+  await page.goto("./");
 
   const card = page
     .locator(".task-challenges button")
@@ -34,7 +34,7 @@ test("the course map CTA lands on the unit the kid is working on", async ({
   await page.addInitScript(() =>
     localStorage.setItem("kids-code-tutorial-step", "3"),
   );
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: /查看课程地图/ }).click();
   await page.waitForURL(/\/learn#chapter-1$/);
 

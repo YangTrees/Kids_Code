@@ -31,11 +31,12 @@ import { HelpDialog } from "../help/HelpDialog";
 import { TouchDpad } from "./TouchDpad";
 import { useTranslate } from "../../shared/use-translate";
 import "../../styles/editor-experience.css";
+import { assetUrl } from "../../shared/base-url";
 
 const assetPathBySprite: Record<string, string> = {
-  spr_liji: "/assets/characters/liji/liji-idle.png",
-  spr_box: "/assets/objects/treasure-chest.png",
-  spr_coin: "/assets/objects/star-coin.png",
+  spr_liji: assetUrl("characters/liji/liji-idle.png"),
+  spr_box: assetUrl("objects/treasure-chest.png"),
+  spr_coin: assetUrl("objects/star-coin.png"),
 };
 
 const categoryItems: Array<{ id: BlockCategory; icon: string; label: string }> =
@@ -272,7 +273,7 @@ export function EditorPage() {
         >
           <img
             className="project-emoji"
-            src="/assets/ui/home-blocks.png"
+            src={assetUrl("ui/home-blocks.png")}
             alt=""
           />
           <span className="project-title-copy">

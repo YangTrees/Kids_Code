@@ -4,7 +4,7 @@ test("right-clicking blocks opens the copy/delete menu", async ({ page }) => {
   await page.addInitScript(() =>
     localStorage.setItem("kids-code-tutorial-step", "3"),
   );
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "开始空白创作" }).click();
   await page.waitForURL(/\/editor\/prj_/);
   await expect(page.locator(".blocklySvg")).toBeVisible();

@@ -7,6 +7,7 @@ import {
 import { useRef, useState } from "react";
 import { DrawingCanvasDialog } from "./DrawingCanvasDialog";
 import { useSettingsStore } from "../../shared/settings-store";
+import { assetUrl } from "../../shared/base-url";
 
 interface AssetLibraryDialogProps {
   kind: "sprite" | "background";
@@ -125,7 +126,7 @@ export function AssetLibraryDialog({
               className="library-card"
               onClick={() => onSelect(asset)}
             >
-              <img src={`/assets/${asset.path}`} alt="" />
+              <img src={assetUrl(asset.path)} alt="" />
               <span>{asset.name}</span>
             </button>
           ))}

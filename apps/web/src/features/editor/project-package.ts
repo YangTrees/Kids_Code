@@ -1,4 +1,5 @@
 import { projectSchema, type Project } from "@kids-code/domain";
+import { assetUrl } from "../../shared/base-url";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -187,9 +188,7 @@ export async function createProjectPackage(
   );
   for (const asset of project.assets) {
     const localAsset = await resolveLocalAsset?.(asset.path);
-    const response = localAsset
-      ? undefined
-      : await fetch(`/assets/${asset.path}`);
+    const response = localAsset ? undefined : await fetch(assetUrl(asset.path));
     if (response && !response.ok)
       throw new Error(`ASSET_EXPORT_FAILED:${asset.assetId}`);
     files.set(

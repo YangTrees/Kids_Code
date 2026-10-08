@@ -17,6 +17,7 @@ import {
 } from "./task-catalog";
 import { createTaskProject } from "./task-project";
 import "../../styles/course.css";
+import { assetUrl } from "../../shared/base-url";
 
 const repository = new IndexedDbProjectRepository();
 
@@ -27,55 +28,55 @@ const chapterDetails: Record<
   基础入门: {
     number: "01",
     description: "认识事件、移动和重复，让角色听懂你的第一条指令。",
-    image: "/assets/ui/home-blocks.png",
+    image: assetUrl("ui/home-blocks.png"),
   },
   互动游戏: {
     number: "02",
     description: "用碰撞、点击和得分，把舞台变成可以玩的游戏。",
-    image: "/assets/ui/home-treasure.png",
+    image: assetUrl("ui/home-treasure.png"),
   },
   程序思维: {
     number: "03",
     description: "切换场景、记录数值，并让程序自己做判断。",
-    image: "/assets/ui/home-coin.png",
+    image: assetUrl("ui/home-coin.png"),
   },
   进阶创作: {
     number: "04",
     description: "加入按键、声音和消息，完成自己的森林冒险。",
-    image: "/assets/ui/home-dialogue.png",
+    image: assetUrl("ui/home-dialogue.png"),
   },
   路线挑战: {
     number: "05",
     description: "沿着固定道路写出路线，用顺序和循环抵达终点。可以直接开始。",
-    image: "/assets/ui/home-route.png",
+    image: assetUrl("ui/home-route.png"),
   },
   云岛远征: {
     number: "06",
     description: "在专属云岛地图上找路标、收星石、选捷径，挑战更聪明的程序。",
-    image: "/assets/ui/home-sky-island.png",
+    image: assetUrl("ui/home-sky-island.png"),
   },
   数据小侦探: {
     number: "07",
     description:
       "用变量把发生的事情记下来、显示出来、比一比，认识人工智能的燃料：数据。",
-    image: "/assets/ui/home-coin.png",
+    image: assetUrl("ui/home-coin.png"),
   },
   规律与模式: {
     number: "08",
     description: "把重复的东西交给循环，找出节拍、形状和节奏里藏着的规律。",
-    image: "/assets/ui/home-blocks.png",
+    image: assetUrl("ui/home-blocks.png"),
   },
   会判断的程序: {
     number: "09",
     description:
       "看特征、定分界线、做判断，亲手搭出“如果…那么”这样的小小决策模型。",
-    image: "/assets/ui/home-dialogue.png",
+    image: assetUrl("ui/home-dialogue.png"),
   },
   "AI 小创客": {
     number: "10",
     description:
       "做出会提醒、会回答、会作曲的小助手，也看看人工智能什么时候会出错。",
-    image: "/assets/ui/home-treasure.png",
+    image: assetUrl("ui/home-treasure.png"),
   },
 };
 
@@ -198,7 +199,7 @@ export function CoursePage() {
           </div>
         </div>
         <div className="course-hero-art" aria-hidden="true">
-          <img src="/assets/characters/liji/liji-idle.png" alt="" />
+          <img src={assetUrl("characters/liji/liji-idle.png")} alt="" />
           <span>从这里出发！</span>
         </div>
       </section>

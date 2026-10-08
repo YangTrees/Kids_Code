@@ -15,6 +15,7 @@ import {
   setAssignedTaskId,
   type CreationTask,
 } from "./task-catalog";
+import { assetUrl } from "../../shared/base-url";
 
 const repository = new IndexedDbProjectRepository();
 
@@ -124,7 +125,7 @@ export function TaskCompletionDialog() {
         }}
       >
         <span className="task-complete-burst" aria-hidden="true" />
-        <img src="/assets/ui/home-coin.png" alt="" />
+        <img src={assetUrl("ui/home-coin.png")} alt="" />
         <span className="task-complete-kicker">CHALLENGE COMPLETE</span>
         <h2 id="task-complete-title">任务完成！</h2>
         <p>你完成了“{completion.task.title}”，新的创作能力已经解锁。</p>

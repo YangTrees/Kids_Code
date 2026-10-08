@@ -4,7 +4,7 @@ test("opens the course map and resumes the current level", async ({ page }) => {
   await page.addInitScript(() =>
     localStorage.setItem("kids-code-tutorial-step", "3"),
   );
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "▶ 开始学习" }).click();
   await expect(page).toHaveURL(/\/learn$/);
   await expect(
@@ -31,7 +31,7 @@ test("opens the independent fixed-path challenge and draws its stage", async ({
   await page.addInitScript(() =>
     localStorage.setItem("kids-code-tutorial-step", "3"),
   );
-  await page.goto("/learn");
+  await page.goto("./learn");
   const pathChapter = page.locator(".course-chapter").nth(4);
   await expect(pathChapter).toContainText("路线挑战");
   await expect(pathChapter.locator(".course-level").first()).toBeEnabled();
@@ -50,7 +50,7 @@ test("opens the new sky-island unit with its dedicated map and goals", async ({
   await page.addInitScript(() =>
     localStorage.setItem("kids-code-tutorial-step", "3"),
   );
-  await page.goto("/learn");
+  await page.goto("./learn");
   const skyChapter = page.locator(".course-chapter").nth(5);
   await expect(skyChapter).toContainText("云岛远征");
   await expect(skyChapter.locator(".course-level")).toHaveCount(4);
@@ -82,7 +82,7 @@ test("opens a clean challenge project from a free template", async ({
       ]),
     );
   });
-  await page.goto("/");
+  await page.goto("./");
   await page
     .getByRole("button", { name: /收集金币/ })
     .first()
@@ -102,7 +102,7 @@ test("runs and replays the free coin template", async ({ page }) => {
   await page.addInitScript(() =>
     localStorage.setItem("kids-code-tutorial-step", "3"),
   );
-  await page.goto("/");
+  await page.goto("./");
   await page
     .getByRole("button", { name: /收集金币/ })
     .first()
@@ -146,7 +146,7 @@ test("moves one visible grid per key, stops at the treasure, and restores the st
   await page.addInitScript(() =>
     localStorage.setItem("kids-code-tutorial-step", "3"),
   );
-  await page.goto("/");
+  await page.goto("./");
   await page
     .getByRole("button", { name: /寻找宝箱/ })
     .first()
@@ -180,7 +180,7 @@ test("persists an edited template and uses its dragged position on replay", asyn
   await page.addInitScript(() =>
     localStorage.setItem("kids-code-tutorial-step", "3"),
   );
-  await page.goto("/");
+  await page.goto("./");
   await page
     .getByRole("button", { name: /寻找宝箱/ })
     .first()
@@ -211,7 +211,7 @@ test("persists an edited template and uses its dragged position on replay", asyn
 });
 
 test("captures and displays a project thumbnail", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "＋ 开始空白创作" }).click();
 
   await expect(page.locator(".pixi-stage-canvas")).toBeVisible();

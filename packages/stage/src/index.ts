@@ -32,6 +32,21 @@ export * from "./geometry";
 
 const localAssetUrls = new Map<string, string>();
 
+/**
+ * 站点资源根目录前缀，部署到子路径（如 /KidsCode/）时由应用启动时注入。
+ * 始终以 "/" 结尾，默认 "/" 表示部署在域名根。
+ */
+let assetBaseUrl = "/";
+
+export function setAssetBaseUrl(base: string): void {
+  const trimmed = base.trim();
+  assetBaseUrl = trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
+}
+
+export function getAssetBaseUrl(): string {
+  return assetBaseUrl;
+}
+
 export function registerLocalAssetUrl(path: string, url: string): void {
   const previous = localAssetUrls.get(path);
   if (previous && previous !== url) URL.revokeObjectURL(previous);
@@ -45,7 +60,7 @@ export function unregisterLocalAssetUrl(path: string): void {
 }
 
 export const resolveAssetUrl = (path: string): string =>
-  localAssetUrls.get(path) ?? `/assets/${path}`;
+  localAssetUrls.get(path) ?? `${assetBaseUrl}assets/${path}`;
 const builtInSoundPaths = new Map([
   ["sfx_ui_click", "sounds/ui-click.wav"],
   ["sfx_collect_coin", "sounds/collect-coin.wav"],

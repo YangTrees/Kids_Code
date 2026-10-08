@@ -11,7 +11,8 @@ export default defineConfig({
   retries: 0,
   reporter: "list",
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    // 应用部署在子路径下（见 apps/web/vite.config.ts 的 base）。
+    baseURL: "http://127.0.0.1:4173/KidsCode/",
     trace: "retain-on-failure",
     ...(process.env.PLAYWRIGHT_CHANNEL
       ? { channel: process.env.PLAYWRIGHT_CHANNEL }
@@ -19,7 +20,7 @@ export default defineConfig({
   },
   webServer: {
     command: "pnpm dev",
-    url: "http://127.0.0.1:4173",
+    url: "http://127.0.0.1:4173/KidsCode/",
     reuseExistingServer: true,
     timeout: 120_000,
   },

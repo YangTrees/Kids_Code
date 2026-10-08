@@ -1,13 +1,13 @@
 /* global self, caches, fetch, URL */
 
-const CACHE_VERSION = "kids-code-shell-v2";
+const CACHE_VERSION = "kids-code-shell-v3";
 const CORE_ASSETS = [
-  "/",
-  "/manifest.webmanifest",
-  "/assets/backgrounds/forest-960x720.webp",
-  "/assets/characters/liji/liji-idle.png",
-  "/assets/objects/star-coin.png",
-  "/assets/objects/treasure-chest.png",
+  "%BASE_URL%",
+  "%BASE_URL%manifest.webmanifest",
+  "%BASE_URL%assets/backgrounds/forest-960x720.webp",
+  "%BASE_URL%assets/characters/liji/liji-idle.png",
+  "%BASE_URL%assets/objects/star-coin.png",
+  "%BASE_URL%assets/objects/treasure-chest.png",
 ];
 
 self.addEventListener("install", (event) => {
@@ -43,14 +43,17 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === "navigate") {
+    const shell = CORE_ASSETS[0];
     event.respondWith(
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          void caches.open(CACHE_VERSION).then((cache) => cache.put("/", copy));
+          void caches
+            .open(CACHE_VERSION)
+            .then((cache) => cache.put(shell, copy));
           return response;
         })
-        .catch(() => caches.match("/")),
+        .catch(() => caches.match(shell)),
     );
     return;
   }

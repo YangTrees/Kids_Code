@@ -5,7 +5,7 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() =>
     localStorage.setItem("kids-code-tutorial-step", "3"),
   );
-  await page.goto(`/editor/prj_layout_${Date.now()}`);
+  await page.goto(`./editor/prj_layout_${Date.now()}`);
   await expect(page.locator(".pixi-stage-canvas")).toBeVisible();
   await expect(page.locator(".blocklySvg")).toBeVisible();
 });
@@ -255,7 +255,7 @@ test("shows sixty-four tasks with two open path branches", async ({ page }) => {
 test("offers complete built-in asset libraries and local image upload", async ({
   page,
 }) => {
-  await page.goto("/editor/prj_demo_001");
+  await page.goto("./editor/prj_demo_001");
   await expect(page.getByLabel("积木脚本工作区")).toBeVisible();
 
   await page.getByRole("button", { name: /添加角色/ }).click();

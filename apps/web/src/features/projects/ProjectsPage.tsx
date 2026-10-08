@@ -24,6 +24,7 @@ import {
   getCurrentChapter,
   type TaskChapter,
 } from "../tasks/task-catalog";
+import { assetUrl } from "../../shared/base-url";
 
 const repository = new IndexedDbProjectRepository();
 
@@ -32,43 +33,43 @@ const chapterCards: Record<
   { image: string; description: string }
 > = {
   基础入门: {
-    image: "/assets/ui/home-blocks.png",
+    image: assetUrl("ui/home-blocks.png"),
     description: "事件、移动、转向和重复，迈出编程第一步。",
   },
   互动游戏: {
-    image: "/assets/ui/home-treasure.png",
+    image: assetUrl("ui/home-treasure.png"),
     description: "让角色碰撞、收集金币，做出胜利反馈。",
   },
   程序思维: {
-    image: "/assets/ui/home-coin.png",
+    image: assetUrl("ui/home-coin.png"),
     description: "用场景、变量和条件，让程序自己判断。",
   },
   进阶创作: {
-    image: "/assets/ui/home-dialogue.png",
+    image: assetUrl("ui/home-dialogue.png"),
     description: "加入键盘、声音与故事，完成冒险小游戏。",
   },
   路线挑战: {
-    image: "/assets/ui/home-route.png",
+    image: assetUrl("ui/home-route.png"),
     description: "看地图写程序，沿固定道路逐格走到终点。",
   },
   云岛远征: {
-    image: "/assets/ui/home-sky-island.png",
+    image: assetUrl("ui/home-sky-island.png"),
     description: "经过路标、收集星石，并在限定步数内找到捷径。",
   },
   数据小侦探: {
-    image: "/assets/ui/home-coin.png",
+    image: assetUrl("ui/home-coin.png"),
     description: "记录、显示和比较数据，认识人工智能的燃料。",
   },
   规律与模式: {
-    image: "/assets/ui/home-blocks.png",
+    image: assetUrl("ui/home-blocks.png"),
     description: "用循环表达节拍、形状和节奏里重复的规律。",
   },
   会判断的程序: {
-    image: "/assets/ui/home-dialogue.png",
+    image: assetUrl("ui/home-dialogue.png"),
     description: "看特征、定分界线，搭出“如果…那么”的决策模型。",
   },
   "AI 小创客": {
-    image: "/assets/ui/home-treasure.png",
+    image: assetUrl("ui/home-treasure.png"),
     description: "做出会提醒、会回答的小助手，也看看它何时出错。",
   },
 };
@@ -259,13 +260,13 @@ export function ProjectsPage() {
         </div>
         <div className="hero-preview" aria-hidden="true">
           <span className="hero-preview-label">正在创作 · 森林寻宝</span>
-          <img src="/assets/characters/liji/liji-idle.png" alt="" />
+          <img src={assetUrl("characters/liji/liji-idle.png")} alt="" />
           <span className="hero-code-card hero-code-motion">向右移动 3 格</span>
           <span className="hero-code-card hero-code-looks">说 我找到啦！</span>
           <span className="hero-play-mark">▶</span>
         </div>
         <div className="hero-mini-card" aria-hidden="true">
-          <img src="/assets/ui/home-blocks.png" alt="" />
+          <img src={assetUrl("ui/home-blocks.png")} alt="" />
           <span>
             <strong>拖一拖</strong>
             像拼积木一样简单
@@ -291,7 +292,7 @@ export function ProjectsPage() {
           >
             <img
               className="template-icon"
-              src="/assets/ui/home-treasure.png"
+              src={assetUrl("ui/home-treasure.png")}
               alt=""
             />
             <span className="template-copy">
@@ -305,7 +306,7 @@ export function ProjectsPage() {
           >
             <img
               className="template-icon"
-              src="/assets/ui/home-coin.png"
+              src={assetUrl("ui/home-coin.png")}
               alt=""
             />
             <span className="template-copy">
@@ -319,7 +320,7 @@ export function ProjectsPage() {
           >
             <img
               className="template-icon"
-              src="/assets/ui/home-dialogue.png"
+              src={assetUrl("ui/home-dialogue.png")}
               alt=""
             />
             <span className="template-copy">
@@ -412,7 +413,9 @@ export function ProjectsPage() {
                 <img
                   src={
                     thumbnailUrls[project.projectId] ??
-                    `/assets/${backdrop?.path ?? "backgrounds/forest-960x720.webp"}`
+                    assetUrl(
+                      backdrop?.path ?? "backgrounds/forest-960x720.webp",
+                    )
                   }
                   alt="作品舞台缩略图"
                 />

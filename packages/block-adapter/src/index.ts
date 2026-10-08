@@ -1108,6 +1108,21 @@ export const compileSerializedWorkspace = (
 const isDeletableBlock = (block: ScratchBlocks.Block): boolean =>
   block.isDeletable() && !block.isShadow();
 
+/**
+ * 积木媒体资源（blockly-media）所在的站点前缀，部署到子路径时注入。
+ * 始终以 "/" 结尾，默认 "/" 表示部署在域名根。
+ */
+let mediaBaseUrl = "/";
+
+export function setMediaBaseUrl(base: string): void {
+  const trimmed = base.trim();
+  mediaBaseUrl = trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
+}
+
+export function getMediaBaseUrl(): string {
+  return mediaBaseUrl;
+}
+
 export class BlockWorkspaceAdapter {
   #workspace: ScratchBlocks.WorkspaceSvg | null = null;
   #isLoading = false;
@@ -1128,7 +1143,7 @@ export class BlockWorkspaceAdapter {
       theme: kidsCodeTheme,
       toolbox: kidsToolbox,
       maxBlocks: toolboxContext?.maxBlocks ?? 1_000,
-      media: "/blockly-media/",
+      media: `${mediaBaseUrl}blockly-media/`,
       trashcan: false,
       sounds: false,
       scrollbars: true,
