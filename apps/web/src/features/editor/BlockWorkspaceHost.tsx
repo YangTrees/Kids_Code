@@ -3,9 +3,11 @@ import {
   type WorkspaceToolboxContext,
 } from "@kids-code/block-adapter";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { countWorkspaceBlocks, useEditorStore } from "./editor-store";
 import { useEditorRuntime } from "./EditorRuntimeContext";
 import { getAssignedTaskId } from "../tasks/task-catalog";
+import { BlockContextMenu, type BlockMenuTarget } from "./BlockContextMenu";
 
 import { builtInSoundNames } from "./asset-catalog";
 
@@ -30,6 +32,45 @@ export function BlockWorkspaceHost() {
     const name = window.prompt("给变量起个名字（最多12个字）", "变量1");
     if (name?.trim()) addVariable(name);
   }, [addVariable]);
+  const [menuTarget, setMenuTarget] = useState<BlockMenuTarget | null>(null);
+  const closeMenu = useCallback(() => setMenuTarget(null), []);
+  const handleContextMenu = useCallback(
+    (event: ReactMouseEvent<HTMLDivElement>) => {
+      const adapter = adapterRef.current;
+      if (!adapter) return;
+      // Keep the browser menu out of the way; kids get our own menu instead.
+      event.preventDefault();
+      const blockId = adapter.getBlockIdFromEventTarget(event.target);
+      const bounds = event.currentTarget.getBoundingClientRect();
+      setMenuTarget({
+        x: Math.max(
+          0,
+          Math.min(event.clientX - bounds.left, bounds.width - 190),
+        ),
+        y: Math.max(
+          0,
+          Math.min(event.clientY - bounds.top, bounds.height - 140),
+        ),
+        blockId,
+        stackSize: blockId ? adapter.getBlockStackSize(blockId) : 0,
+      });
+    },
+    [],
+  );
+  const duplicateFromMenu = useCallback(() => {
+    const blockId = menuTarget?.blockId;
+    setMenuTarget(null);
+    if (blockId) adapterRef.current?.duplicateBlock(blockId);
+  }, [menuTarget]);
+  const deleteFromMenu = useCallback(() => {
+    const blockId = menuTarget?.blockId;
+    setMenuTarget(null);
+    if (blockId) adapterRef.current?.deleteBlock(blockId);
+  }, [menuTarget]);
+  const cleanUpFromMenu = useCallback(() => {
+    setMenuTarget(null);
+    adapterRef.current?.cleanUpBlocks();
+  }, []);
   const toolboxContext = useMemo<WorkspaceToolboxContext>(
     () => ({
       selectedSpriteId,
@@ -69,6 +110,8 @@ export function BlockWorkspaceHost() {
 
   useEffect(() => {
     const host = hostRef.current;
+    // A fresh workspace (sprite switch, undo restore) invalidates the menu.
+    setMenuTarget(null);
     if (!host || !isHydrated) return;
     const adapter = new BlockWorkspaceAdapter();
     const workspaceState =
@@ -129,7 +172,7 @@ export function BlockWorkspaceHost() {
   }, [selectedCategory]);
 
   return (
-    <div className="block-workspace-shell">
+    <div className="block-workspace-shell" onContextMenu={handleContextMenu}>
       <div
         ref={hostRef}
         className="block-workspace-host"
@@ -139,6 +182,15 @@ export function BlockWorkspaceHost() {
         <div className="workspace-error" role="alert">
           积木工作区暂时没有加载成功，请刷新后再试。
         </div>
+      ) : null}
+      {menuTarget ? (
+        <BlockContextMenu
+          target={menuTarget}
+          onDuplicate={duplicateFromMenu}
+          onDelete={deleteFromMenu}
+          onCleanUp={cleanUpFromMenu}
+          onClose={closeMenu}
+        />
       ) : null}
     </div>
   );

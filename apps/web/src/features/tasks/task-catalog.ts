@@ -529,3 +529,23 @@ export function markTaskCompleted(taskId: TaskId, stars: 1 | 2 | 3 = 3): void {
   );
   window.dispatchEvent(new Event("kids-code:task-change"));
 }
+
+/** 课程地图上的单元顺序，与关卡顺序保持一致。 */
+export const courseChapters: TaskChapter[] = Array.from(
+  new Set(creationTasks.map((task) => task.chapter)),
+);
+
+/** 单元在课程地图上的锚点。用序号命名，避免中文与空格进入地址栏。 */
+export function getChapterAnchor(chapter: TaskChapter): string {
+  return `chapter-${courseChapters.indexOf(chapter) + 1}`;
+}
+
+/** 孩子当前所在的单元：第一个还没完成的关卡所属的单元。 */
+export function getCurrentChapter(
+  completedIds = getCompletedTaskIds(),
+): TaskChapter {
+  const next = creationTasks.find(
+    (task) => !completedIds.includes(task.taskId),
+  );
+  return (next ?? creationTasks[creationTasks.length - 1]!).chapter;
+}

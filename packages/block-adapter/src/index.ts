@@ -1101,6 +1101,13 @@ export const compileSerializedWorkspace = (
   }
 };
 
+/**
+ * Shadows are placeholders owned by their input, so they are never offered as
+ * a standalone copy/delete target.
+ */
+const isDeletableBlock = (block: ScratchBlocks.Block): boolean =>
+  block.isDeletable() && !block.isShadow();
+
 export class BlockWorkspaceAdapter {
   #workspace: ScratchBlocks.WorkspaceSvg | null = null;
   #isLoading = false;
@@ -1231,6 +1238,80 @@ export class BlockWorkspaceAdapter {
 
   highlightBlock(blockId: string | null): void {
     this.#workspace?.highlightBlock(blockId);
+  }
+
+  /**
+   * Maps a DOM event (for example a right-click) back to the block under the
+   * cursor. Scratch Blocks tags every block SVG group with `data-id`, so the
+   * lookup stays stable without reaching into library internals.
+   */
+  getBlockIdFromEventTarget(target: EventTarget | null): string | null {
+    if (!this.#workspace || !(target instanceof Element)) return null;
+    const owner = target.closest("[data-id]");
+    const blockId = owner?.getAttribute("data-id");
+    if (!blockId) return null;
+    const block = this.#workspace.getBlockById(blockId);
+    if (!block || block.isInFlyout) return null;
+    return blockId;
+  }
+
+  /** How many blocks disappear when `blockId` is deleted. */
+  getBlockStackSize(blockId: string): number {
+    const block = this.#workspace?.getBlockById(blockId);
+    if (!block) return 0;
+    const deletable = block.getDescendants(false).filter(isDeletableBlock);
+    const next = block.getNextBlock();
+    if (!next) return Math.max(deletable.length, 1);
+    // Blocks hanging below stay in the script, so they are not counted.
+    const below = next.getDescendants(false).filter(isDeletableBlock);
+    return Math.max(
+      deletable.filter((item) => !below.includes(item)).length,
+      1,
+    );
+  }
+
+  canDeleteBlock(blockId: string): boolean {
+    const block = this.#workspace?.getBlockById(blockId);
+    return !!block && isDeletableBlock(block);
+  }
+
+  /** Copies the block together with everything connected below it. */
+  duplicateBlock(blockId: string): boolean {
+    const workspace = this.#workspace;
+    if (!workspace) return false;
+    const block = workspace.getBlockById(blockId);
+    if (!block || block.isInFlyout) return false;
+    const copyData = block.toCopyData(true);
+    if (!copyData) return false;
+    ScratchBlocks.Events.setGroup(true);
+    try {
+      return ScratchBlocks.clipboard.paste(copyData, workspace) !== null;
+    } finally {
+      ScratchBlocks.Events.setGroup(false);
+    }
+  }
+
+  /**
+   * Deletes the block with `healStack`, so the script stays continuous and the
+   * change is undoable as a single step.
+   */
+  deleteBlock(blockId: string): boolean {
+    const workspace = this.#workspace;
+    if (!workspace) return false;
+    const block = workspace.getBlockById(blockId);
+    if (!block || block.isInFlyout || !isDeletableBlock(block)) return false;
+    ScratchBlocks.Events.setGroup(true);
+    try {
+      block.dispose(true, true);
+      return true;
+    } finally {
+      ScratchBlocks.Events.setGroup(false);
+    }
+  }
+
+  /** Tidies up blocks that were dropped all over the workspace. */
+  cleanUpBlocks(): void {
+    this.#workspace?.cleanUp();
   }
 
   destroy(): void {

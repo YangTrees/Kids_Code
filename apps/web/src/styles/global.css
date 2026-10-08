@@ -409,6 +409,69 @@ button:disabled {
   background-image: radial-gradient(#d9e2ec 1.4px, transparent 1.4px);
   background-size: 22px 22px;
 }
+.block-context-menu {
+  position: absolute;
+  z-index: 20;
+  display: grid;
+  gap: 6px;
+  width: 184px;
+  padding: 12px;
+  color: #29466d;
+  background: white;
+  border: 3px solid #d7e8fb;
+  border-radius: 20px;
+  box-shadow: 0 18px 44px rgb(26 56 94 / 26%);
+  animation: block-menu-pop 0.16s ease-out both;
+}
+.block-context-menu-title {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #7c8ba3;
+}
+.block-context-menu button {
+  min-height: 44px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: #29466d;
+  text-align: left;
+  background: #f4f8fd;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  cursor: pointer;
+}
+.block-context-menu button:hover,
+.block-context-menu button:focus-visible {
+  background: #e4efff;
+  border-color: #b9d6fb;
+}
+.block-context-menu .block-context-menu-danger {
+  color: #c0392b;
+  background: #fdeceb;
+}
+.block-context-menu .block-context-menu-danger:hover,
+.block-context-menu .block-context-menu-danger:focus-visible {
+  background: #fbdedc;
+  border-color: #f4bdb7;
+}
+.block-context-menu-hint {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #8d9bb1;
+}
+@keyframes block-menu-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 .workspace-error {
   position: absolute;
   inset: 28% 12%;

@@ -17,8 +17,11 @@ import {
 import { HelpDialog } from "../help/HelpDialog";
 import { useTranslate } from "../../shared/use-translate";
 import {
+  courseChapters,
   creationTasks,
+  getChapterAnchor,
   getCompletedTaskIds,
+  getCurrentChapter,
   type TaskChapter,
 } from "../tasks/task-catalog";
 
@@ -69,7 +72,6 @@ const chapterCards: Record<
     description: "做出会提醒、会回答的小助手，也看看它何时出错。",
   },
 };
-const chapters = Array.from(new Set(creationTasks.map((task) => task.chapter)));
 
 function relativeUpdatedAt(value: string): string {
   const elapsed = Math.max(0, Date.now() - Date.parse(value));
@@ -344,13 +346,20 @@ export function ProjectsPage() {
             <h2>课程挑战</h2>
             <p>六个单元，从第一块积木走到云岛路线挑战。</p>
           </div>
-          <button className="import-project" onClick={() => navigate("/learn")}>
+          <button
+            className="import-project"
+            onClick={() =>
+              navigate(
+                `/learn#${getChapterAnchor(getCurrentChapter(completedTasks))}`,
+              )
+            }
+          >
             查看课程地图 · 已完成 {completedTasks.length} /{" "}
             {creationTasks.length} →
           </button>
         </header>
         <div>
-          {chapters.map((chapter, index) => {
+          {courseChapters.map((chapter, index) => {
             const tasks = creationTasks.filter(
               (task) => task.chapter === chapter,
             );
@@ -358,7 +367,10 @@ export function ProjectsPage() {
               completedTasks.includes(task.taskId),
             ).length;
             return (
-              <button key={chapter} onClick={() => navigate("/learn")}>
+              <button
+                key={chapter}
+                onClick={() => navigate(`/learn#${getChapterAnchor(chapter)}`)}
+              >
                 <img
                   className="task-art"
                   src={chapterCards[chapter].image}

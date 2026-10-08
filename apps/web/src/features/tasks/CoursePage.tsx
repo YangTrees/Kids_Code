@@ -1,11 +1,14 @@
 import { IndexedDbProjectRepository } from "@kids-code/persistence";
 import type { Project } from "@kids-code/domain";
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import {
+  courseChapters,
   creationTasks,
   getAssignedTaskId,
+  getChapterAnchor,
   getCompletedTaskIds,
+  getCurrentChapter,
   getTaskProgress,
   isTaskUnlocked,
   setAssignedTaskId,
@@ -90,9 +93,8 @@ export function CoursePage() {
   const hasStartedNextTask = projects.some(
     (project) => getAssignedTaskId(project.projectId) === nextTask.taskId,
   );
-  const chapters = Array.from(
-    new Set(creationTasks.map((task) => task.chapter)),
-  );
+  const { hash } = useLocation();
+  const [targetChapter, setTargetChapter] = useState<TaskChapter | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -111,6 +113,23 @@ export function CoursePage() {
       active = false;
     };
   }, []);
+
+  // 从首页点进某个单元时，直接滚到那个单元并短暂高亮，别停在页面顶部。
+  useEffect(() => {
+    const anchor = hash.replace("#", "");
+    if (!anchor) return;
+    const chapter =
+      anchor === "current"
+        ? getCurrentChapter()
+        : courseChapters.find((item) => getChapterAnchor(item) === anchor);
+    if (!chapter) return;
+    const element = document.getElementById(getChapterAnchor(chapter));
+    if (!element) return;
+    element.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTargetChapter(chapter);
+    const timer = window.setTimeout(() => setTargetChapter(null), 2600);
+    return () => window.clearTimeout(timer);
+  }, [hash]);
 
   const openTask = async (task: CreationTask) => {
     if (
@@ -203,7 +222,7 @@ export function CoursePage() {
       ) : null}
 
       <div className="course-chapters">
-        {chapters.map((chapter) => {
+        {courseChapters.map((chapter) => {
           const tasks = creationTasks.filter(
             (task) => task.chapter === chapter,
           );
@@ -212,7 +231,15 @@ export function CoursePage() {
           ).length;
           const detail = chapterDetails[chapter];
           return (
-            <section className="course-chapter" key={chapter}>
+            <section
+              className={
+                targetChapter === chapter
+                  ? "course-chapter course-chapter-target"
+                  : "course-chapter"
+              }
+              key={chapter}
+              id={getChapterAnchor(chapter)}
+            >
               <header>
                 <span className="course-chapter-number">{detail.number}</span>
                 <div>
