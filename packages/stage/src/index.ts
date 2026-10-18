@@ -31,10 +31,12 @@ import {
 export * from "./geometry";
 export * from "./assets";
 import { resolveAssetUrl } from "./assets";
+import { StageNarration } from "./narration";
 const builtInSoundPaths = new Map([
   ["sfx_ui_click", "sounds/ui-click.wav"],
   ["sfx_collect_coin", "sounds/collect-coin.wav"],
   ["sfx_game_success", "sounds/game-success.wav"],
+  ["sfx_hello", "sounds/hello.wav"],
 ]);
 const ASSET_RETRY_DELAYS = [0, 180, 600] as const;
 
@@ -95,6 +97,8 @@ export class StageController implements StagePort {
   >();
   readonly #soundPaths = new Map<string, string>();
   readonly #activeAudio = new Set<HTMLAudioElement>();
+  readonly #narration = new StageNarration();
+  #resolutionObserver: ResizeObserver | null = null;
   readonly #effects = new Map<Graphics, (ticker: Ticker) => void>();
   readonly #lastPlayClickAt = new Map<string, number>();
   readonly #variableValues = new Map<
@@ -142,7 +146,14 @@ export class StageController implements StagePort {
       preference: "webgl",
       antialias: true,
       autoDensity: true,
-      resolution: Math.min(window.devicePixelRatio, 2),
+      resolution: Math.min(
+        4,
+        Math.max(
+          2,
+          (window.devicePixelRatio * host.clientWidth) /
+            project.settings.stageWidth,
+        ),
+      ),
       backgroundColor: 0xf4f8ed,
     });
     this.#initialized = true;
@@ -160,6 +171,23 @@ export class StageController implements StagePort {
       return false;
     }
     host.replaceChildren(this.#application.canvas);
+    this.#resolutionObserver = new ResizeObserver(() => {
+      const resolution = Math.min(
+        4,
+        Math.max(
+          2,
+          (window.devicePixelRatio * host.clientWidth) /
+            project.settings.stageWidth,
+        ),
+      );
+      if (resolution !== this.#application.renderer.resolution)
+        this.#application.renderer.resize(
+          project.settings.stageWidth,
+          project.settings.stageHeight,
+          resolution,
+        );
+    });
+    this.#resolutionObserver.observe(host);
     this.#mounted = true;
     return true;
   }
@@ -648,6 +676,11 @@ export class StageController implements StagePort {
     if (this.#muted) return;
     const path = this.#soundPaths.get(soundId);
     if (!path) return;
+    this.#playAudioPath(path);
+  }
+
+  #playAudioPath(path: string): void {
+    if (this.#muted) return;
     const audio = new Audio(resolveAssetUrl(path));
     audio.volume = this.#volume;
     this.#activeAudio.add(audio);
@@ -658,21 +691,25 @@ export class StageController implements StagePort {
   }
 
   pauseAllSounds(): void {
+    this.#narration.pause();
     for (const audio of this.#activeAudio) audio.pause();
   }
 
   resumeAllSounds(): void {
     if (this.#muted) return;
+    this.#narration.resume();
     for (const audio of this.#activeAudio) void audio.play().catch(() => null);
   }
 
   setMuted(muted: boolean): void {
     this.#muted = muted;
+    this.#narration.setMuted(muted);
     for (const audio of this.#activeAudio) audio.muted = muted;
   }
 
   setVolume(volume: number): void {
     this.#volume = Math.min(1, Math.max(0, volume));
+    this.#narration.setVolume(this.#volume);
     for (const audio of this.#activeAudio) audio.volume = this.#volume;
   }
 
@@ -687,6 +724,7 @@ export class StageController implements StagePort {
   }
 
   stopAllSounds(): void {
+    this.#narration.stop();
     for (const audio of this.#activeAudio) {
       audio.pause();
       audio.currentTime = 0;
@@ -850,6 +888,11 @@ export class StageController implements StagePort {
     const sprite = this.#sprites.get(spriteId);
     if (!sprite) return;
     this.clearSpeech(spriteId);
+    const greeting = message.replace(/[\s，,。.!！]/g, "");
+    if (greeting === "你好") this.#playAudioPath("sounds/hello.wav");
+    else if (greeting === "你好我是团团")
+      this.#playAudioPath("sounds/hello-tuantuan.wav");
+    else this.#narration.speak(message);
 
     const bubble = new Container();
     const text = new Text({
@@ -1150,6 +1193,8 @@ export class StageController implements StagePort {
   }
 
   destroy(): void {
+    this.#resolutionObserver?.disconnect();
+    this.#resolutionObserver = null;
     if (!this.#initialized) return;
     this.stopAllSounds();
     this.#clearEffects();

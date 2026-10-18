@@ -4,6 +4,7 @@ import {
   creationTasks,
   getAssignedCreationTask,
   evaluateCreationTask,
+  pinAssignedTaskVersion,
 } from "./task-catalog";
 import { createTaskProject } from "./task-project";
 import { CURRENT_TASK_VERSION, findVersionedTask } from "./task-versions";
@@ -12,6 +13,7 @@ import { sameTaskAnswer } from "./task-answers";
 import baseline from "../../../../../docs/baselines/course-v3.json";
 import { getLessonConfig } from "./lesson-config";
 import { chapterImage } from "./chapter-visuals";
+import { lessonScenarios } from "./lesson-scenarios";
 import {
   referenceRoots,
   equivalentRoots,
@@ -67,7 +69,10 @@ describe("one current unreleased curriculum", () => {
         task.rules.map((rule) => ({ id: rule.id, anyOf: rule.anyOf })),
       ).toEqual(row.rules.map((rule) => ({ id: rule.id, anyOf: rule.anyOf })));
       expect(task.runtimeGoal.label.replaceAll("团团", "栗奇")).toBe(
-        row.runtimeGoal,
+        lessonScenarios[task.taskId]?.goal ??
+          (task.taskId === "repeat"
+            ? "重复两次移动，沿网格小路到达终点"
+            : row.runtimeGoal),
       );
       expect(task.programGoal?.label ?? null).toBe(row.programGoal);
       expect(getLessonConfig(task)).toBeDefined();
@@ -80,19 +85,46 @@ describe("one current unreleased curriculum", () => {
           (sprite) => sprite.spriteId === project.course!.bindings.actor,
         )?.costumeAssetId,
       ).toBe("costume_story_tuantuan_idle_v1");
-      expect(
-        project.scenes.map((scene) =>
-          scene.instances.map((instance) => instance.transform),
-        ),
-      ).toEqual(
-        row.scenes.map((scene) =>
-          scene.instances.map((instance) => instance.transform),
-        ),
-      );
+      if (task.taskId !== "repeat")
+        expect(
+          project.scenes.map((scene) =>
+            scene.instances.map((instance) => instance.transform),
+          ),
+        ).toEqual(
+          row.scenes.map((scene) =>
+            scene.instances.map((instance) => instance.transform),
+          ),
+        );
       expect(getTaskSetupProblem(project)).toBeNull();
       expect(evaluateCreationTask(project, task).complete).toBe(false);
     },
   );
+  it("uses a two-step grid route for lesson six", () => {
+    const task = creationTasks[5]!;
+    const project = createTaskProject(task);
+    expect(task.taskId).toBe("repeat");
+    expect(project.pathMap?.tiles).toHaveLength(3);
+    expect(project.pathMap?.start).toEqual({ column: 4, row: 5 });
+    expect(project.pathMap?.goal).toEqual({ column: 6, row: 5 });
+    expect(project.settings.movementStep).toBe(40);
+  });
+  it("opens an existing lesson-six program on the latest grid without discarding its blocks", () => {
+    const project = createTaskProject(creationTasks[5]!);
+    delete project.pathMap;
+    project.scenes[0]!.sceneId = "scn_existing_repeat";
+    project.currentSceneId = "scn_existing_repeat";
+    project.workspaceStates[project.course!.bindings.actor] = {
+      blocks: { blocks: referenceRoots("repeat") },
+    };
+    const updated = pinAssignedTaskVersion(project);
+    expect(updated.projectId).toBe(project.projectId);
+    expect(updated.workspaceStates).toEqual(project.workspaceStates);
+    expect(updated.pathMap?.tiles).toHaveLength(3);
+    expect(
+      updated.scenes.some((scene) => scene.sceneId === updated.currentSceneId),
+    ).toBe(true);
+    expect(getTaskSetupProblem(updated)).toBeNull();
+  });
   it("makes multi-scene lessons visually distinct", () => {
     for (const task of creationTasks.filter((item) =>
       ["scene", "scene_story", "ai_story"].includes(item.taskId),

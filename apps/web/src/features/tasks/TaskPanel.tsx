@@ -9,6 +9,7 @@ import { useDataPlayProgress } from "./data-play";
 import { TaskCompatibilityNotice } from "./TaskCompatibilityNotice";
 import { RealBlockGuide } from "./LessonGuide";
 import { completionStars, recordLearningSupport } from "./learning-support";
+import { LessonStars } from "../../shared/LessonStars";
 import {
   creationTasks,
   evaluateCreationTask,
@@ -140,7 +141,7 @@ export function TaskPanel({ onClose }: { onClose: () => void }) {
           </button>
         </header>
         <div className="task-panel-body">
-          <nav aria-label="任务列表">
+          <nav aria-label="任务列表" tabIndex={0}>
             {chapterGroups.map(({ chapter, tasks }) => (
               <section className="task-chapter" key={chapter}>
                 <h3>
@@ -169,11 +170,13 @@ export function TaskPanel({ onClose }: { onClose: () => void }) {
                       <span className="task-nav-copy">
                         <strong>{item.title}</strong>
                         <small>
-                          {record
-                            ? `已完成 · ${record.stars} 星`
-                            : unlocked
-                              ? "可以挑战"
-                              : "完成上一关后解锁"}
+                          {record ? (
+                            <LessonStars stars={record.stars} />
+                          ) : unlocked ? (
+                            "可以挑战"
+                          ) : (
+                            "完成上一关后解锁"
+                          )}
                         </small>
                       </span>
                       <span
@@ -247,7 +250,7 @@ export function TaskPanel({ onClose }: { onClose: () => void }) {
             </section>
             {evaluation.complete ? (
               <div className="task-success" role="status">
-                <span>完成奖励 · {completionStars(task, hintLevel)} 星</span>
+                <LessonStars stars={completionStars(task, hintLevel)} />
                 <strong>任务完成！</strong>
                 <p>你完成了本关目标，还可以继续改编作品。</p>
                 <small>

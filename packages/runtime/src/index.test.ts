@@ -1,4 +1,8 @@
-import { createDefaultProject, type RuntimeScript } from "@kids-code/domain";
+import {
+  createDefaultProject,
+  getMovementStep,
+  type RuntimeScript,
+} from "@kids-code/domain";
 import { describe, expect, it, vi } from "vitest";
 import {
   CancellationToken,
@@ -106,6 +110,48 @@ const script: RuntimeScript = {
 };
 
 describe("RuntimeSession", () => {
+  it("distinguishes an armed key program from a finished finite program until stopped", async () => {
+    const project = createDefaultProject();
+    const session = new RuntimeSession(
+      project,
+      createStage(),
+      { highlightBlock: vi.fn(), reportError: vi.fn() },
+      new ImmediateClock(),
+    );
+    await session.start([
+      {
+        scriptId: "key-listener",
+        ownerSpriteId: "spr_liji",
+        blocks: [
+          {
+            id: "key",
+            sourceBlockId: "key",
+            type: "EVT_KEY",
+            key: "right arrow",
+          },
+          {
+            id: "key-move",
+            sourceBlockId: "key-move",
+            type: "MOT_MOVE",
+            steps: 1,
+            direction: "right",
+          },
+        ],
+      },
+    ]);
+    expect(session.report.awaitingInput).toBe(true);
+    const before = session.report.spritePositions.spr_liji!.x;
+    await session.triggerKey("right arrow");
+    expect(session.report.spritePositions.spr_liji!.x).toBe(
+      before + getMovementStep(project),
+    );
+    expect(session.report.executedBlockCounts?.["key-move"]).toBe(1);
+    expect(session.report.awaitingInput).toBe(true);
+    session.stop();
+    expect(session.report.awaitingInput).toBe(false);
+    await session.start([script]);
+    expect(session.report.awaitingInput).toBe(false);
+  });
   it("walks a fixed path cell by cell and refuses to skip a corner", async () => {
     const project = createDefaultProject();
     project.pathMap = {

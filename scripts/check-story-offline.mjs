@@ -1,4 +1,4 @@
-/* global console, URL, localStorage, navigator, location, indexedDB, caches */
+/* global console, URL, localStorage, navigator, location, indexedDB, caches, fetch */
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
@@ -123,7 +123,7 @@ try {
     page.locator(".blocklyBlockCanvas").filter({ hasText: "离线也能编程" }),
   ).toBeVisible();
   const cached = await page.evaluate(async () => {
-    const cache = await caches.open("kids-code-shell-v7-brand");
+    const cache = await caches.open("kids-code-shell-v8-lesson-feedback");
     return (await cache.keys()).map((request) => new URL(request.url).pathname);
   });
   for (const resource of [
@@ -150,6 +150,8 @@ try {
     "sounds/bell.wav",
     "sounds/door-open.wav",
     "sounds/game-over.wav",
+    "sounds/hello.wav",
+    "sounds/hello-tuantuan.wav",
     "characters/liji/liji-idle.png",
   ])
     assert.ok(cached.includes("/KidsCode/assets/" + resource), resource);
@@ -158,6 +160,25 @@ try {
   await expect(page.getByLabel("当前挑战")).toContainText("让团团说话");
   await expect(page.locator(".pixi-stage-canvas")).toBeVisible();
   await expect(page.locator(".blocklySvg")).toBeVisible();
+  const offlineVoices = await page.evaluate(async () => {
+    return Promise.all(
+      ["hello.wav", "hello-tuantuan.wav"].map(async (name) => {
+        const response = await fetch("/KidsCode/assets/sounds/" + name);
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        return {
+          ok: response.ok,
+          size: bytes.length,
+          header: String.fromCharCode(...bytes.subarray(0, 4)),
+        };
+      }),
+    );
+  });
+  for (const voice of offlineVoices) {
+    assert.ok(
+      voice.ok && voice.size > 10000 && voice.header === "RIFF",
+      "Bundled Chinese voice must be available offline",
+    );
+  }
   const mentor = page.getByAltText("点点陪你完成挑战");
   await expect
     .poll(() => mentor.evaluate((image) => image.naturalWidth))
@@ -166,7 +187,7 @@ try {
   await expect(page.getByRole("dialog", { name: "任务完成！" })).toBeVisible();
   await page.screenshot({ path: "artifacts/story-ip/offline-v4.png" });
   console.log(
-    "Verified production offline v4: cached old/new assets, restored course and blocks, completed lesson.",
+    "Verified production offline v8: cached story assets and Chinese WAV voices, restored course and blocks, completed lesson.",
   );
 } finally {
   await browser?.close();

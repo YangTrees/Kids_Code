@@ -241,7 +241,6 @@ export function BlockWorkspaceHost({
       className="block-workspace-shell"
       onContextMenu={handleContextMenu}
       onPointerDownCapture={(event) => {
-        if (!lesson) return;
         const target = adapterRef.current?.parameterAt(event.target);
         if (!target) return;
         event.preventDefault();
@@ -250,7 +249,7 @@ export function BlockWorkspaceHost({
         setParameter(target);
       }}
       onMouseDownCapture={(event) => {
-        if (lesson && adapterRef.current?.parameterAt(event.target)) {
+        if (adapterRef.current?.parameterAt(event.target)) {
           event.preventDefault();
           event.stopPropagation();
         }

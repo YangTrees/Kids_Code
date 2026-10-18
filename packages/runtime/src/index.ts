@@ -133,6 +133,8 @@ export class CancellationToken {
 }
 export interface RuntimeReport {
   status: RuntimeStatus;
+  /** Execution is idle but the running project still listens for user events. */
+  awaitingInput?: boolean;
   score: number;
   result: "success" | "failure" | null;
   spritePositions: Record<string, { x: number; y: number }>;
@@ -241,6 +243,14 @@ export class RuntimeSession {
     const pathSteps = Math.max(0, this.#pathTrace.length - 1);
     return {
       status: this.#status,
+      awaitingInput:
+        this.#status === "COMPLETED" &&
+        this.#result === null &&
+        this.#scripts.some((script) =>
+          ["EVT_KEY", "EVT_SPRITE_CLICK"].includes(
+            script.blocks[0]?.type ?? "",
+          ),
+        ),
       score: this.#score,
       result: this.#result,
       spritePositions: Object.fromEntries(

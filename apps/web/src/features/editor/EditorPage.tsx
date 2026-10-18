@@ -33,12 +33,14 @@ import { DataPlayBoard } from "../tasks/DataPlayBoard";
 import {
   getAssignedTaskId,
   getAssignedCreationTask,
+  creationTasks,
 } from "../tasks/task-catalog";
 import { getLessonConfig } from "../tasks/lesson-config";
 import { BLOCK_PALETTE } from "@kids-code/block-adapter";
 import { LessonToolActions } from "../tasks/LessonToolActions";
 import { LessonRolePicker } from "../tasks/LessonRolePicker";
 import { LessonRouteTrace } from "../tasks/LessonRouteTrace";
+import { LessonNavigation } from "../tasks/LessonNavigation";
 import type { CSSProperties } from "react";
 import "../../styles/teaching.css";
 import { HelpDialog } from "../help/HelpDialog";
@@ -185,7 +187,15 @@ export function EditorPage() {
   const allowUploads = useSettingsStore((state) => state.allowUploads);
   const addSoundAsset = useEditorStore((state) => state.addSoundAsset);
   const removeSoundAsset = useEditorStore((state) => state.removeSoundAsset);
-  const running = status === "STARTING" || status === "RUNNING";
+  const awaitingInput = lastRunReport?.awaitingInput === true;
+  const running =
+    status === "STARTING" ||
+    status === "RUNNING" ||
+    status === "PAUSED" ||
+    awaitingInput;
+  const currentTask = getAssignedCreationTask(project);
+  const lessonNumber =
+    creationTasks.findIndex((task) => task.taskId === currentTask?.taskId) + 1;
   const courseTaskId = getAssignedTaskId(project);
   const step = getMovementStep(project);
   const selectedSprite = project.sprites.find(
@@ -197,15 +207,17 @@ export function EditorPage() {
     lastRunReport?.projectId === project.projectId
       ? lastRunReport.spritePositions[selectedSpriteId]
       : undefined;
-  const statusLabel = {
-    IDLE: t("editor.status.IDLE"),
-    STARTING: t("editor.status.STARTING"),
-    RUNNING: t("editor.status.RUNNING"),
-    PAUSED: t("editor.status.PAUSED"),
-    COMPLETED: t("editor.status.COMPLETED"),
-    STOPPED: t("editor.status.STOPPED"),
-    ERROR: t("editor.status.ERROR"),
-  }[status];
+  const statusLabel = awaitingInput
+    ? "运行中 · 等待按键或点击"
+    : {
+        IDLE: t("editor.status.IDLE"),
+        STARTING: t("editor.status.STARTING"),
+        RUNNING: t("editor.status.RUNNING"),
+        PAUSED: t("editor.status.PAUSED"),
+        COMPLETED: t("editor.status.COMPLETED"),
+        STOPPED: t("editor.status.STOPPED"),
+        ERROR: t("editor.status.ERROR"),
+      }[status];
   const currentScene = project.scenes.find(
     (scene) => scene.sceneId === project.currentSceneId,
   );
@@ -318,7 +330,11 @@ export function EditorPage() {
             alt=""
           />
           <span className="project-title-copy">
-            <small>当前作品</small>
+            <small>
+              {currentTask
+                ? `第 ${lessonNumber} 课 · ${currentTask.chapter}`
+                : "当前作品"}
+            </small>
             <strong>{project.name}</strong>
           </span>
           <span className="edit-pencil" aria-hidden="true">
@@ -400,6 +416,7 @@ export function EditorPage() {
           <button
             className="run-button"
             aria-label="绿旗运行"
+            aria-busy={running}
             title="从起点运行绿旗积木"
             onClick={run}
             disabled={!ready || running}
@@ -407,7 +424,13 @@ export function EditorPage() {
             <span className="play-action-icon flag-icon">
               <GreenFlagIcon />
             </span>
-            <span>{t("editor.action.run")}</span>
+            <span>
+              {status === "PAUSED"
+                ? "已暂停"
+                : running
+                  ? "运行中"
+                  : t("editor.action.run")}
+            </span>
           </button>
           <button
             className="step-button"
@@ -416,6 +439,7 @@ export function EditorPage() {
             onClick={stepRun}
             disabled={
               !ready ||
+              awaitingInput ||
               (status !== "IDLE" &&
                 status !== "STOPPED" &&
                 status !== "COMPLETED" &&
@@ -483,14 +507,16 @@ export function EditorPage() {
             </span>
           </div>
           <CurrentTaskObjective />
+          {currentTask && <LessonNavigation key={project.projectId} />}
           <div className="stage-actions">
             <button
               className="stage-run"
               aria-label="运行作品"
               onClick={run}
               disabled={!ready || running}
+              aria-busy={running}
             >
-              <GreenFlagIcon /> 运行
+              <GreenFlagIcon /> {running ? "运行中" : "运行"}
             </button>
             <button
               onClick={() => setGridVisible((value) => !value)}

@@ -1,6 +1,9 @@
 .editor-page[data-lesson-mode="true"] {
   grid-template-rows: auto minmax(0, 1fr);
 }
+.editor-page[data-lesson-mode="true"]:not([data-play-mode="true"]) {
+  grid-template-rows: 74px minmax(0, 1fr);
+}
 .editor-page[data-lesson-mode="true"] .asset-tray,
 .editor-page[data-lesson-mode="true"] .stage-actions [aria-label="选择背景"],
 .editor-page[data-lesson-mode="true"] .stage-image,
@@ -33,8 +36,8 @@
   border-color: #428ef4;
 }
 .lesson-role-picker img {
-  width: 28px;
-  height: 32px;
+  width: 44px;
+  height: 48px;
   object-fit: contain;
 }
 .category-variable {
@@ -349,4 +352,51 @@
 .editor-page .kids-create-variable-button .blocklyFlyoutButtonBackground {
   fill: var(--block-variable, #ff8c1a) !important;
   stroke: #db6e00;
+}
+.lesson-navigation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 0;
+}
+.lesson-navigation button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 10px;
+  min-height: 64px;
+  border: 2px solid #cadbda;
+  border-bottom-width: 4px;
+  border-radius: 16px;
+  color: #254b5a;
+  background: #fff;
+  text-align: left;
+}
+.lesson-navigation button:disabled {
+  color: #677575;
+  background: #eeefea;
+}
+.lesson-navigation small,
+.lesson-navigation strong {
+  display: block;
+}
+.lesson-navigation small {
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+.lesson-navigation strong {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.lesson-description {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #475d65;
+}
+.lesson-guide li {
+  white-space: pre-line;
+}
+.lesson-navigation p {
+  grid-column: 1 / -1;
 }

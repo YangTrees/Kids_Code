@@ -1,6 +1,6 @@
 /* global self, caches, fetch, URL */
 
-const CACHE_VERSION = "kids-code-shell-v7-brand";
+const CACHE_VERSION = "kids-code-shell-v8-lesson-feedback";
 const CORE_ASSETS = [
   "%BASE_URL%",
   "%BASE_URL%manifest.webmanifest",
@@ -34,6 +34,8 @@ const CORE_ASSETS = [
   "%BASE_URL%assets/sounds/ui-click.wav",
   "%BASE_URL%assets/sounds/collect-coin.wav",
   "%BASE_URL%assets/sounds/game-success.wav",
+  "%BASE_URL%assets/sounds/hello.wav",
+  "%BASE_URL%assets/sounds/hello-tuantuan.wav",
   "%BASE_URL%assets/sounds/jump.wav",
   "%BASE_URL%assets/sounds/bump.wav",
   "%BASE_URL%assets/sounds/door-open.wav",

@@ -158,6 +158,12 @@ const seedMessages = (): void => {
   Object.assign(ScratchBlocks.Msg, {
     EVENT_WHENFLAGCLICKED: "点击 %1 时",
     EVENT_WHENKEYPRESSED: "按下 %1 键时",
+    EVENT_WHENKEYPRESSED_SPACE: "空格",
+    EVENT_WHENKEYPRESSED_LEFT: "←",
+    EVENT_WHENKEYPRESSED_RIGHT: "→",
+    EVENT_WHENKEYPRESSED_UP: "↑",
+    EVENT_WHENKEYPRESSED_DOWN: "↓",
+    EVENT_WHENKEYPRESSED_ANY: "任意",
     EVENT_WHENTHISSPRITECLICKED: "点击这个角色时",
     MOTION_MOVESTEPS: "向右移动 %1 格",
     MOTION_TURNRIGHT: "右转 %1 %2 度",
@@ -309,6 +315,7 @@ const registerKidsBlocks = (): void => {
         ],
         output: "String",
         colour: BLOCK_PALETTE.sound,
+        extensions: ["kids_picker_no_drag"],
       },
     ]);
   }
@@ -1397,13 +1404,26 @@ export class BlockWorkspaceAdapter {
 
   parameterAt(target: EventTarget | null): BlockParameter | null {
     if (!(target instanceof Element)) return null;
-    const block = this.#workspace?.getBlockById(
-      target.closest("[data-id]")?.getAttribute("data-id") ?? "",
-    );
-    if (!block || block.isInFlyout) return null;
+    const id = target.closest("[data-id]")?.getAttribute("data-id") ?? "";
+    const block =
+      this.#workspace?.getBlockById(id) ??
+      this.#workspace?.getFlyout()?.getWorkspace().getBlockById(id);
+    if (!block) return null;
     for (const input of block.inputList)
       for (const field of input.fieldRow) {
-        if (!field.name || !field.getSvgRoot()?.contains(target)) continue;
+        // Scratch draws a sound-menu shadow as a capsule. Its padding and
+        // outer path belong to the block SVG, outside the field's text/arrow
+        // group. Those are still parameter clicks, not parent-block drags.
+        const ownsSoundCapsule =
+          field.name === "SOUND_MENU" &&
+          (block.type === "kids_sound_menu" ||
+            block.type === "sound_sounds_menu");
+        const hitsField =
+          field.getSvgRoot()?.contains(target) ||
+          ((ownsSoundCapsule ||
+            (block.isShadow() && field.isFullBlockField())) &&
+            block.getSvgRoot()?.contains(target));
+        if (!field.name || !hitsField) continue;
         const parent = block.getParent();
         const ownerInput =
           parent?.inputList.find(
@@ -1446,7 +1466,11 @@ export class BlockWorkspaceAdapter {
                 ? "选择角色"
                 : field.name === "SCENE"
                   ? "选择场景"
-                  : "选择参数",
+                  : field.name === "SOUND_MENU"
+                    ? "选择声音"
+                    : field.name === "KEY_OPTION"
+                      ? "选择按键"
+                      : "选择参数",
             options: field.getOptions(false).flatMap((option) => {
               if (!Array.isArray(option) || typeof option[1] !== "string")
                 return [];
@@ -1487,7 +1511,12 @@ export class BlockWorkspaceAdapter {
   }
 
   editParameter(parameter: BlockParameter, value: string): boolean {
-    const block = this.#workspace?.getBlockById(parameter.blockId);
+    const block =
+      this.#workspace?.getBlockById(parameter.blockId) ??
+      this.#workspace
+        ?.getFlyout()
+        ?.getWorkspace()
+        .getBlockById(parameter.blockId);
     if (!block || !block.getField(parameter.fieldName)) return false;
     ScratchBlocks.Events.setGroup(true);
     try {
@@ -1498,9 +1527,10 @@ export class BlockWorkspaceAdapter {
         const connection = parent?.inputList.find(
           (input) => input.connection?.targetBlock() === block,
         )?.connection;
-        if (!connection || !this.#workspace) return false;
+        if (!connection) return false;
+        const owner = block.workspace as ScratchBlocks.WorkspaceSvg;
         block.dispose();
-        const shadow = this.#workspace.newBlock("math_number");
+        const shadow = owner.newBlock("math_number");
         shadow.setFieldValue(value, "NUM");
         shadow.setShadow(true);
         connection.connect(shadow.outputConnection);
@@ -1515,6 +1545,7 @@ export class BlockWorkspaceAdapter {
 
   cancelGesture(): void {
     this.#workspace?.cancelCurrentGesture();
+    this.#workspace?.getFlyout()?.getWorkspace().cancelCurrentGesture();
   }
 
   compile(ownerSpriteId: string): RuntimeScript[] {

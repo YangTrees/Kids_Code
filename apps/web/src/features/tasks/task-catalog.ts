@@ -16,6 +16,7 @@ import { hasLoop } from "./task-program";
 import { CURRENT_TASK_VERSION, correctTaskCopy } from "./task-versions";
 import { createLatestTask } from "./task-visuals";
 import { getLatestTaskVersion } from "./task-release";
+import { createTaskProject } from "./task-project";
 import type {
   CreationTask,
   TaskBlockCategory,
@@ -660,8 +661,32 @@ export function getAssignedCreationTask(
 }
 
 export function pinAssignedTaskVersion(project: Project): Project {
-  if (project.course) return project;
   const task = getAssignedCreationTask(project);
+  if (task?.taskId === "repeat" && !project.pathMap) {
+    const layout = createTaskProject(task);
+    return bindCourseProject(
+      {
+        ...project,
+        settings: {
+          ...project.settings,
+          movementStep: layout.settings.movementStep,
+        },
+        pathMap: layout.pathMap,
+        currentSceneId: layout.currentSceneId,
+        sprites: layout.sprites,
+        scenes: layout.scenes,
+        assets: [
+          ...project.assets,
+          ...layout.assets.filter(
+            (asset) =>
+              !project.assets.some((item) => item.assetId === asset.assetId),
+          ),
+        ],
+      },
+      task,
+    );
+  }
+  if (project.course) return project;
   return task ? bindCourseProject(project, task, false) : project;
 }
 

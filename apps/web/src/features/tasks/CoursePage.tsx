@@ -29,6 +29,7 @@ import {
   blockCategoryStyle,
 } from "../../shared/ProgrammingBlocks";
 import { courseBlockCategories } from "./course-blocks";
+import { LessonStars } from "../../shared/LessonStars";
 
 const repository = new IndexedDbProjectRepository();
 
@@ -515,15 +516,24 @@ export function CoursePage() {
                               </span>
                             </span>
                             <span className="course-level-state">
-                              {done
-                                ? record
-                                  ? record.stars + " 星 · 再试一次"
-                                  : "已完成 · 再试一次"
-                                : unlocked
-                                  ? isCurrent
-                                    ? "从这里继续"
-                                    : "开始挑战"
-                                  : "尚未解锁"}
+                              {done ? (
+                                record ? (
+                                  <>
+                                    <LessonStars stars={record.stars} />
+                                    <span>再试一次</span>
+                                  </>
+                                ) : (
+                                  "已完成 · 再试一次"
+                                )
+                              ) : unlocked ? (
+                                isCurrent ? (
+                                  "从这里继续"
+                                ) : (
+                                  "开始挑战"
+                                )
+                              ) : (
+                                "尚未解锁"
+                              )}
                               <CourseGlyph
                                 name={
                                   done

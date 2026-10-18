@@ -1,0 +1,16 @@
+.lesson-stars {
+  display: inline-flex;
+  gap: 3px;
+  vertical-align: middle;
+}
+.lesson-stars svg {
+  width: 22px;
+  height: 22px;
+  fill: #e6e5df;
+  stroke: #b6b8b0;
+  stroke-width: 1.5;
+}
+.lesson-stars svg[data-earned="true"] {
+  fill: #ffce4b;
+  stroke: #bc7b15;
+}

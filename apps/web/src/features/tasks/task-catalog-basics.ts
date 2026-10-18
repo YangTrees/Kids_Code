@@ -163,7 +163,8 @@ export const basicsTasks: CreationTask[] = [
     taskId: "repeat",
     chapter: "基础入门",
     title: "重复的舞步",
-    description: "使用循环，让栗奇重复执行一个动作。",
+    description:
+      "团团要沿着浅色小路送达终点。把“向右移动 1 格”放进“重复 2 次”，让同一个动作带他走完两格路。",
     projectMode: "blank",
     blockGuide: [
       { label: "点击开始", category: "event", shape: "hat" },
@@ -188,9 +189,11 @@ export const basicsTasks: CreationTask[] = [
       },
     ],
     runtimeGoal: {
-      label: "运行并看到动作重复执行",
+      label: "重复两次移动，沿网格小路到达终点",
       check: (report) =>
-        report.status === "RUNNING" || report.status === "COMPLETED",
+        report.status === "COMPLETED" &&
+        report.pathReachedGoal === true &&
+        !report.pathViolation,
     },
     hints: [
       "橙色的“控制”分类里有重复积木。",

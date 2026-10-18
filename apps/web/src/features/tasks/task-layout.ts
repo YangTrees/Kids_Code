@@ -6,6 +6,11 @@ import { bindCourseProject } from "./task-contract";
 const pathLayouts: Partial<
   Record<CreationTask["taskId"], Omit<PathMap, "actorSpriteId">>
 > = {
+  repeat: {
+    start: { column: 4, row: 5 },
+    goal: { column: 6, row: 5 },
+    tiles: [4, 5, 6].map((column) => ({ column, row: 5 })),
+  },
   path_straight: {
     start: { column: 4, row: 5 },
     goal: { column: 7, row: 5 },

@@ -99,7 +99,7 @@ export function CurrentTaskCard({ onOpen }: { onOpen: () => void }) {
       <div>
         <span>
           {task
-            ? `挑战 ${creationTasks.findIndex((item) => item.taskId === task.taskId) + 1} / ${creationTasks.length}`
+            ? `第 ${creationTasks.findIndex((item) => item.taskId === task.taskId) + 1} 课 / 共 ${creationTasks.length} 课 · ${task.chapter}`
             : assigned
               ? "任务版本待更新"
               : "自由创作"}
@@ -118,6 +118,7 @@ export function CurrentTaskCard({ onOpen }: { onOpen: () => void }) {
         </p>
       ) : null}
       <TaskCompatibilityNotice />
+      {task && <p className="lesson-description">{task.description}</p>}
       {evaluation ? (
         <>
           {pathProgress ? (

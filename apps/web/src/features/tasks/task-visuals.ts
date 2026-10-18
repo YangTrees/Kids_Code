@@ -2,12 +2,14 @@ import type { Project } from "@kids-code/domain";
 import { spriteLibrary, backgroundLibrary } from "../editor/asset-catalog";
 import { STORY_TASK_VERSION } from "./task-release";
 import type { CreationTask } from "./task-types";
+import { lessonScenarios } from "./lesson-scenarios";
 
 export const STORY_ACTOR_ID = "spr_story_tuantuan";
 export const STORY_COSTUME_ID = "costume_story_tuantuan_idle_v1";
 
 /** Copy changes identity labels only. Assessment closures and all requirements stay intact. */
 export function createLatestTask(task: CreationTask): CreationTask {
+  const scenario = lessonScenarios[task.taskId];
   const text = (value: string) =>
     value
       .replaceAll("栗奇", "团团")
@@ -19,8 +21,8 @@ export function createLatestTask(task: CreationTask): CreationTask {
     ...task,
     contentVersion: STORY_TASK_VERSION,
     visualSetId: "story-ip-v1",
-    title: text(task.title),
-    description: text(task.description),
+    title: scenario?.title ?? text(task.title),
+    description: scenario?.description ?? text(task.description),
     blockGuide: task.blockGuide.map((block) => ({
       ...block,
       label: text(block.label),
@@ -30,8 +32,13 @@ export function createLatestTask(task: CreationTask): CreationTask {
       label: text(rule.label),
       anyOf: [...rule.anyOf],
     })),
-    hints: task.hints.map(text) as CreationTask["hints"],
-    runtimeGoal: { ...task.runtimeGoal, label: text(task.runtimeGoal.label) },
+    hints: task.hints.map((hint, index) =>
+      index === 0 && scenario ? scenario.question : text(hint),
+    ) as CreationTask["hints"],
+    runtimeGoal: {
+      ...task.runtimeGoal,
+      label: scenario?.goal ?? text(task.runtimeGoal.label),
+    },
     ...(task.programGoal
       ? {
           programGoal: {

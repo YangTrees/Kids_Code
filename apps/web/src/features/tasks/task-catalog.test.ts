@@ -235,10 +235,11 @@ describe("creation tasks", () => {
     ).toBe(true);
   });
 
-  it("requires two real action executions for the repeat challenge", () => {
-    const project = createProjectForMode("blank", "repetition");
+  it("requires two real moves and reaching the grid goal for the repeat challenge", () => {
+    const task = creationTasks.find((item) => item.taskId === "repeat")!;
+    const project = createTaskProject(task);
     project.workspaceStates = {
-      spr_liji: {
+      [project.course!.bindings.actor]: {
         blocks: {
           blocks: [
             {
@@ -246,11 +247,11 @@ describe("creation tasks", () => {
               id: "flag",
               next: {
                 block: {
-                  type: "control_forever",
+                  type: "control_repeat",
                   id: "repeat",
                   inputs: {
                     SUBSTACK: {
-                      block: { type: "motion_turnright", id: "turn" },
+                      block: { type: "motion_movesteps", id: "move" },
                     },
                   },
                 },
@@ -260,23 +261,31 @@ describe("creation tasks", () => {
         },
       },
     };
-    const task = creationTasks.find((item) => item.taskId === "repeat")!;
     const report: RuntimeReport = {
-      status: "RUNNING",
+      status: "COMPLETED",
       score: 0,
       result: null,
       spritePositions: {},
       touchedPairs: [],
       variables: {},
-      executedBlockCounts: { flag: 1, repeat: 1, turn: 1 },
+      executedBlockCounts: { flag: 1, repeat: 1, move: 1 },
+      pathReachedGoal: true,
+      pathViolation: false,
     };
     expect(evaluateCreationTask(project, task, report).complete).toBe(false);
     expect(
       evaluateCreationTask(project, task, {
         ...report,
-        executedBlockCounts: { flag: 1, repeat: 1, turn: 2 },
+        executedBlockCounts: { flag: 1, repeat: 1, move: 2 },
       }).complete,
     ).toBe(true);
+    expect(
+      evaluateCreationTask(project, task, {
+        ...report,
+        pathReachedGoal: false,
+        executedBlockCounts: { flag: 1, repeat: 1, move: 2 },
+      }).complete,
+    ).toBe(false);
   });
 
   it("provides six coding units and four AI-themed units", () => {

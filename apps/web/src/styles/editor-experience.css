@@ -107,7 +107,7 @@
 .editor-page .stage-frame {
   flex: none;
   width: 100%;
-  max-width: min(100%, calc((100dvh - 455px) * 4 / 3));
+  max-width: 100%;
   min-width: 220px;
   margin: 0 auto;
   border: 0;

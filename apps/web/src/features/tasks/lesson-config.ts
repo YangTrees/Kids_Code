@@ -80,9 +80,9 @@ const lessons: Partial<Record<TaskId, LessonConfig>> = {
       "control_wait",
     ],
     ["event", "motion", "looks", "control"],
-    "同一个动作能不能只搭一次，却做两次？",
-    "次数在上面，重复做的动作放进循环肚子里。",
-    ["放入绿旗", "循环内放动作", "运行观察至少两次动作"],
+    "从起点到终点有两格，同一个动作能不能只搭一次，却做两次？",
+    "次数在上面，向右移动 1 格放进循环肚子里；观察团团逐格走到终点。",
+    ["放入绿旗", "重复 2 次里放向右移动 1 格", "运行，沿浅色道路走到终点"],
   ),
   collision: config(
     [
@@ -259,7 +259,7 @@ function expandedLesson(task: CreationTask): LessonConfig {
           .filter((rule) => !["start", "click", "keyboard"].includes(rule.id))
           .map((rule) => rule.label)
           .slice(0, 2)
-          .join("；"),
+          .join("\n"),
       runHint,
     ],
   );

@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.4.1",
   "provenanceGroups": [
     {
       "assetIds": [
@@ -522,6 +522,32 @@
       "id": "ui_unit_smart_rules",
       "type": "ui",
       "path": "ui/unit-smart-rules.png"
+    },
+    {
+      "id": "sfx_hello",
+      "type": "audio",
+      "path": "sounds/hello.wav",
+      "provenance": {
+        "sourceType": "self",
+        "sourcePath": "scripts/prepare-greeting-audio.ps1",
+        "license": "system-speech-generated-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "voice_hello_tuantuan",
+      "type": "audio",
+      "path": "sounds/hello-tuantuan.wav",
+      "provenance": {
+        "sourceType": "self",
+        "sourcePath": "scripts/prepare-greeting-audio.ps1",
+        "license": "system-speech-generated-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
     },
     { "id": "sfx_ui_click", "type": "audio", "path": "sounds/ui-click.wav" },
     {

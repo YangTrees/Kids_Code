@@ -371,6 +371,20 @@ export const backgroundLibrary: BackgroundLibraryAsset[] = [
 /** 内置音效（附录 B 要求 ≥15 项）。 */
 export const soundLibrary: SoundLibraryAsset[] = [
   {
+    assetId: "sfx_hello",
+    name: "你好（中文配音）",
+    path: "sounds/hello.wav",
+    group: "反馈",
+    provenance: {
+      sourceType: "self",
+      sourcePath: "scripts/prepare-greeting-audio.ps1",
+      license: "system-speech-generated-prototype",
+      commercialUseReview: "pending",
+      reviewStatus: "approved-prototype",
+      canUnpublish: true,
+    },
+  },
+  {
     assetId: "sfx_ui_click",
     name: "按钮声",
     path: "sounds/ui-click.wav",
