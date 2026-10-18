@@ -1,6 +1,6 @@
 {
-  "name": "栗奇编程乐园",
-  "short_name": "栗奇编程",
+  "name": "团团点点的好奇编程乐园",
+  "short_name": "团团点点编程",
   "description": "面向儿童的无代码编程与游戏创作工具",
   "lang": "zh-CN",
   "start_url": "%BASE_URL%",

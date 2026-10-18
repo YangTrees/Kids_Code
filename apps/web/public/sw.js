@@ -1,6 +1,6 @@
 /* global self, caches, fetch, URL */
 
-const CACHE_VERSION = "kids-code-shell-v3";
+const CACHE_VERSION = "kids-code-shell-v7-brand";
 const CORE_ASSETS = [
   "%BASE_URL%",
   "%BASE_URL%manifest.webmanifest",
@@ -8,6 +8,44 @@ const CORE_ASSETS = [
   "%BASE_URL%assets/characters/liji/liji-idle.png",
   "%BASE_URL%assets/objects/star-coin.png",
   "%BASE_URL%assets/objects/treasure-chest.png",
+  "%BASE_URL%assets/characters/story-ip/tuantuan-stage-front-v1.webp",
+  "%BASE_URL%assets/characters/story-ip/tuantuan-stage-right-v1.webp",
+  "%BASE_URL%assets/objects/story-ip/treasure-chest-v1.webp",
+  "%BASE_URL%assets/objects/story-ip/star-coin-v1.webp",
+  "%BASE_URL%assets/backgrounds/story-ip/garden-v1.webp",
+  "%BASE_URL%assets/backgrounds/story-ip/cloud-island-v1.webp",
+  "%BASE_URL%assets/backgrounds/story-ip/data-workshop-v1.webp",
+  "%BASE_URL%assets/ui/story-ip/diandian-hint-v2.webp",
+  "%BASE_URL%assets/ui/story-ip/tuantuan-curious-v1.webp",
+  "%BASE_URL%assets/ui/story-ip/tuantuan-happy-v1.webp",
+  "%BASE_URL%assets/ui/story-ip/tuantuan-pointing-v1.webp",
+  "%BASE_URL%assets/ui/story-ip/diandian-default-v1.webp",
+  "%BASE_URL%assets/ui/story-ip/home-hero-v1.webp",
+  "%BASE_URL%assets/ui/story-ip/unit-basics-v1.webp",
+  "%BASE_URL%assets/ui/story-ip/unit-interaction-v1.webp",
+  "%BASE_URL%assets/ui/story-ip/unit-thinking-v1.webp",
+  "%BASE_URL%assets/ui/story-ip/unit-creation-v1.webp",
+  "%BASE_URL%assets/ui/story-ip/unit-route-v1.webp",
+  "%BASE_URL%assets/ui/story-ip/unit-sky-v1.webp",
+  "%BASE_URL%assets/ui/story-ip/unit-data-v1.webp",
+  "%BASE_URL%assets/ui/story-ip/unit-patterns-v1.webp",
+  "%BASE_URL%assets/ui/story-ip/unit-decisions-v1.webp",
+  "%BASE_URL%assets/ui/story-ip/unit-makers-v1.webp",
+  "%BASE_URL%assets/sounds/ui-click.wav",
+  "%BASE_URL%assets/sounds/collect-coin.wav",
+  "%BASE_URL%assets/sounds/game-success.wav",
+  "%BASE_URL%assets/sounds/jump.wav",
+  "%BASE_URL%assets/sounds/bump.wav",
+  "%BASE_URL%assets/sounds/door-open.wav",
+  "%BASE_URL%assets/sounds/magic.wav",
+  "%BASE_URL%assets/sounds/pop.wav",
+  "%BASE_URL%assets/sounds/whoosh.wav",
+  "%BASE_URL%assets/sounds/bell.wav",
+  "%BASE_URL%assets/sounds/drum.wav",
+  "%BASE_URL%assets/sounds/splash.wav",
+  "%BASE_URL%assets/sounds/sparkle.wav",
+  "%BASE_URL%assets/sounds/countdown.wav",
+  "%BASE_URL%assets/sounds/game-over.wav",
 ];
 
 self.addEventListener("install", (event) => {

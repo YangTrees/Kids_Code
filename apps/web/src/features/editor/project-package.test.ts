@@ -1,5 +1,7 @@
 import { createDefaultProject } from "@kids-code/domain";
 import { describe, expect, it } from "vitest";
+import { creationTasks, getAssignedCreationTask } from "../tasks/task-catalog";
+import { createTaskProject } from "../tasks/task-project";
 import {
   decodeZip,
   encodeZip,
@@ -26,6 +28,21 @@ const readTestBlob = (blob: Blob): Promise<ArrayBuffer> =>
   });
 
 describe("kidgame project package", () => {
+  it("keeps the course version and bindings when imported in another browser", async () => {
+    const project = createTaskProject(creationTasks[0]!);
+    const files = new Map<string, Uint8Array>([
+      ["project.json", encoder.encode(JSON.stringify(project))],
+    ]);
+    for (const asset of project.assets)
+      files.set(`assets/${asset.path}`, new Uint8Array([1]));
+    const imported = await readProjectPackage(
+      new File([asBuffer(encodeZip(files))], "lesson.kidgame"),
+    );
+    expect(imported.course).toEqual(project.course);
+    expect(getAssignedCreationTask(imported)?.taskId).toBe(
+      project.course?.taskId,
+    );
+  });
   it("round-trips UTF-8 file names and contents", () => {
     const files = new Map([
       ["project.json", encoder.encode('{"name":"森林寻宝"}')],

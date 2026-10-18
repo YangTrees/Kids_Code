@@ -228,6 +228,13 @@ export const compileBlockForRuntime = (
         direction: "right",
         steps: numberInput(block, "STEPS", 1, 10, 1),
       };
+    case "kids_move_forward":
+      return {
+        ...base,
+        type: "MOT_MOVE",
+        direction: "forward",
+        steps: numberInput(block, "STEPS", 1, 10, 1),
+      };
     case "kids_move_left":
       return {
         ...base,

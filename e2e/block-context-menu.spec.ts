@@ -9,8 +9,9 @@ test("right-clicking blocks opens the copy/delete menu", async ({ page }) => {
   await page.waitForURL(/\/editor\/prj_/);
   await expect(page.locator(".blocklySvg")).toBeVisible();
 
-  const blockCount = () => page.locator(".blocklySvg g[data-id]").count();
-  const blockPaths = page.locator(".blocklySvg g[data-id] path.blocklyPath");
+  const canvas = page.locator(".blocklyBlockCanvas").first();
+  const blockCount = () => canvas.locator("g[data-id]").count();
+  const blockPaths = canvas.locator("g[data-id] path.blocklyPath");
   const menu = page.locator(".block-context-menu");
   await expect(blockPaths.first()).toBeAttached();
 
@@ -36,12 +37,25 @@ test("right-clicking blocks opens the copy/delete menu", async ({ page }) => {
   await expect.poll(blockCount).toBeLessThan(afterCopy);
 
   // Right-clicking empty space offers tidy-up, Escape dismisses the menu.
-  const workspace = await page.locator(".blocklySvg").boundingBox();
-  await page.mouse.click(
-    workspace!.x + workspace!.width - 70,
-    workspace!.y + workspace!.height - 70,
-    { button: "right" },
-  );
+  // Copied stacks can cover a fixed coordinate on compact layouts. Find a
+  // genuinely exposed background point, then exercise a real mouse gesture.
+  const emptyPoint = await page.locator(".blocklySvg").evaluate((svg) => {
+    const bounds = svg.getBoundingClientRect();
+    for (let y = bounds.bottom - 60; y > bounds.top + 30; y -= 30) {
+      for (let x = bounds.right - 60; x > bounds.left + 30; x -= 30) {
+        if (
+          document
+            .elementFromPoint(x, y)
+            ?.classList.contains("blocklyMainBackground")
+        ) {
+          return { x, y };
+        }
+      }
+    }
+    return null;
+  });
+  expect(emptyPoint).not.toBeNull();
+  await page.mouse.click(emptyPoint!.x, emptyPoint!.y, { button: "right" });
   await expect(menu).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: "整理积木" })).toBeVisible();
   await page.keyboard.press("Escape");

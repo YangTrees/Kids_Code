@@ -1,6 +1,24 @@
 import * as ScratchBlocks from "scratch-blocks";
 import { runtimeScriptSchema, type RuntimeScript } from "@kids-code/domain";
 import { compileBlockForRuntime } from "./compiler";
+import {
+  BLOCK_PALETTE,
+  filterTeachingToolbox,
+  type ToolboxItem,
+} from "./teaching";
+import { numberParameter, type BlockParameter } from "./parameters";
+import { getMediaBaseUrl } from "./media";
+export { getMediaBaseUrl, setMediaBaseUrl } from "./media";
+export {
+  numberParameter,
+  validateParameter,
+  type BlockParameter,
+} from "./parameters";
+export {
+  BLOCK_PALETTE,
+  filterTeachingToolbox,
+  type ToolboxCategory,
+} from "./teaching";
 
 export {
   compileBlockForRuntime,
@@ -9,7 +27,14 @@ export {
 
 export type WorkspaceChangeListener = (workspaceState: object) => void;
 export type WorkspaceCategory =
-  "event" | "motion" | "looks" | "sound" | "control" | "game";
+  | "event"
+  | "motion"
+  | "looks"
+  | "sound"
+  | "control"
+  | "game"
+  | "variable"
+  | "operator";
 
 const categoryPosition: Record<WorkspaceCategory, number> = {
   event: 0,
@@ -18,6 +43,8 @@ const categoryPosition: Record<WorkspaceCategory, number> = {
   sound: 3,
   control: 4,
   game: 5,
+  variable: 6,
+  operator: 7,
 };
 
 export interface WorkspaceToolboxContext {
@@ -30,6 +57,8 @@ export interface WorkspaceToolboxContext {
   variables: Array<{ variableId: string; name: string }>;
   onCreateVariable?: () => void;
   maxBlocks?: number;
+  allowedBlockTypes?: readonly string[];
+  coordinateGrid?: { columns: number; rows: number };
 }
 
 let activeToolboxContext: WorkspaceToolboxContext | null = null;
@@ -186,7 +215,19 @@ const registerKidsBlocks = (): void => {
         args0: [{ type: "input_value", name: "STEPS" }],
         previousStatement: null,
         nextStatement: null,
-        colour: "#428EF4",
+        colour: BLOCK_PALETTE.motion,
+      },
+    ]);
+  }
+  if (!ScratchBlocks.Blocks.kids_move_forward) {
+    ScratchBlocks.defineBlocksWithJsonArray([
+      {
+        type: "kids_move_forward",
+        message0: "朝面向方向前进 %1 格",
+        args0: [{ type: "input_value", name: "STEPS" }],
+        previousStatement: null,
+        nextStatement: null,
+        colour: BLOCK_PALETTE.motion,
       },
     ]);
   }
@@ -198,7 +239,7 @@ const registerKidsBlocks = (): void => {
         args0: [{ type: "input_value", name: "DEGREES" }],
         previousStatement: null,
         nextStatement: null,
-        colour: "#428EF4",
+        colour: BLOCK_PALETTE.motion,
       },
     ]);
   }
@@ -210,7 +251,7 @@ const registerKidsBlocks = (): void => {
         args0: [{ type: "input_value", name: "STEPS" }],
         previousStatement: null,
         nextStatement: null,
-        colour: "#428EF4",
+        colour: BLOCK_PALETTE.motion,
       },
       {
         type: "kids_move_down",
@@ -218,7 +259,7 @@ const registerKidsBlocks = (): void => {
         args0: [{ type: "input_value", name: "STEPS" }],
         previousStatement: null,
         nextStatement: null,
-        colour: "#428EF4",
+        colour: BLOCK_PALETTE.motion,
       },
     ]);
   }
@@ -236,7 +277,7 @@ const registerKidsBlocks = (): void => {
         ],
         previousStatement: null,
         nextStatement: null,
-        colour: "#45B531",
+        colour: BLOCK_PALETTE.game,
       },
       {
         type: "kids_switch_costume",
@@ -250,7 +291,7 @@ const registerKidsBlocks = (): void => {
         ],
         previousStatement: null,
         nextStatement: null,
-        colour: "#8A55E8",
+        colour: BLOCK_PALETTE.looks,
       },
     ]);
   }
@@ -267,7 +308,7 @@ const registerKidsBlocks = (): void => {
           },
         ],
         output: "String",
-        colour: "#E34D91",
+        colour: BLOCK_PALETTE.sound,
       },
     ]);
   }
@@ -279,7 +320,7 @@ const registerKidsBlocks = (): void => {
         args0: [{ type: "input_value", name: "VALUE" }],
         previousStatement: null,
         nextStatement: null,
-        colour: "#45B531",
+        colour: BLOCK_PALETTE.game,
       },
       {
         type: "kids_score_change",
@@ -287,7 +328,7 @@ const registerKidsBlocks = (): void => {
         args0: [{ type: "input_value", name: "DELTA" }],
         previousStatement: null,
         nextStatement: null,
-        colour: "#45B531",
+        colour: BLOCK_PALETTE.game,
       },
       {
         type: "kids_if_touching",
@@ -303,7 +344,7 @@ const registerKidsBlocks = (): void => {
         args1: [{ type: "input_statement", name: "SUBSTACK" }],
         previousStatement: null,
         nextStatement: null,
-        colour: "#F58A25",
+        colour: BLOCK_PALETTE.control,
       },
     ]);
   }
@@ -317,7 +358,7 @@ const registerKidsBlocks = (): void => {
         args1: [{ type: "input_statement", name: "SUBSTACK" }],
         previousStatement: null,
         nextStatement: null,
-        colour: "#F58A25",
+        colour: BLOCK_PALETTE.control,
       },
       {
         type: "kids_if_else",
@@ -329,7 +370,7 @@ const registerKidsBlocks = (): void => {
         args2: [{ type: "input_statement", name: "SUBSTACK2" }],
         previousStatement: null,
         nextStatement: null,
-        colour: "#F58A25",
+        colour: BLOCK_PALETTE.control,
       },
       {
         type: "kids_touching_condition",
@@ -360,7 +401,7 @@ const registerKidsBlocks = (): void => {
           { type: "input_value", name: "RIGHT", check: "Number" },
         ],
         extensions: ["output_boolean"],
-        colour: "#59C059",
+        colour: BLOCK_PALETTE.operator,
       },
       {
         type: "kids_logic_and",
@@ -370,7 +411,7 @@ const registerKidsBlocks = (): void => {
           { type: "input_value", name: "RIGHT", check: "Boolean" },
         ],
         extensions: ["output_boolean"],
-        colour: "#59C059",
+        colour: BLOCK_PALETTE.operator,
       },
       {
         type: "kids_logic_or",
@@ -380,14 +421,14 @@ const registerKidsBlocks = (): void => {
           { type: "input_value", name: "RIGHT", check: "Boolean" },
         ],
         extensions: ["output_boolean"],
-        colour: "#59C059",
+        colour: BLOCK_PALETTE.operator,
       },
       {
         type: "kids_logic_not",
         message0: "不满足 %1",
         args0: [{ type: "input_value", name: "OPERAND", check: "Boolean" }],
         extensions: ["output_boolean"],
-        colour: "#59C059",
+        colour: BLOCK_PALETTE.operator,
       },
       {
         type: "kids_random_number",
@@ -397,7 +438,7 @@ const registerKidsBlocks = (): void => {
           { type: "input_value", name: "TO", check: "Number" },
         ],
         extensions: ["output_number"],
-        colour: "#59C059",
+        colour: BLOCK_PALETTE.operator,
       },
     ]);
   }
@@ -417,7 +458,7 @@ const registerKidsBlocks = (): void => {
         ],
         previousStatement: null,
         nextStatement: null,
-        colour: "#F58A25",
+        colour: BLOCK_PALETTE.variable,
       },
       {
         type: "kids_variable_increase",
@@ -428,7 +469,7 @@ const registerKidsBlocks = (): void => {
         ],
         previousStatement: null,
         nextStatement: null,
-        colour: "#F58A25",
+        colour: BLOCK_PALETTE.variable,
       },
       {
         type: "kids_variable_decrease",
@@ -439,7 +480,7 @@ const registerKidsBlocks = (): void => {
         ],
         previousStatement: null,
         nextStatement: null,
-        colour: "#F58A25",
+        colour: BLOCK_PALETTE.variable,
       },
       {
         type: "kids_variable_show",
@@ -447,7 +488,7 @@ const registerKidsBlocks = (): void => {
         args0: [variableField()],
         previousStatement: null,
         nextStatement: null,
-        colour: "#F58A25",
+        colour: BLOCK_PALETTE.variable,
       },
       {
         type: "kids_variable_hide",
@@ -455,14 +496,14 @@ const registerKidsBlocks = (): void => {
         args0: [variableField()],
         previousStatement: null,
         nextStatement: null,
-        colour: "#F58A25",
+        colour: BLOCK_PALETTE.variable,
       },
       {
         type: "kids_variable_value",
         message0: "%1 的值",
         args0: [variableField()],
         extensions: ["output_number"],
-        colour: "#F58A25",
+        colour: BLOCK_PALETTE.variable,
       },
       {
         type: "kids_variable_compare",
@@ -481,7 +522,7 @@ const registerKidsBlocks = (): void => {
           { type: "input_value", name: "RIGHT", check: "Number" },
         ],
         extensions: ["output_boolean"],
-        colour: "#59C059",
+        colour: BLOCK_PALETTE.operator,
       },
     ]);
   }
@@ -498,7 +539,7 @@ const registerKidsBlocks = (): void => {
           },
         ],
         nextStatement: null,
-        colour: "#F4B41A",
+        colour: BLOCK_PALETTE.event,
       },
       {
         type: "kids_broadcast",
@@ -512,7 +553,7 @@ const registerKidsBlocks = (): void => {
         ],
         previousStatement: null,
         nextStatement: null,
-        colour: "#F4B41A",
+        colour: BLOCK_PALETTE.event,
       },
     ]);
   }
@@ -522,14 +563,14 @@ const registerKidsBlocks = (): void => {
         type: "kids_when_scene_starts",
         message0: "场景开始时",
         nextStatement: null,
-        colour: "#F4B41A",
+        colour: BLOCK_PALETTE.event,
       },
       {
         type: "kids_next_scene",
         message0: "切换到下一个场景",
         previousStatement: null,
         nextStatement: null,
-        colour: "#45B531",
+        colour: BLOCK_PALETTE.game,
       },
     ]);
   }
@@ -546,7 +587,7 @@ const registerKidsBlocks = (): void => {
           },
         ],
         nextStatement: null,
-        colour: "#F4B41A",
+        colour: BLOCK_PALETTE.event,
       },
       {
         type: "kids_while_touching",
@@ -559,7 +600,7 @@ const registerKidsBlocks = (): void => {
           },
         ],
         nextStatement: null,
-        colour: "#F4B41A",
+        colour: BLOCK_PALETTE.event,
       },
       {
         type: "kids_when_touch_end",
@@ -572,14 +613,14 @@ const registerKidsBlocks = (): void => {
           },
         ],
         nextStatement: null,
-        colour: "#F4B41A",
+        colour: BLOCK_PALETTE.event,
       },
       {
         type: "kids_goto_start",
         message0: "回到起点",
         previousStatement: null,
         nextStatement: null,
-        colour: "#428EF4",
+        colour: BLOCK_PALETTE.motion,
       },
       {
         type: "kids_stop",
@@ -595,7 +636,7 @@ const registerKidsBlocks = (): void => {
           },
         ],
         previousStatement: null,
-        colour: "#F58A25",
+        colour: BLOCK_PALETTE.control,
       },
       {
         type: "kids_result",
@@ -616,7 +657,7 @@ const registerKidsBlocks = (): void => {
           },
         ],
         previousStatement: null,
-        colour: "#45B531",
+        colour: BLOCK_PALETTE.game,
       },
     ]);
   }
@@ -659,18 +700,18 @@ const blockStyle = (primary: string, secondary: string, tertiary: string) => ({
 const kidsCodeTheme = ScratchBlocks.Theme.defineTheme("kids-code", {
   name: "kids-code",
   blockStyles: {
-    event: blockStyle("#F4B41A", "#D99800", "#B77900"),
-    motion: blockStyle("#428EF4", "#2674D8", "#1C5EB7"),
-    looks: blockStyle("#8A55E8", "#6F3FCB", "#5730A5"),
-    sounds: blockStyle("#E34D91", "#C83778", "#A42A62"),
-    control: blockStyle("#F58A25", "#D96B10", "#B65308"),
-    data: blockStyle("#FF8C1A", "#DB6E00", "#B85800"),
+    event: blockStyle(BLOCK_PALETTE.event, "#D99800", "#B77900"),
+    motion: blockStyle(BLOCK_PALETTE.motion, "#2674D8", "#1C5EB7"),
+    looks: blockStyle(BLOCK_PALETTE.looks, "#6F3FCB", "#5730A5"),
+    sounds: blockStyle(BLOCK_PALETTE.sound, "#C83778", "#A42A62"),
+    control: blockStyle(BLOCK_PALETTE.control, "#D96B10", "#B65308"),
+    data: blockStyle(BLOCK_PALETTE.variable, "#DB6E00", "#B85800"),
     data_lists: blockStyle("#FF661A", "#DB4D00", "#B83E00"),
     sensing: blockStyle("#4CBFE6", "#2CA7D1", "#2187AA"),
     pen: blockStyle("#0FBD8C", "#0B9F76", "#087D5D"),
-    operators: blockStyle("#59C059", "#3FA33F", "#318231"),
+    operators: blockStyle(BLOCK_PALETTE.operator, "#3FA33F", "#318231"),
     more: blockStyle("#FF6680", "#DB4D68", "#B83E55"),
-    game: blockStyle("#55BE42", "#3E9F30", "#2F7D24"),
+    game: blockStyle(BLOCK_PALETTE.game, "#3E9F30", "#2F7D24"),
     textField: blockStyle("#FFFFFF", "#E8EEF5", "#C9D5E4"),
   },
   componentStyles: {
@@ -698,13 +739,21 @@ const kidsCodeTheme = ScratchBlocks.Theme.defineTheme("kids-code", {
   },
 });
 
-const kidsToolbox = {
+const kidsToolbox: {
+  kind: string;
+  contents: Array<{
+    kind: string;
+    name: string;
+    colour: string;
+    contents: ToolboxItem[];
+  }>;
+} = {
   kind: "categoryToolbox",
   contents: [
     {
       kind: "category",
       name: "事件",
-      colour: "#F4B41A",
+      colour: BLOCK_PALETTE.event,
       contents: [
         { kind: "block", type: "event_whenflagclicked" },
         { kind: "block", type: "event_whenkeypressed" },
@@ -720,11 +769,20 @@ const kidsToolbox = {
     {
       kind: "category",
       name: "动作",
-      colour: "#428EF4",
+      colour: BLOCK_PALETTE.motion,
       contents: [
         {
           kind: "block",
           type: "motion_movesteps",
+          inputs: {
+            STEPS: {
+              shadow: { type: "kids_step_picker", fields: { VALUE: "1" } },
+            },
+          },
+        },
+        {
+          kind: "block",
+          type: "kids_move_forward",
           inputs: {
             STEPS: {
               shadow: { type: "kids_step_picker", fields: { VALUE: "1" } },
@@ -796,7 +854,7 @@ const kidsToolbox = {
     {
       kind: "category",
       name: "外观",
-      colour: "#8A55E8",
+      colour: BLOCK_PALETTE.looks,
       contents: [
         {
           kind: "block",
@@ -830,7 +888,7 @@ const kidsToolbox = {
     {
       kind: "category",
       name: "声音",
-      colour: "#E34D91",
+      colour: BLOCK_PALETTE.sound,
       contents: [
         {
           kind: "block",
@@ -843,7 +901,7 @@ const kidsToolbox = {
     {
       kind: "category",
       name: "控制",
-      colour: "#F58A25",
+      colour: BLOCK_PALETTE.control,
       contents: [
         {
           kind: "block",
@@ -895,7 +953,7 @@ const kidsToolbox = {
     {
       kind: "category",
       name: "游戏",
-      colour: "#45B531",
+      colour: BLOCK_PALETTE.game,
       contents: [
         {
           kind: "button",
@@ -956,6 +1014,51 @@ const kidsToolbox = {
   ],
 };
 
+// Real categories follow semantic block colors, including mixed score/data lessons.
+const operatorTypes = new Set([
+  "kids_score_compare",
+  "kids_variable_compare",
+  "kids_logic_and",
+  "kids_logic_or",
+  "kids_logic_not",
+  "kids_random_number",
+]);
+const controlItems = kidsToolbox.contents[4]!.contents;
+const gameItems = kidsToolbox.contents[5]!.contents;
+const operatorItems = [...controlItems, ...gameItems].filter(
+  (item) => "type" in item && operatorTypes.has(item.type!),
+);
+const variableItems = gameItems.filter(
+  (item) =>
+    item.kind === "button" ||
+    ("type" in item &&
+      item.type!.startsWith("kids_variable_") &&
+      !operatorTypes.has(item.type!)),
+);
+kidsToolbox.contents[4]!.contents = controlItems.filter(
+  (item) => !("type" in item && operatorTypes.has(item.type!)),
+);
+kidsToolbox.contents[5]!.contents = gameItems.filter(
+  (item) =>
+    item.kind !== "button" &&
+    !(
+      "type" in item &&
+      (item.type!.startsWith("kids_variable_") || operatorTypes.has(item.type!))
+    ),
+);
+kidsToolbox.contents.push({
+  kind: "category",
+  name: "变量",
+  colour: BLOCK_PALETTE.variable,
+  contents: variableItems,
+});
+kidsToolbox.contents.push({
+  kind: "category",
+  name: "运算",
+  colour: BLOCK_PALETTE.operator,
+  contents: operatorItems,
+});
+
 const editableInputDefaults: Record<
   string,
   Array<{
@@ -966,6 +1069,14 @@ const editableInputDefaults: Record<
   }>
 > = {
   motion_movesteps: [
+    {
+      inputName: "STEPS",
+      shadowType: "math_number",
+      fieldName: "NUM",
+      value: "1",
+    },
+  ],
+  kids_move_forward: [
     {
       inputName: "STEPS",
       shadowType: "math_number",
@@ -1088,16 +1199,23 @@ const compileWorkspace = (
 export const compileSerializedWorkspace = (
   ownerSpriteId: string,
   workspaceState: object,
+  toolboxContext?: WorkspaceToolboxContext,
 ): RuntimeScript[] => {
   seedMessages();
   registerKidsBlocks();
   registerUnknownSerializedBlocks(workspaceState);
+  const previousContext = activeToolboxContext;
+  const context = toolboxContext ?? previousContext;
+  activeToolboxContext = context
+    ? { ...context, selectedSpriteId: ownerSpriteId }
+    : null;
   const workspace = new ScratchBlocks.Workspace();
   try {
     ScratchBlocks.serialization.workspaces.load(workspaceState, workspace);
     return compileWorkspace(workspace, ownerSpriteId);
   } finally {
     workspace.dispose();
+    activeToolboxContext = previousContext;
   }
 };
 
@@ -1108,24 +1226,42 @@ export const compileSerializedWorkspace = (
 const isDeletableBlock = (block: ScratchBlocks.Block): boolean =>
   block.isDeletable() && !block.isShadow();
 
-/**
- * 积木媒体资源（blockly-media）所在的站点前缀，部署到子路径时注入。
- * 始终以 "/" 结尾，默认 "/" 表示部署在域名根。
- */
-let mediaBaseUrl = "/";
-
-export function setMediaBaseUrl(base: string): void {
-  const trimmed = base.trim();
-  mediaBaseUrl = trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
-}
-
-export function getMediaBaseUrl(): string {
-  return mediaBaseUrl;
+/** A separate read-only workspace renders the same block definitions and colors. */
+export function mountBlockPreview(
+  container: HTMLElement,
+  state: object,
+  context?: WorkspaceToolboxContext,
+): () => void {
+  const previousContext = activeToolboxContext;
+  activeToolboxContext = context ?? previousContext;
+  try {
+    seedMessages();
+    registerKidsBlocks();
+    const workspace = ScratchBlocks.inject(container, {
+      scratchTheme: ScratchBlocks.ScratchBlocksTheme.CLASSIC,
+      theme: kidsCodeTheme,
+      readOnly: true,
+      scrollbars: false,
+      sounds: false,
+      media: `${getMediaBaseUrl()}blockly-media/`,
+      zoom: { startScale: 1 },
+    });
+    ScratchBlocks.serialization.workspaces.load(state, workspace);
+    const bounds = workspace.getBlocksBoundingBox();
+    container.style.height = `${Math.max(100, bounds.bottom - bounds.top + 36)}px`;
+    container.style.minWidth = `${Math.max(280, bounds.right - bounds.left + 50)}px`;
+    ScratchBlocks.svgResize(workspace);
+    return () => workspace.dispose();
+  } finally {
+    activeToolboxContext = previousContext;
+  }
 }
 
 export class BlockWorkspaceAdapter {
   #workspace: ScratchBlocks.WorkspaceSvg | null = null;
   #isLoading = false;
+  #loadTimer: number | null = null;
+  #parameterGrid = { columns: 12, rows: 9 };
 
   mount(
     container: Element,
@@ -1133,17 +1269,26 @@ export class BlockWorkspaceAdapter {
     initialState?: object,
     seedDefault = true,
     toolboxContext?: WorkspaceToolboxContext,
+    lifecycle?: { onReady: () => void; onError: (error: unknown) => void },
   ): void {
+    this.#isLoading = true;
     activeToolboxContext = toolboxContext ?? null;
+    this.#parameterGrid = toolboxContext?.coordinateGrid ?? {
+      columns: 12,
+      rows: 9,
+    };
     seedMessages();
     registerKidsBlocks();
     registerUnknownSerializedBlocks(initialState);
     this.#workspace = ScratchBlocks.inject(container, {
       scratchTheme: ScratchBlocks.ScratchBlocksTheme.CLASSIC,
       theme: kidsCodeTheme,
-      toolbox: kidsToolbox,
+      toolbox: filterTeachingToolbox(
+        kidsToolbox,
+        toolboxContext?.allowedBlockTypes,
+      ),
       maxBlocks: toolboxContext?.maxBlocks ?? 1_000,
-      media: `${mediaBaseUrl}blockly-media/`,
+      media: `${getMediaBaseUrl()}blockly-media/`,
       trashcan: false,
       sounds: false,
       scrollbars: true,
@@ -1169,21 +1314,25 @@ export class BlockWorkspaceAdapter {
       onChange(ScratchBlocks.serialization.workspaces.save(this.#workspace));
     });
 
-    window.setTimeout(() => {
-      if (this.#workspace && initialState) {
-        this.#isLoading = true;
-        try {
-          ScratchBlocks.serialization.workspaces.load(
-            initialState,
-            this.#workspace,
-          );
+    const workspace = this.#workspace;
+    this.#loadTimer = window.setTimeout(() => {
+      this.#loadTimer = null;
+      if (this.#workspace !== workspace) return;
+      try {
+        if (initialState) {
+          ScratchBlocks.serialization.workspaces.load(initialState, workspace);
           this.#ensureEditableInputs();
-        } finally {
-          this.#isLoading = false;
+        } else if (seedDefault) {
+          this.#seedWorkspace();
         }
-        return;
+        this.#isLoading = false;
+        lifecycle?.onReady();
+      } catch (error) {
+        // Keep a partially deserialized workspace out of the run/save path.
+        this.#isLoading = true;
+        if (lifecycle) lifecycle.onError(error);
+        else console.error("Failed to restore block workspace", error);
       }
-      if (seedDefault) this.#seedWorkspace();
     }, 0);
   }
 
@@ -1244,6 +1393,128 @@ export class BlockWorkspaceAdapter {
     return this.#workspace
       ? ScratchBlocks.serialization.workspaces.save(this.#workspace)
       : undefined;
+  }
+
+  parameterAt(target: EventTarget | null): BlockParameter | null {
+    if (!(target instanceof Element)) return null;
+    const block = this.#workspace?.getBlockById(
+      target.closest("[data-id]")?.getAttribute("data-id") ?? "",
+    );
+    if (!block || block.isInFlyout) return null;
+    for (const input of block.inputList)
+      for (const field of input.fieldRow) {
+        if (!field.name || !field.getSvgRoot()?.contains(target)) continue;
+        const parent = block.getParent();
+        const ownerInput =
+          parent?.inputList.find(
+            (item) => item.connection?.targetBlock() === block,
+          )?.name ?? "";
+        const numeric =
+          field.name === "NUM" ||
+          (field.name === "VALUE" && block.type.endsWith("_picker"));
+        if (numeric) {
+          const config = numberParameter(
+            parent?.type ?? block.type,
+            ownerInput,
+            this.#parameterGrid,
+          );
+          return {
+            blockId: block.id,
+            fieldName: field.name,
+            kind: "number",
+            value: String(field.getValue()),
+            label: config.label,
+            number: config,
+          };
+        }
+        if (field.name === "TEXT")
+          return {
+            blockId: block.id,
+            fieldName: field.name,
+            kind: "text",
+            value: String(field.getValue()),
+            label: "说话内容",
+          };
+        if (field instanceof ScratchBlocks.FieldDropdown)
+          return {
+            blockId: block.id,
+            fieldName: field.name,
+            kind: "select",
+            value: String(field.getValue()),
+            label:
+              field.name === "TARGET"
+                ? "选择角色"
+                : field.name === "SCENE"
+                  ? "选择场景"
+                  : "选择参数",
+            options: field.getOptions(false).flatMap((option) => {
+              if (!Array.isArray(option) || typeof option[1] !== "string")
+                return [];
+              const label = option[0];
+              return [
+                {
+                  label:
+                    typeof label === "string"
+                      ? label
+                      : label && "alt" in label
+                        ? String(label.alt)
+                        : String(option[1]),
+                  value: option[1],
+                },
+              ];
+            }),
+          };
+      }
+    return null;
+  }
+
+  listParameters(): BlockParameter[] {
+    const parameters: BlockParameter[] = [];
+    const seen = new Set<string>();
+    for (const block of this.#workspace?.getAllBlocks(false) ?? []) {
+      for (const input of block.inputList) {
+        for (const field of input.fieldRow) {
+          const parameter = this.parameterAt(field.getSvgRoot());
+          if (!parameter) continue;
+          const key = `${parameter.blockId}:${parameter.fieldName}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          parameters.push(parameter);
+        }
+      }
+    }
+    return parameters;
+  }
+
+  editParameter(parameter: BlockParameter, value: string): boolean {
+    const block = this.#workspace?.getBlockById(parameter.blockId);
+    if (!block || !block.getField(parameter.fieldName)) return false;
+    ScratchBlocks.Events.setGroup(true);
+    try {
+      // Grid-picker dropdowns have a fixed menu. Preserve arbitrary legal numbers
+      // as ordinary numeric shadows so saving/reloading cannot discard the value.
+      if (parameter.kind === "number" && block.type.endsWith("_picker")) {
+        const parent = block.getParent();
+        const connection = parent?.inputList.find(
+          (input) => input.connection?.targetBlock() === block,
+        )?.connection;
+        if (!connection || !this.#workspace) return false;
+        block.dispose();
+        const shadow = this.#workspace.newBlock("math_number");
+        shadow.setFieldValue(value, "NUM");
+        shadow.setShadow(true);
+        connection.connect(shadow.outputConnection);
+        shadow.initSvg();
+        shadow.render();
+      } else block.setFieldValue(value, parameter.fieldName);
+      return true;
+    } finally {
+      ScratchBlocks.Events.setGroup(false);
+    }
+  }
+
+  cancelGesture(): void {
+    this.#workspace?.cancelCurrentGesture();
   }
 
   compile(ownerSpriteId: string): RuntimeScript[] {
@@ -1330,6 +1601,9 @@ export class BlockWorkspaceAdapter {
   }
 
   destroy(): void {
+    if (this.#loadTimer !== null) window.clearTimeout(this.#loadTimer);
+    this.#loadTimer = null;
+    this.#isLoading = true;
     this.#workspace?.dispose();
     this.#workspace = null;
   }

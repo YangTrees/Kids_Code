@@ -37,6 +37,23 @@ export interface TrashRecord {
   project: Project;
 }
 
+export interface LocalDataSnapshot {
+  projects: Project[];
+  trash: TrashRecord[];
+  thumbnails: Array<{
+    projectId: string;
+    updatedAt: string;
+    mimeType: string;
+    bytes: Uint8Array;
+  }>;
+  assets: Array<{
+    path: string;
+    updatedAt: string;
+    mimeType: string;
+    bytes: Uint8Array;
+  }>;
+}
+
 const TRASH_RETENTION_MS = 7 * 24 * 60 * 60 * 1_000;
 
 class KidsCodeDatabase extends Dexie {
@@ -79,6 +96,8 @@ export interface ProjectRepository {
   listThumbnails(): Promise<ProjectThumbnail[]>;
   saveAsset(path: string, blob: Blob): Promise<void>;
   getAsset(path: string): Promise<Blob | undefined>;
+  snapshotAll(): Promise<LocalDataSnapshot>;
+  replaceAll(snapshot: LocalDataSnapshot): Promise<void>;
   /** 家长区“删除全部数据”：清空本机作品、回收站、缩略图与本地素材。 */
   clearAll(): Promise<void>;
 }
@@ -88,6 +107,11 @@ export class IndexedDbProjectRepository implements ProjectRepository {
 
   constructor(name?: string) {
     this.#db = new KidsCodeDatabase(name);
+  }
+
+  /** Release only this repository's connection after an aborted initial read. */
+  close(): void {
+    this.#db.close();
   }
 
   async get(projectId: string): Promise<Project | undefined> {
@@ -149,10 +173,17 @@ export class IndexedDbProjectRepository implements ProjectRepository {
         "rw",
         this.#db.trash,
         this.#db.thumbnails,
+        this.#db.projects,
+        this.#db.localAssets,
         async () => {
           const ids = expired.map((record) => record.projectId);
           await this.#db.trash.bulkDelete(ids);
           await this.#db.thumbnails.bulkDelete(ids);
+          await this.#pruneUnusedAssets(
+            expired.flatMap((record) =>
+              record.project.assets.map((asset) => asset.path),
+            ),
+          );
         },
       );
     }
@@ -188,9 +219,16 @@ export class IndexedDbProjectRepository implements ProjectRepository {
       "rw",
       this.#db.trash,
       this.#db.thumbnails,
+      this.#db.projects,
+      this.#db.localAssets,
       async () => {
+        const record = await this.#db.trash.get(projectId);
         await this.#db.trash.delete(projectId);
         await this.#db.thumbnails.delete(projectId);
+        if (record)
+          await this.#pruneUnusedAssets(
+            record.project.assets.map((asset) => asset.path),
+          );
       },
     );
   }
@@ -231,6 +269,66 @@ export class IndexedDbProjectRepository implements ProjectRepository {
       : undefined;
   }
 
+  async snapshotAll(): Promise<LocalDataSnapshot> {
+    const [projects, trash, thumbnails, assets] = await this.#db.transaction(
+      "r",
+      this.#db.projects,
+      this.#db.trash,
+      this.#db.thumbnails,
+      this.#db.localAssets,
+      () =>
+        Promise.all([
+          this.#db.projects.toArray(),
+          this.#db.trash.toArray(),
+          this.#db.thumbnails.toArray(),
+          this.#db.localAssets.toArray(),
+        ]),
+    );
+    return {
+      projects: projects.map((record) => record.project),
+      trash,
+      thumbnails: await Promise.all(
+        thumbnails.map(async (record) => ({
+          projectId: record.projectId,
+          updatedAt: record.updatedAt,
+          mimeType: record.mimeType ?? record.blob?.type ?? "image/png",
+          bytes:
+            record.bytes ?? new Uint8Array(await record.blob!.arrayBuffer()),
+        })),
+      ),
+      assets,
+    };
+  }
+
+  async replaceAll(snapshot: LocalDataSnapshot): Promise<void> {
+    await this.#db.transaction(
+      "rw",
+      this.#db.projects,
+      this.#db.trash,
+      this.#db.thumbnails,
+      this.#db.localAssets,
+      async () => {
+        await Promise.all([
+          this.#db.projects.clear(),
+          this.#db.trash.clear(),
+          this.#db.thumbnails.clear(),
+          this.#db.localAssets.clear(),
+        ]);
+        await this.#db.projects.bulkPut(
+          snapshot.projects.map((project) => ({
+            projectId: project.projectId,
+            revision: Date.now(),
+            updatedAt: project.updatedAt,
+            project,
+          })),
+        );
+        await this.#db.trash.bulkPut(snapshot.trash);
+        await this.#db.thumbnails.bulkPut(snapshot.thumbnails);
+        await this.#db.localAssets.bulkPut(snapshot.assets);
+      },
+    );
+  }
+
   async clearAll(): Promise<void> {
     await this.#db.transaction(
       "rw",
@@ -246,6 +344,26 @@ export class IndexedDbProjectRepository implements ProjectRepository {
           this.#db.localAssets.clear(),
         ]);
       },
+    );
+  }
+
+  async #pruneUnusedAssets(paths: string[]): Promise<void> {
+    const candidates = [
+      ...new Set(paths.filter((path) => path.startsWith("uploads/"))),
+    ];
+    if (candidates.length === 0) return;
+    const [projects, trash] = await Promise.all([
+      this.#db.projects.toArray(),
+      this.#db.trash.toArray(),
+    ]);
+    const used = new Set(
+      [
+        ...projects.map((record) => record.project),
+        ...trash.map((record) => record.project),
+      ].flatMap((project) => project.assets.map((asset) => asset.path)),
+    );
+    await this.#db.localAssets.bulkDelete(
+      candidates.filter((path) => !used.has(path)),
     );
   }
 

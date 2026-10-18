@@ -51,6 +51,14 @@ describe("compileBlockForRuntime", () => {
     });
   });
 
+  it("compiles movement relative to the sprite's current facing", () => {
+    expect(
+      compileBlockForRuntime(
+        fakeBlock("kids_move_forward", { STEPS: { NUM: 3 } }),
+      ),
+    ).toMatchObject({ type: "MOT_MOVE", direction: "forward", steps: 3 });
+  });
+
   it("compiles collision enter, stay, and exit events", () => {
     for (const [type, runtimeType] of [
       ["kids_when_touching", "EVT_TOUCH"],

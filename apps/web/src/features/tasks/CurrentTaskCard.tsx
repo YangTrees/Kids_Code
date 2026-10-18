@@ -4,23 +4,57 @@ import { useEditorRuntime } from "../editor/EditorRuntimeContext";
 import {
   creationTasks,
   evaluateCreationTask,
+  getAssignedCreationTask,
   getAssignedTaskId,
 } from "./task-catalog";
+import { useDataPlayProgress } from "./data-play";
+import { TaskCompatibilityNotice } from "./TaskCompatibilityNotice";
+import { assetUrl } from "../../shared/base-url";
+import { LessonGuide } from "./LessonGuide";
+
+/** Keep the lesson goal in view before the stage, not below a large canvas. */
+export function CurrentTaskObjective() {
+  const project = useEditorStore((state) => state.project);
+  const task = getAssignedCreationTask(project);
+  if (!task) return null;
+  return (
+    <div
+      className="stage-task-objective"
+      data-story={task.visualSetId ? "true" : undefined}
+      aria-label="本关目标"
+    >
+      <span>本关目标</span>
+      <strong>{task.runtimeGoal.label}</strong>
+      {task.visualSetId && (
+        <img
+          className="task-mentor-avatar"
+          src={assetUrl("ui/story-ip/diandian-hint-v2.webp")}
+          alt="点点陪你完成挑战"
+        />
+      )}
+    </div>
+  );
+}
 
 export function CurrentTaskCard({ onOpen }: { onOpen: () => void }) {
   const project = useEditorStore((state) => state.project);
-  const { lastRunReport } = useEditorRuntime();
+  const { lastRunReport, runId } = useEditorRuntime();
+  const interaction = useDataPlayProgress(project.projectId);
   const [, refresh] = useState(0);
   useEffect(() => {
     const onChange = () => refresh((value) => value + 1);
     window.addEventListener("kids-code:task-change", onChange);
     return () => window.removeEventListener("kids-code:task-change", onChange);
   }, []);
-  const task = creationTasks.find(
-    (item) => item.taskId === getAssignedTaskId(project.projectId),
-  );
+  const task = getAssignedCreationTask(project);
+  const assigned = getAssignedTaskId(project) ?? project.course?.taskId;
   const report = lastRunReport?.taskId === task?.taskId ? lastRunReport : null;
-  const evaluation = task ? evaluateCreationTask(project, task, report) : null;
+  const evaluation = task
+    ? evaluateCreationTask(project, task, report, {
+        progress: interaction,
+        runId,
+      })
+    : null;
   const nextGoal = evaluation?.rules.find((rule) => !rule.complete);
   const map = project.pathMap;
   const pathProgress =
@@ -59,22 +93,31 @@ export function CurrentTaskCard({ onOpen }: { onOpen: () => void }) {
   return (
     <section
       className="current-task-card"
-      data-mode={task ? "task" : "free"}
+      data-mode={assigned ? "task" : "free"}
       aria-label="当前挑战"
     >
       <div>
         <span>
           {task
-            ? `挑战 ${creationTasks.indexOf(task) + 1} / ${creationTasks.length}`
-            : "自由创作"}
+            ? `挑战 ${creationTasks.findIndex((item) => item.taskId === task.taskId) + 1} / ${creationTasks.length}`
+            : assigned
+              ? "任务版本待更新"
+              : "自由创作"}
         </span>
         <button onClick={onOpen}>{task ? "查看提示" : "选择挑战"} →</button>
       </div>
-      <strong>{task?.title ?? "让你的想法动起来"}</strong>
-      <p>
-        {task?.description ??
-          "给选中的角色连接积木，点击运行观察结果。停止后可以继续摆放角色。"}
-      </p>
+      <strong>
+        {task?.title ??
+          (assigned ? "当前课程版本暂不支持" : "让你的想法动起来")}
+      </strong>
+      {!task ? (
+        <p className="current-task-objective">
+          {assigned
+            ? "新建当前版本，或复制已有作品继续自由创作。"
+            : "给选中的角色连接积木，点击运行观察结果。停止后可以继续摆放角色。"}
+        </p>
+      ) : null}
+      <TaskCompatibilityNotice />
       {evaluation ? (
         <>
           {pathProgress ? (
@@ -82,14 +125,33 @@ export function CurrentTaskCard({ onOpen }: { onOpen: () => void }) {
               {pathProgress}
             </p>
           ) : null}
-          <ul>
-            {evaluation.rules.map((rule) => (
-              <li key={rule.id} data-complete={rule.complete}>
-                <span aria-hidden="true">{rule.complete ? "✓" : "○"}</span>
-                {rule.label}
-              </li>
-            ))}
-          </ul>
+          <p className="current-task-next" role="status">
+            {nextGoal
+              ? `下一步：${nextGoal.label}`
+              : "本关目标已经完成，可以继续改编或进入下一任务。"}
+          </p>
+          <details className="current-task-checks">
+            <summary>
+              查看全部检查项（
+              {evaluation.rules.filter((rule) => rule.complete).length}/
+              {evaluation.rules.length}）
+            </summary>
+            <ul>
+              {evaluation.rules.map((rule) => (
+                <li key={rule.id} data-complete={rule.complete}>
+                  <span aria-hidden="true">{rule.complete ? "✓" : "○"}</span>
+                  {rule.label}
+                </li>
+              ))}
+            </ul>
+            {task?.description ? <p>{task.description}</p> : null}
+            {project.course?.setup ? (
+              <p>
+                本关保留地图与角色起点，运行积木可以改变角色。想重新设计地图，可复制到自由创作。
+              </p>
+            ) : null}
+          </details>
+          {task?.visualSetId && <LessonGuide key={project.projectId} />}
           {report?.status === "COMPLETED" && nextGoal ? (
             <p className="current-task-feedback" role="status">
               {pathFeedback ??

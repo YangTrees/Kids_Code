@@ -12,10 +12,13 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
   type ReactNode,
 } from "react";
 import { useParams } from "react-router";
 import { useEditorStore } from "./editor-store";
+import { EditorLoadScreen } from "./EditorLoadStatus";
+import { pinAssignedTaskVersion } from "../tasks/task-catalog";
 import type {
   BackgroundLibraryAsset,
   SpriteLibraryAsset,
@@ -49,6 +52,7 @@ const ProjectPersistenceContext =
   createContext<ProjectPersistenceContextValue | null>(null);
 
 const AUTO_SAVE_DELAY_MS = 2_000;
+const PROJECT_READ_TIMEOUT_MS = 10_000;
 const draftKey = (projectId: string) => `kids-code:draft:${projectId}`;
 
 function readRecoveryDraft(projectId: string) {
@@ -86,12 +90,26 @@ export function ProjectPersistenceProvider({
   const projectRef = useRef(project);
   const revisionRef = useRef(0);
   const timerRef = useRef<number | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [loadState, setLoadState] = useState<{
+    projectId: string;
+    attempt: number;
+    phase: "loading" | "ready" | "error";
+    error: "failed" | "timeout" | null;
+  }>({ projectId, attempt: 0, phase: "loading", error: null });
+  const isReady =
+    loadState.projectId === projectId &&
+    loadState.attempt === loadAttempt &&
+    loadState.phase === "ready" &&
+    isHydrated &&
+    project.projectId === projectId;
 
   useEffect(() => {
     projectRef.current = project;
   }, [project]);
 
   useEffect(() => {
+    if (!isReady) return;
     let active = true;
     void Promise.all(
       project.assets
@@ -101,29 +119,51 @@ export function ProjectPersistenceProvider({
           if (active && blob)
             registerLocalAssetUrl(asset.path, URL.createObjectURL(blob));
         }),
-    );
+    ).catch(() => {
+      console.warn("[kids-code][load] local-asset-read-failed");
+    });
     return () => {
       active = false;
     };
-  }, [project.assets]);
+  }, [isReady, project.assets]);
 
   useEffect(() => {
     let active = true;
+    let completed = false;
+    const repository = new IndexedDbProjectRepository();
+    repositoryRef.current = repository;
+    setLoadState({
+      projectId,
+      attempt: loadAttempt,
+      phase: "loading",
+      error: null,
+    });
+    const timeout = window.setTimeout(() => {
+      active = false;
+      repository.close();
+      setLoadState({
+        projectId,
+        attempt: loadAttempt,
+        phase: "error",
+        error: "timeout",
+      });
+    }, PROJECT_READ_TIMEOUT_MS);
     void (async () => {
-      const storedProject = await repositoryRef.current.get(projectId);
+      const storedProject = await repository.get(projectId);
       if (!active) return;
       const recoveryDraft = readRecoveryDraft(projectId);
-      const nextProject = upgradeProjectGeometry(
+      const loadedProject = upgradeProjectGeometry(
         recoveryDraft &&
           (!storedProject || recoveryDraft.updatedAt > storedProject.updatedAt)
           ? recoveryDraft
           : projectSchema.parse(storedProject ?? createDefaultProject()),
       );
+      const nextProject = pinAssignedTaskVersion(loadedProject);
       await Promise.all(
         nextProject.assets
           .filter((asset) => asset.path.startsWith("uploads/"))
           .map(async (asset) => {
-            const blob = await repositoryRef.current.getAsset(asset.path);
+            const blob = await repository.getAsset(asset.path);
             if (active && blob)
               registerLocalAssetUrl(asset.path, URL.createObjectURL(blob));
           }),
@@ -134,25 +174,44 @@ export function ProjectPersistenceProvider({
           ? nextProject
           : { ...nextProject, projectId },
       );
-    })();
+      window.clearTimeout(timeout);
+      completed = true;
+      if (nextProject !== loadedProject) useEditorStore.getState().markDirty();
+      setLoadState({
+        projectId,
+        attempt: loadAttempt,
+        phase: "ready",
+        error: null,
+      });
+    })().catch(() => {
+      if (!active) return;
+      active = false;
+      window.clearTimeout(timeout);
+      repository.close();
+      console.warn("[kids-code][load] project-read-failed");
+      setLoadState({
+        projectId,
+        attempt: loadAttempt,
+        phase: "error",
+        error: "failed",
+      });
+    });
     return () => {
       active = false;
+      window.clearTimeout(timeout);
+      if (!completed) repository.close();
     };
-  }, [hydrateProject, projectId]);
+  }, [hydrateProject, projectId, loadAttempt]);
 
   useEffect(() => {
-    if (
-      !isHydrated ||
-      project.projectId !== projectId ||
-      saveStatus !== "dirty"
-    )
+    if (!isReady || project.projectId !== projectId || saveStatus !== "dirty")
       return;
     writeRecoveryDraft(projectId, project);
-  }, [isHydrated, project, projectId, saveStatus]);
+  }, [isReady, project, projectId, saveStatus]);
 
   const flush = useCallback(async () => {
     if (
-      !isHydrated ||
+      !isReady ||
       projectRef.current.projectId !== projectId ||
       saveStatus === "saved"
     )
@@ -165,21 +224,30 @@ export function ProjectPersistenceProvider({
     setSaveStatus("saving");
     try {
       await repositoryRef.current.save(projectToSave, revision);
-      if (revision === revisionRef.current) {
+      if (
+        revision === revisionRef.current &&
+        projectRef.current.projectId === projectToSave.projectId
+      ) {
         localStorage.removeItem(draftKey(projectId));
         setSaveStatus(projectRef.current === projectToSave ? "saved" : "dirty");
       }
     } catch (error) {
       console.error("Failed to save project", error);
-      if (revision === revisionRef.current) setSaveStatus("error");
+      if (
+        revision === revisionRef.current &&
+        projectRef.current.projectId === projectToSave.projectId
+      )
+        setSaveStatus("error");
     }
-  }, [isHydrated, projectId, saveStatus, setSaveStatus]);
+  }, [isReady, projectId, saveStatus, setSaveStatus]);
 
   const retrySave = useCallback(() => {
     setSaveStatus("dirty");
   }, [setSaveStatus]);
 
   const saveNow = useCallback(async () => {
+    if (!isReady || useEditorStore.getState().project.projectId !== projectId)
+      throw new Error("PROJECT_NOT_READY");
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     const revision = (revisionRef.current = Math.max(
       Date.now(),
@@ -188,10 +256,12 @@ export function ProjectPersistenceProvider({
     const snapshot = useEditorStore.getState().project;
     await repositoryRef.current.save(snapshot, revision);
     localStorage.removeItem(draftKey(snapshot.projectId));
-    setSaveStatus(
-      useEditorStore.getState().project === snapshot ? "saved" : "dirty",
-    );
-  }, [setSaveStatus]);
+    if (useEditorStore.getState().project.projectId === snapshot.projectId) {
+      setSaveStatus(
+        useEditorStore.getState().project === snapshot ? "saved" : "dirty",
+      );
+    }
+  }, [isReady, projectId, setSaveStatus]);
 
   const saveThumbnail = useCallback(
     (blob: Blob) => repositoryRef.current.saveThumbnail(projectId, blob),
@@ -199,7 +269,7 @@ export function ProjectPersistenceProvider({
   );
 
   useEffect(() => {
-    if (!isHydrated || saveStatus !== "dirty") return;
+    if (!isReady || saveStatus !== "dirty") return;
     timerRef.current = window.setTimeout(() => {
       timerRef.current = null;
       void flush();
@@ -208,7 +278,7 @@ export function ProjectPersistenceProvider({
       if (timerRef.current !== null) window.clearTimeout(timerRef.current);
       timerRef.current = null;
     };
-  }, [flush, isHydrated, saveStatus]);
+  }, [flush, isReady, saveStatus]);
 
   useEffect(() => {
     const handlePageHide = () => {
@@ -326,7 +396,7 @@ export function ProjectPersistenceProvider({
 
   const value = useMemo(
     () => ({
-      isReady: isHydrated,
+      isReady,
       exportProject,
       importProject,
       retrySave,
@@ -340,7 +410,7 @@ export function ProjectPersistenceProvider({
       importLocalAudio,
       importLocalImage,
       importProject,
-      isHydrated,
+      isReady,
       retrySave,
       saveNow,
       saveThumbnail,
@@ -349,7 +419,19 @@ export function ProjectPersistenceProvider({
 
   return (
     <ProjectPersistenceContext.Provider value={value}>
-      {children}
+      {isReady ? (
+        children
+      ) : (
+        <EditorLoadScreen
+          error={
+            loadState.projectId === projectId &&
+            loadState.attempt === loadAttempt
+              ? loadState.error
+              : null
+          }
+          onRetry={() => setLoadAttempt((attempt) => attempt + 1)}
+        />
+      )}
     </ProjectPersistenceContext.Provider>
   );
 }

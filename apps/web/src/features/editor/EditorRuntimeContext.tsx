@@ -23,7 +23,11 @@ import { BrowserRuntimeClock } from "./browser-clock";
 import { useEditorStore } from "./editor-store";
 import { PROJECT_LIMITS } from "@kids-code/domain";
 import { useSettingsStore } from "../../shared/settings-store";
-import { getAssignedTaskId } from "../tasks/task-catalog";
+import {
+  getAssignedCreationTask,
+  getAssignedTaskId,
+} from "../tasks/task-catalog";
+import { clearChartSelection } from "../tasks/data-play";
 
 interface EditorRuntimeContextValue {
   status: RuntimeStatus;
@@ -135,6 +139,16 @@ export function EditorRuntimeProvider({ children }: { children: ReactNode }) {
 
   const registerWorkspace = useCallback(
     (workspace: BlockWorkspaceAdapter | null) => {
+      if (!workspace) {
+        // A program replacement must release the old execution AND restore its
+        // saved start. Otherwise the next flag run inherits the last live pose.
+        // Stage teardown separately uses stop(false) before dropping this ref.
+        sessionRef.current?.stop();
+        sessionRef.current = null;
+        stepModeRef.current = false;
+        setLastRunReport(null);
+        setStatus("IDLE");
+      }
       workspaceRef.current = workspace;
       setReady(Boolean(stageRef.current && workspaceRef.current));
     },
@@ -180,6 +194,25 @@ export function EditorRuntimeProvider({ children }: { children: ReactNode }) {
             const compiled = compileSerializedWorkspace(
               sprite.spriteId,
               workspaceState,
+              {
+                selectedSpriteId: sprite.spriteId,
+                sprites: project.sprites,
+                scenes: project.scenes,
+                spriteAssets: project.assets
+                  .filter((asset) => asset.type === "sprite")
+                  .map((asset) => ({
+                    assetId: asset.assetId,
+                    name: asset.name ?? asset.assetId,
+                  })),
+                sounds: project.assets
+                  .filter((asset) => asset.type === "audio")
+                  .map((asset) => ({
+                    assetId: asset.assetId,
+                    name: asset.name ?? asset.assetId,
+                  })),
+                messages: project.messages,
+                variables: project.variables,
+              },
             );
             scripts.push(...compiled);
             scriptCounts.set(sprite.spriteId, compiled.length);
@@ -204,6 +237,7 @@ export function EditorRuntimeProvider({ children }: { children: ReactNode }) {
         // Green-flag runs always begin from the saved editor snapshot. Event
         // scripts triggered during the same run keep their live positions.
         sessionRef.current?.stop();
+        clearChartSelection(project.projectId);
         setRunId((id) => id + 1);
         setErrorMessage(null);
         const debug: DebugPort = {
@@ -213,7 +247,8 @@ export function EditorRuntimeProvider({ children }: { children: ReactNode }) {
               "有一块积木没有运行成功，工作区已经标出出错位置，请检查它的设置。",
             ),
         };
-        const taskId = getAssignedTaskId(project.projectId);
+        const taskId = getAssignedTaskId(project);
+        const taskVersion = getAssignedCreationTask(project)?.contentVersion;
         const session = new RuntimeSession(
           project,
           stage,
@@ -221,7 +256,11 @@ export function EditorRuntimeProvider({ children }: { children: ReactNode }) {
           new BrowserRuntimeClock(),
           (_status, report) => {
             setStatus(_status);
-            setLastRunReport(taskId ? { ...report, taskId } : report);
+            setLastRunReport(
+              taskId
+                ? { ...report, taskId, ...(taskVersion ? { taskVersion } : {}) }
+                : report,
+            );
             const executed = Object.values(
               report.executedBlockCounts ?? {},
             ).reduce((total, count) => total + count, 0);

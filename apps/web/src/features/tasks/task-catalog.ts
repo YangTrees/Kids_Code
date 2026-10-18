@@ -1,7 +1,21 @@
 import type { Project } from "@kids-code/domain";
 import type { RuntimeReport } from "@kids-code/runtime";
-import { aiTasks } from "./task-catalog-ai";
+import {
+  hasCorrectChartSeries,
+  isSortComplete,
+  type DataPlayProgress,
+} from "./data-play";
+import {
+  bindCourseProject,
+  getTaskSetupProblem,
+  resolveTaskBindings,
+} from "./task-contract";
 import { basicsTasks } from "./task-catalog-basics";
+import { aiTasks } from "./task-catalog-ai";
+import { hasLoop } from "./task-program";
+import { CURRENT_TASK_VERSION, correctTaskCopy } from "./task-versions";
+import { createLatestTask } from "./task-visuals";
+import { getLatestTaskVersion } from "./task-release";
 import type {
   CreationTask,
   TaskBlockCategory,
@@ -27,7 +41,46 @@ export type {
  * 前六个单元循序渐进地教积木编程，后四个单元参考 Hour of AI 的路径，
  * 用变量、循环和条件把“数据 → 规律 → 判断 → 创造”的人工智能思维方式拆开演示。
  */
-export const creationTasks: CreationTask[] = [...basicsTasks, ...aiTasks];
+export const creationTasks: CreationTask[] = [
+  ...basicsTasks.map((task, index) => ({
+    ...task,
+    difficulty: (index < 3
+      ? 1
+      : index < 12
+        ? 2
+        : index < 24
+          ? 3
+          : index < 28
+            ? 3
+            : 4) as 1 | 2 | 3 | 4,
+    ...(task.taskId === "path_repeat"
+      ? {
+          programGoal: {
+            label: "把向右和向上两块动作作为一组放进循环",
+            check: (project: Project) =>
+              hasLoop(project, ["motion_movesteps", "kids_move_up"]),
+          },
+        }
+      : {}),
+    ...(task.taskId === "sound"
+      ? {
+          programGoal: {
+            label: "音效和等待放在同一个循环里",
+            check: (project: Project) =>
+              hasLoop(project, ["sound_play", "control_wait"]),
+          },
+        }
+      : {}),
+  })),
+  ...aiTasks,
+].map((task) =>
+  createLatestTask(
+    correctTaskCopy({ ...task, contentVersion: CURRENT_TASK_VERSION }),
+  ),
+);
+
+export const getTaskDifficultyLabel = (task: CreationTask) =>
+  ["入门", "练习", "组合", "进阶", "综合"][(task.difficulty ?? 1) - 1]!;
 
 interface TaskBlockNode {
   type?: string;
@@ -60,6 +113,9 @@ const stackHas = (
 const conditionTaskActions: Partial<
   Record<TaskId, { needsElse: boolean; actions: string[] }>
 > = {
+  data_compare: { needsElse: false, actions: ["looks_sayforsecs"] },
+  data_label: { needsElse: true, actions: ["looks_sayforsecs"] },
+  data_sort: { needsElse: true, actions: ["looks_sayforsecs"] },
   think_if: { needsElse: false, actions: ["looks_sayforsecs"] },
   think_else: { needsElse: true, actions: ["looks_sayforsecs"] },
   think_threshold: { needsElse: true, actions: ["looks_sayforsecs"] },
@@ -69,7 +125,6 @@ const conditionTaskActions: Partial<
   ai_quiz: { needsElse: true, actions: ["looks_sayforsecs"] },
   ai_limit: { needsElse: false, actions: ["looks_sayforsecs"] },
   ai_fair: { needsElse: true, actions: ["looks_sayforsecs"] },
-  ai_final: { needsElse: true, actions: ["kids_result", "sound_play"] },
   pattern_forever: { needsElse: false, actions: ["kids_stop"] },
 };
 
@@ -85,7 +140,19 @@ function taskConnectionGoal(
       ).map((root) => ({ spriteId, root })),
   );
   const anyStack = (predicate: (block: TaskBlockNode) => boolean) =>
-    roots.some(({ root }) => stackHas(root, predicate));
+    roots.some(({ root }) => {
+      const visit = (block: TaskBlockNode | undefined): boolean => {
+        if (!block || block.disabled) return false;
+        return (
+          predicate(block) ||
+          Object.values(block.inputs ?? {}).some((input) =>
+            visit(input.block ?? input.shadow),
+          ) ||
+          visit(block.next?.block)
+        );
+      };
+      return visit(root);
+    });
   if (taskId === "sequence")
     return {
       label: "把说话接在开始下面，再把移动接在说话下面",
@@ -277,10 +344,11 @@ export function collectWorkspaceBlockTypes(
   return types;
 }
 
-export function evaluateCreationTask(
+function evaluateCurrentTask(
   project: Project,
   task: CreationTask,
   report?: RuntimeReport | null,
+  interaction?: { progress: DataPlayProgress; runId: number },
 ) {
   const blockTypes = collectWorkspaceBlockTypes(project);
   const ranTypes = collectWorkspaceBlockTypes(
@@ -342,6 +410,15 @@ export function evaluateCreationTask(
       ),
     ),
   ).has("kids_score_change");
+  const executedAtLeast = (type: string, count: number) =>
+    collectWorkspaceBlockTypes(
+      project,
+      Object.fromEntries(
+        Object.entries(report?.executedBlockCounts ?? {}).filter(
+          ([, executions]) => executions >= count,
+        ),
+      ),
+    ).has(type);
   const secondSceneId = project.scenes[1]?.sceneId;
   const spokeInSecondScene = Boolean(
     secondSceneId &&
@@ -372,14 +449,48 @@ export function evaluateCreationTask(
     }),
   );
   const connectionGoal = taskConnectionGoal(project, task.taskId);
+  const programGoal = task.programGoal
+    ? {
+        label: task.programGoal.label,
+        complete: task.programGoal.check(project, report),
+      }
+    : null;
   const rules = [
     ...task.rules.map((rule) => ({
       ...rule,
       complete: rule.anyOf.some((type) => blockTypes.has(type)),
     })),
+    ...(task.taskId === "data_sort"
+      ? [
+          {
+            id: "sort-board",
+            label: "把六张数字卡分进正确的两堆",
+            anyOf: [],
+            complete: isSortComplete(
+              interaction?.progress.sortAssignments ?? {},
+            ),
+          },
+        ]
+      : []),
+    ...(task.taskId === "data_chart"
+      ? [
+          {
+            id: "chart-reading",
+            label: "读图并选出最高的第五根柱",
+            anyOf: [],
+            complete: Boolean(
+              report?.status === "COMPLETED" &&
+              hasCorrectChartSeries(report) &&
+              interaction?.progress.chartRunId === interaction?.runId &&
+              interaction?.progress.chartSelection === 4,
+            ),
+          },
+        ]
+      : []),
     ...(connectionGoal
       ? [{ id: "connection", ...connectionGoal, anyOf: [] }]
       : []),
+    ...(programGoal ? [{ id: "program", ...programGoal, anyOf: [] }] : []),
     {
       id: "runtime",
       label: task.runtimeGoal.label,
@@ -388,6 +499,7 @@ export function evaluateCreationTask(
         validRun &&
         executedGoals &&
         (!connectionGoal || connectionGoal.complete) &&
+        (!programGoal || programGoal.complete) &&
         task.runtimeGoal.check(report) &&
         (task.taskId !== "move" || movedTowardTarget) &&
         (task.taskId !== "sequence" || movedRight) &&
@@ -395,12 +507,97 @@ export function evaluateCreationTask(
         (task.taskId !== "turn" || turnedFromStart) &&
         (task.taskId !== "repeat" || repeatedAction) &&
         (task.taskId !== "score" || repeatedScore) &&
+        (task.taskId !== "data_chart" ||
+          (executedAtLeast("kids_variable_increase", 5) &&
+            hasCorrectChartSeries(report))) &&
+        (task.taskId !== "pattern_beat" ||
+          (executedAtLeast("sound_play", 4) &&
+            executedAtLeast("control_wait", 4))) &&
+        (task.taskId !== "pattern_square" ||
+          (executedAtLeast("kids_move_forward", 4) &&
+            executedAtLeast("motion_turnright", 4))) &&
+        (task.taskId !== "pattern_grow" ||
+          (executedAtLeast("looks_changesizeby", 4) &&
+            executedAtLeast("control_wait", 4))) &&
+        (task.taskId !== "pattern_tempo" ||
+          (executedAtLeast("motion_turnright", 4) &&
+            executedAtLeast("sound_play", 4) &&
+            executedAtLeast("control_wait", 4))) &&
+        (task.taskId !== "pattern_swap" ||
+          (executedAtLeast("looks_hide", 3) &&
+            executedAtLeast("looks_show", 3) &&
+            executedAtLeast("control_wait", 6))) &&
+        (task.taskId !== "pattern_predict" ||
+          executedAtLeast("kids_variable_set", 3)) &&
+        (task.taskId !== "ai_limit" || executedAtLeast("kids_if", 2)) &&
+        (task.taskId !== "ai_fair" || executedAtLeast("kids_if_else", 2)) &&
         (task.taskId !== "scene_story" || spokeInSecondScene) &&
+        (task.taskId !== "ai_story" || spokeInSecondScene) &&
         (task.taskId !== "scene" || (report.sceneChanges ?? 0) > 0),
       ),
     },
   ];
   return { rules, complete: rules.every((rule) => rule.complete) };
+}
+
+export function evaluateCreationTask(
+  project: Project,
+  task: CreationTask,
+  report?: RuntimeReport | null,
+  interaction?: { progress: DataPlayProgress; runId: number },
+) {
+  const problem = getTaskSetupProblem(project);
+  const resolved = resolveTaskBindings(project, report);
+  const evaluation = evaluateCurrentTask(
+    resolved.project,
+    task,
+    resolved.report,
+    interaction,
+  );
+  const staleRun = Boolean(
+    report?.taskVersion &&
+    report.taskVersion !==
+      (task.contentVersion ?? getLatestTaskVersion(task.taskId)),
+  );
+  const wrongVersion = Boolean(
+    project.course && project.course.taskId !== task.taskId,
+  );
+  const wrongTaskRun = Boolean(report?.taskId && report.taskId !== task.taskId);
+  const rules = [
+    ...(problem
+      ? [{ id: "setup", label: problem, anyOf: [], complete: false }]
+      : []),
+    ...(wrongVersion
+      ? [
+          {
+            id: "assignment",
+            label: "这份作品属于其他任务，请打开对应关卡。",
+            anyOf: [],
+            complete: false,
+          },
+        ]
+      : []),
+    ...(staleRun || wrongTaskRun
+      ? [
+          {
+            id: "version",
+            label: "这次运行属于其他任务版本，请重新运行本关。",
+            anyOf: [],
+            complete: false,
+          },
+        ]
+      : []),
+    ...evaluation.rules,
+  ];
+  return {
+    rules,
+    complete:
+      !problem &&
+      !staleRun &&
+      !wrongVersion &&
+      !wrongTaskRun &&
+      evaluation.complete,
+  };
 }
 
 const assignmentKey = (projectId: string) => `kids-code:task:${projectId}`;
@@ -409,15 +606,74 @@ const PROGRESS_KEY = "kids-code:task-progress-v2";
 const hintKey = (projectId: string, taskId: TaskId) =>
   `kids-code:task-hints:${projectId}:${taskId}`;
 
-export function getAssignedTaskId(projectId: string): TaskId | undefined {
-  const value = localStorage.getItem(assignmentKey(projectId));
+function readAssignment(
+  projectId: string,
+): { taskId: TaskId; contentVersion: string } | undefined {
+  let stored: unknown;
+  try {
+    const value = localStorage.getItem(assignmentKey(projectId));
+    if (!value) return undefined;
+    try {
+      stored = JSON.parse(value);
+    } catch {
+      stored = value;
+    }
+  } catch {
+    return undefined;
+  }
+  const value =
+    typeof stored === "string"
+      ? stored
+      : (stored as { taskId?: unknown } | null)?.taskId;
+  if (!creationTasks.some((task) => task.taskId === value)) return undefined;
+  return {
+    taskId: value as TaskId,
+    contentVersion:
+      typeof stored === "object" &&
+      stored &&
+      typeof (stored as { contentVersion?: unknown }).contentVersion ===
+        "string"
+        ? (stored as { contentVersion: string }).contentVersion
+        : CURRENT_TASK_VERSION,
+  };
+}
+
+export function getAssignedTaskId(
+  projectOrId: Project | string,
+): TaskId | undefined {
+  const value =
+    typeof projectOrId === "string"
+      ? readAssignment(projectOrId)?.taskId
+      : (projectOrId.course?.taskId ??
+        readAssignment(projectOrId.projectId)?.taskId);
   return creationTasks.some((task) => task.taskId === value)
     ? (value as TaskId)
     : undefined;
 }
 
-export function setAssignedTaskId(projectId: string, taskId: TaskId): void {
-  localStorage.setItem(assignmentKey(projectId), taskId);
+export function getAssignedCreationTask(
+  project: Project,
+): CreationTask | undefined {
+  const assignment = project.course ?? readAssignment(project.projectId);
+  if (!assignment) return undefined;
+  return creationTasks.find((task) => task.taskId === assignment.taskId);
+}
+
+export function pinAssignedTaskVersion(project: Project): Project {
+  if (project.course) return project;
+  const task = getAssignedCreationTask(project);
+  return task ? bindCourseProject(project, task, false) : project;
+}
+
+export function setAssignedTaskId(
+  projectId: string,
+  taskId: TaskId,
+  contentVersion = getLatestTaskVersion(taskId),
+): void {
+  localStorage.setItem(
+    assignmentKey(projectId),
+    JSON.stringify({ taskId, contentVersion }),
+  );
   window.dispatchEvent(new Event("kids-code:task-change"));
 }
 

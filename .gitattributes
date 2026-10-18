@@ -1,0 +1,15 @@
+# Keep Prettier's LF output stable on Windows regardless of core.autocrlf.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.mp3 binary
+*.wav binary
+*.ogg binary
+*.webm binary
+*.mp4 binary
+*.docx binary

@@ -99,7 +99,7 @@ export const runtimeBlockSchema: z.ZodType<RuntimeBlock> = z.lazy(() =>
     }),
     runtimeBlockBaseSchema.extend({
       type: z.literal("MOT_MOVE"),
-      direction: z.enum(["right", "left", "up", "down"]),
+      direction: z.enum(["right", "left", "up", "down", "forward"]),
       steps: z.number().int().min(1).max(10),
     }),
     runtimeBlockBaseSchema.extend({
@@ -244,7 +244,7 @@ export type RuntimeBlock =
   | (RuntimeBlockBase & { type: "UNSUPPORTED"; originalType: string })
   | (RuntimeBlockBase & {
       type: "MOT_MOVE";
-      direction: "right" | "left" | "up" | "down";
+      direction: "right" | "left" | "up" | "down" | "forward";
       steps: number;
     })
   | (RuntimeBlockBase & { type: "MOT_TURN"; degrees: number })

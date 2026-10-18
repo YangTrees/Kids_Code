@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import path from "node:path";
+import assetManifest from "../apps/web/public/assets/asset-manifest.json";
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() =>
@@ -8,6 +9,9 @@ test.beforeEach(async ({ page }) => {
   await page.goto(`./editor/prj_layout_${Date.now()}`);
   await expect(page.locator(".pixi-stage-canvas")).toBeVisible();
   await expect(page.locator(".blocklySvg")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "运行作品", exact: true }),
+  ).toBeEnabled();
 });
 
 test("keeps the logical stage at 4:3 without stretching the workspace", async ({
@@ -97,10 +101,14 @@ test("loads the P1 condition, logic, and random-number blocks", async ({
 }) => {
   await page.getByRole("button", { name: "⟳ 控制" }).click();
 
+  for (const type of ["kids_if", "kids_if_else", "kids_touching_condition"]) {
+    await expect(page.locator(`.${type}`)).toHaveCount(1);
+  }
+  await expect(
+    page.locator(".kids_touching_condition .blocklyDropdownText"),
+  ).not.toHaveText("团团");
+  await page.locator(".category-operator.category-button").click();
   for (const type of [
-    "kids_if",
-    "kids_if_else",
-    "kids_touching_condition",
     "kids_score_compare",
     "kids_logic_and",
     "kids_logic_or",
@@ -110,16 +118,13 @@ test("loads the P1 condition, logic, and random-number blocks", async ({
     await expect(page.locator(`.${type}`)).toHaveCount(1);
   }
 
-  await expect(
-    page.locator(".kids_touching_condition .blocklyDropdownText"),
-  ).not.toHaveText("栗奇");
   await expect(page.locator(".blocklyDragging")).toHaveCount(0);
 });
 
 test("creates a project variable and exposes all variable blocks", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: "🎮 游戏" }).click();
+  await page.locator(".category-variable.category-button").click();
   const createButton = page
     .locator(".blocklyFlyoutButton")
     .filter({ hasText: "创建变量" });
@@ -127,14 +132,21 @@ test("creates a project variable and exposes all variable blocks", async ({
   await expect(createButton).toHaveClass(/kids-create-variable-button/);
   await expect(
     createButton.locator(".blocklyFlyoutButtonBackground"),
-  ).toHaveCSS("fill", "rgb(245, 138, 37)");
+  ).toHaveCSS("fill", "rgb(255, 140, 26)");
   await expect(
     page.locator(".kids_variable_set .blocklyPath").first(),
-  ).toHaveCSS("fill", "rgb(245, 138, 37)");
+  ).toHaveCSS("fill", "rgb(255, 140, 26)");
 
-  page.once("dialog", (dialog) => dialog.accept("能量"));
   await createButton.click();
-  await page.getByRole("button", { name: "🎮 游戏" }).click();
+  const variableDialog = page.getByRole("dialog", {
+    name: "创建变量",
+    exact: true,
+  });
+  await variableDialog.getByRole("textbox").fill("能量");
+  await variableDialog
+    .getByRole("button", { name: "创建", exact: true })
+    .click();
+  await page.locator(".category-variable.category-button").click();
 
   for (const type of [
     "kids_variable_set",
@@ -143,7 +155,6 @@ test("creates a project variable and exposes all variable blocks", async ({
     "kids_variable_show",
     "kids_variable_hide",
     "kids_variable_value",
-    "kids_variable_compare",
   ]) {
     await expect(page.locator(`.${type}`)).toHaveCount(1);
   }
@@ -167,6 +178,8 @@ test("shows editor status, common shortcuts, and a grid toggle", async ({
     ["♪ 声音", "rgb(227, 77, 145)"],
     ["⟳ 控制", "rgb(245, 138, 37)"],
     ["🎮 游戏", "rgb(69, 181, 49)"],
+    ["x 变量", "rgb(255, 140, 26)"],
+    ["= 运算", "rgb(89, 192, 89)"],
   ]) {
     await expect(page.getByRole("button", { name })).toHaveCSS(
       "border-bottom-color",
@@ -244,12 +257,19 @@ test("shows sixty-four tasks with two open path branches", async ({ page }) => {
   await expect(tasks.nth(28)).toBeEnabled();
   await expect(tasks.nth(29)).toBeDisabled();
   await expect(page.getByText("基础入门", { exact: true })).toBeVisible();
-  const guideBlocks = page.locator(".task-block-sample");
-  await expect(guideBlocks).toHaveCount(2);
-  const guideColours = await guideBlocks.evaluateAll((blocks) =>
-    blocks.map((block) => getComputedStyle(block).backgroundColor),
-  );
-  expect(new Set(guideColours).size).toBe(2);
+  await expect(page.locator(".real-block-guide")).toHaveCount(0);
+  await page.getByRole("button", { name: "给我一个提示", exact: true }).click();
+  await page.getByRole("button", { name: "再提示一点", exact: true }).click();
+  await page.getByRole("button", { name: "再提示一点", exact: true }).click();
+  const guide = page.locator(".real-block-guide");
+  await expect(guide.locator(".blocklySvg")).toBeVisible();
+  const guideColours = await guide
+    .locator(".blocklyPath")
+    .evaluateAll((blocks) =>
+      blocks.map((block) => getComputedStyle(block).fill),
+    );
+  expect(guideColours).toContain("rgb(244, 180, 26)");
+  expect(guideColours).toContain("rgb(138, 85, 232)");
 });
 
 test("offers complete built-in asset libraries and local image upload", async ({
@@ -260,7 +280,9 @@ test("offers complete built-in asset libraries and local image upload", async ({
 
   await page.getByRole("button", { name: /添加角色/ }).click();
   await expect(page.getByRole("dialog", { name: "选择角色" })).toBeVisible();
-  await expect(page.locator(".library-card")).toHaveCount(12);
+  await expect(page.locator(".library-card")).toHaveCount(
+    assetManifest.assets.filter((asset) => asset.type === "sprite").length,
+  );
   await expect(
     page.getByRole("button", { name: /上传角色图片/ }),
   ).toBeVisible();
@@ -282,7 +304,9 @@ test("offers complete built-in asset libraries and local image upload", async ({
   await expect(
     page.getByRole("dialog", { name: "更换场景背景" }),
   ).toBeVisible();
-  await expect(page.locator(".library-card")).toHaveCount(10);
+  await expect(page.locator(".library-card")).toHaveCount(
+    assetManifest.assets.filter((asset) => asset.type === "background").length,
+  );
   await expect(
     page.getByRole("button", { name: /上传背景图片/ }),
   ).toBeVisible();

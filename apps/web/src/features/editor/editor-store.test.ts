@@ -8,10 +8,36 @@ import {
 import { backgroundLibrary, spriteLibrary } from "./asset-catalog";
 
 describe("editor store", () => {
+  it("keeps one real workspace edit as one undo step despite duplicate serialization events", () => {
+    const original = createDefaultProject();
+    original.workspaceStates.spr_liji = {
+      blocks: { blocks: [{ type: "math_number", fields: { NUM: "2" } }] },
+    };
+    useEditorStore.getState().hydrateProject(original);
+    const edited = {
+      blocks: { blocks: [{ type: "math_number", fields: { NUM: "7" } }] },
+    };
+    useEditorStore.getState().setWorkspaceState("spr_liji", edited);
+    const length = useEditorStore.getState().projectHistory.length;
+    useEditorStore
+      .getState()
+      .setWorkspaceState("spr_liji", structuredClone(edited));
+    expect(useEditorStore.getState().projectHistory).toHaveLength(length);
+    useEditorStore.getState().undoProject();
+    expect(useEditorStore.getState().project.workspaceStates.spr_liji).toEqual(
+      original.workspaceStates.spr_liji,
+    );
+    useEditorStore.getState().redoProject();
+    expect(useEditorStore.getState().project.workspaceStates.spr_liji).toEqual(
+      edited,
+    );
+  });
   it("offers the minimum twelve built-in sprite choices", () => {
-    expect(spriteLibrary).toHaveLength(12);
-    expect(new Set(spriteLibrary.map((asset) => asset.assetId)).size).toBe(12);
-    expect(backgroundLibrary).toHaveLength(10);
+    expect(spriteLibrary.length).toBeGreaterThanOrEqual(12);
+    expect(new Set(spriteLibrary.map((asset) => asset.assetId)).size).toBe(
+      spriteLibrary.length,
+    );
+    expect(backgroundLibrary.length).toBeGreaterThanOrEqual(14);
   });
 
   it("creates a project variable and ignores duplicate names", () => {
@@ -95,8 +121,12 @@ describe("editor store", () => {
   it("adds assets selected from the library", () => {
     const state = useEditorStore.getState();
     state.hydrateProject(createDefaultProject());
-    state.addSpriteFromLibrary(spriteLibrary[1]!);
-    state.addSceneFromLibrary(backgroundLibrary[1]!);
+    state.addSpriteFromLibrary(
+      spriteLibrary.find((asset) => asset.assetId === "obj_treasure_chest")!,
+    );
+    state.addSceneFromLibrary(
+      backgroundLibrary.find((asset) => asset.assetId === "bg_classroom_01")!,
+    );
 
     const project = useEditorStore.getState().project;
     expect(project.sprites).toHaveLength(4);
@@ -108,7 +138,10 @@ describe("editor store", () => {
   it("changes the current backdrop and project settings", () => {
     const state = useEditorStore.getState();
     state.hydrateProject(createDefaultProject());
-    state.updateSceneBackdrop("scn_forest", backgroundLibrary[1]!);
+    state.updateSceneBackdrop(
+      "scn_forest",
+      backgroundLibrary.find((asset) => asset.assetId === "bg_classroom_01")!,
+    );
     state.updateProjectSettings("  我的寻宝游戏  ", "en-US");
 
     const project = useEditorStore.getState().project;

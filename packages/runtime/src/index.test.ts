@@ -846,6 +846,8 @@ describe("RuntimeSession", () => {
     ]);
 
     expect(session.report.variables).toEqual({ var_energy: 4 });
+    expect(session.report.variableHistory?.var_energy).toEqual([0, 3, 5, 4]);
+    expect(session.report.visibleVariables).toEqual([]);
     expect(stage.setScore).toHaveBeenLastCalledWith(5);
     expect(stage.setVariable).toHaveBeenLastCalledWith(
       "var_energy",
@@ -1182,6 +1184,114 @@ describe("RuntimeSession", () => {
 
     expect(debug.reportError).toHaveBeenCalledWith("STEP_LIMIT");
     expect(session.status).toBe("ERROR");
+  });
+
+  it("moves in a square relative to the sprite's facing and records the trail", async () => {
+    const project = createDefaultProject();
+    const actor = project.scenes[0]!.instances.find(
+      (instance) => instance.spriteId === "spr_liji",
+    )!;
+    actor.transform.x = 180;
+    actor.transform.y = 180;
+    const session = new RuntimeSession(
+      project,
+      createStage(),
+      { highlightBlock: vi.fn(), reportError: vi.fn() },
+      new ImmediateClock(),
+    );
+    await session.start([
+      {
+        scriptId: "square",
+        ownerSpriteId: "spr_liji",
+        blocks: [
+          { id: "flag", sourceBlockId: "flag", type: "EVT_FLAG" },
+          {
+            id: "repeat",
+            sourceBlockId: "repeat",
+            type: "CTL_REPEAT",
+            count: 4,
+            body: [
+              {
+                id: "forward",
+                sourceBlockId: "forward",
+                type: "MOT_MOVE",
+                direction: "forward",
+                steps: 3,
+              },
+              {
+                id: "turn",
+                sourceBlockId: "turn",
+                type: "MOT_TURN",
+                degrees: 90,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+    expect(session.status).toBe("COMPLETED");
+    expect(session.report.spriteTrails?.spr_liji).toEqual([
+      { x: 180, y: 180 },
+      { x: 300, y: 180 },
+      { x: 300, y: 300 },
+      { x: 180, y: 300 },
+      { x: 180, y: 180 },
+    ]);
+  });
+
+  it("can finish a forever loop by stopping the current script", async () => {
+    const session = new RuntimeSession(
+      createDefaultProject(),
+      createStage(),
+      { highlightBlock: vi.fn(), reportError: vi.fn() },
+      new ImmediateClock(),
+    );
+    await session.start([
+      {
+        scriptId: "stop-loop",
+        ownerSpriteId: "spr_liji",
+        blocks: [
+          { id: "flag", sourceBlockId: "flag", type: "EVT_FLAG" },
+          {
+            id: "forever",
+            sourceBlockId: "forever",
+            type: "CTL_FOREVER",
+            body: [
+              {
+                id: "score",
+                sourceBlockId: "score",
+                type: "GAME_CHANGE_SCORE",
+                delta: 1,
+              },
+              {
+                id: "if",
+                sourceBlockId: "if",
+                type: "CTL_IF",
+                condition: {
+                  type: "COND_COMPARE",
+                  operator: "gt",
+                  left: { type: "NUMBER_SCORE" },
+                  right: { type: "NUMBER_LITERAL", value: 4 },
+                },
+                body: [
+                  {
+                    id: "stop",
+                    sourceBlockId: "stop",
+                    type: "CTL_STOP",
+                    scope: "this",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+    expect(session.status).toBe("COMPLETED");
+    expect(session.report.score).toBe(5);
+    expect(session.report.executedBlockCounts?.stop).toBe(1);
+    expect(session.report.executedBlockCounts?.if).toBe(5);
+    expect(session.report.executedBlockCounts?.forever).toBe(1);
   });
 
   it("rejects too many concurrent start scripts", async () => {

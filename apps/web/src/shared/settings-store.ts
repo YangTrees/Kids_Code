@@ -29,6 +29,7 @@ interface SettingsState extends AppSettings {
   setAllowUploads: (value: boolean) => void;
   setTutorialDone: (value: boolean) => void;
   resetSettings: () => void;
+  reloadSettings: () => void;
 }
 
 const STORAGE_KEY = "kids-code:settings";
@@ -109,6 +110,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       writeStoredSettings(DEFAULT_SETTINGS);
       set({ ...DEFAULT_SETTINGS });
     },
+    reloadSettings: () => set(readStoredSettings()),
   };
 });
 

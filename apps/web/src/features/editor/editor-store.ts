@@ -12,7 +12,14 @@ import type {
 } from "./asset-catalog";
 
 export type BlockCategory =
-  "event" | "motion" | "looks" | "sound" | "control" | "game";
+  | "event"
+  | "motion"
+  | "looks"
+  | "sound"
+  | "control"
+  | "game"
+  | "variable"
+  | "operator";
 export type SaveStatus = "saved" | "dirty" | "saving" | "error";
 
 interface EditorSnapshot {
@@ -45,6 +52,7 @@ interface EditorState {
   selectCategory: (category: BlockCategory) => void;
   hydrateProject: (project: Project) => void;
   replaceProject: (project: Project) => void;
+  applyProjectUpdate: (project: Project) => void;
   setWorkspaceState: (spriteId: string, workspaceState: object) => void;
   undoWorkspace: (spriteId: string) => void;
   redoWorkspace: (spriteId: string) => void;
@@ -106,6 +114,17 @@ export const useEditorStore = create<EditorState>((set) => ({
   historyRevision: 0,
   selectSprite: (spriteId) => set({ selectedSpriteId: spriteId }),
   selectCategory: (selectedCategory) => set({ selectedCategory }),
+  applyProjectUpdate: (project) =>
+    set((state) => ({
+      project,
+      saveStatus: "dirty",
+      selectedSpriteId: project.sprites.some(
+        (sprite) => sprite.spriteId === state.selectedSpriteId,
+      )
+        ? state.selectedSpriteId
+        : project.sprites[0]!.spriteId,
+      historyRevision: state.historyRevision + 1,
+    })),
   hydrateProject: (project) =>
     set({
       project: upgradeProjectCoordinates(project),
@@ -133,6 +152,14 @@ export const useEditorStore = create<EditorState>((set) => ({
   setWorkspaceState: (spriteId, workspaceState) =>
     set((state) => {
       const previous = state.project.workspaceStates[spriteId];
+      // One edit can emit several Blockly events. Identical snapshots must not
+      // create no-op undo entries or dirty an already-saved project.
+      if (
+        previous === workspaceState ||
+        (previous !== undefined &&
+          JSON.stringify(previous) === JSON.stringify(workspaceState))
+      )
+        return state;
       return {
         project: {
           ...state.project,

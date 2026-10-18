@@ -2,12 +2,13 @@ import { IndexedDbProjectRepository } from "@kids-code/persistence";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { createTaskProject } from "./task-project";
+import { useDataPlayProgress } from "./data-play";
 import { useProjectPersistence } from "../editor/ProjectPersistenceContext";
 import { useEditorRuntime } from "../editor/EditorRuntimeContext";
 import { useEditorStore } from "../editor/editor-store";
 import {
-  creationTasks,
   evaluateCreationTask,
+  getAssignedCreationTask,
   getAssignedTaskId,
   getNextCreationTask,
   getTaskHintLevel,
@@ -16,6 +17,7 @@ import {
   type CreationTask,
 } from "./task-catalog";
 import { assetUrl } from "../../shared/base-url";
+import { completionStars, recordLearningSupport } from "./learning-support";
 
 const repository = new IndexedDbProjectRepository();
 
@@ -28,6 +30,7 @@ export function TaskCompletionDialog() {
   const navigate = useNavigate();
   const project = useEditorStore((state) => state.project);
   const { lastRunReport, status, runId, stop } = useEditorRuntime();
+  const interaction = useDataPlayProgress(project.projectId);
   const { saveNow } = useProjectPersistence();
   const handledRunRef = useRef("");
   const busyRef = useRef(false);
@@ -44,19 +47,27 @@ export function TaskCompletionDialog() {
       lastRunReport.projectId !== project.projectId
     )
       return;
-    const taskId = getAssignedTaskId(project.projectId);
+    const taskId = getAssignedTaskId(project);
     if (lastRunReport.taskId !== taskId) return;
-    const task = creationTasks.find((item) => item.taskId === taskId);
-    if (!task || !evaluateCreationTask(project, task, lastRunReport).complete)
+    const task = getAssignedCreationTask(project);
+    if (
+      !task ||
+      !evaluateCreationTask(project, task, lastRunReport, {
+        progress: interaction,
+        runId,
+      }).complete
+    )
       return;
     handledRunRef.current = key;
-    const stars = Math.max(
-      1,
-      3 - getTaskHintLevel(project.projectId, task.taskId),
-    ) as 1 | 2 | 3;
+    const stars = completionStars(
+      task,
+      getTaskHintLevel(project.projectId, task.taskId),
+    );
+    if (task.visualSetId)
+      recordLearningSupport(project.projectId, task, { completed: true });
     markTaskCompleted(task.taskId, stars);
     setCompletion({ task, stars });
-  }, [lastRunReport, project, status, runId]);
+  }, [interaction, lastRunReport, project, status, runId]);
 
   if (!completion) return null;
 
@@ -75,7 +86,7 @@ export function TaskCompletionDialog() {
         return;
       }
       const existing = (await repository.list())
-        .filter((item) => getAssignedTaskId(item.projectId) === nextTask.taskId)
+        .filter((item) => getAssignedTaskId(item) === nextTask.taskId)
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
       if (existing) {
         stop();
@@ -125,7 +136,14 @@ export function TaskCompletionDialog() {
         }}
       >
         <span className="task-complete-burst" aria-hidden="true" />
-        <img src={assetUrl("ui/home-coin.png")} alt="" />
+        <img
+          src={assetUrl(
+            completion.task.visualSetId
+              ? "ui/story-ip/tuantuan-happy-v1.webp"
+              : "ui/home-coin.png",
+          )}
+          alt=""
+        />
         <span className="task-complete-kicker">CHALLENGE COMPLETE</span>
         <h2 id="task-complete-title">任务完成！</h2>
         <p>你完成了“{completion.task.title}”，新的创作能力已经解锁。</p>

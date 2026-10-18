@@ -1,4 +1,5 @@
 import type { RuntimeReport } from "@kids-code/runtime";
+import type { Project } from "@kids-code/domain";
 import type { ProjectMode } from "../projects/project-factory";
 
 export type TaskId =
@@ -111,6 +112,8 @@ export interface TaskRule {
 
 export interface CreationTask {
   taskId: TaskId;
+  contentVersion?: string;
+  visualSetId?: "story-ip-v1";
   chapter: TaskChapter;
   title: string;
   description: string;
@@ -122,4 +125,9 @@ export interface CreationTask {
     check: (report: RuntimeReport) => boolean;
   };
   hints: [string, string, string];
+  difficulty?: 1 | 2 | 3 | 4 | 5;
+  programGoal?: {
+    label: string;
+    check: (project: Project, report?: RuntimeReport | null) => boolean;
+  };
 }

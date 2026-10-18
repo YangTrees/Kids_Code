@@ -1,22 +1,47 @@
 import {
   BlockWorkspaceAdapter,
   type WorkspaceToolboxContext,
+  type BlockParameter,
 } from "@kids-code/block-adapter";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { countWorkspaceBlocks, useEditorStore } from "./editor-store";
 import { useEditorRuntime } from "./EditorRuntimeContext";
-import { getAssignedTaskId } from "../tasks/task-catalog";
+import {
+  getAssignedTaskId,
+  getAssignedCreationTask,
+} from "../tasks/task-catalog";
+import { getLessonConfig } from "../tasks/lesson-config";
+import { getGridDimensions } from "@kids-code/domain";
+import {
+  ParameterDialog,
+  ParameterListDialog,
+  VariableNameDialog,
+} from "./LearningDialogs";
 import { BlockContextMenu, type BlockMenuTarget } from "./BlockContextMenu";
 
 import { builtInSoundNames } from "./asset-catalog";
+import { EditorSurfaceStatus } from "./EditorLoadStatus";
+import { useTranslate } from "../../shared/use-translate";
 
-export function BlockWorkspaceHost() {
+export function BlockWorkspaceHost({
+  fullTools = false,
+}: {
+  fullTools?: boolean;
+}) {
   const hostRef = useRef<HTMLDivElement>(null);
   const adapterRef = useRef<BlockWorkspaceAdapter | null>(null);
   const selectedSpriteId = useEditorStore((state) => state.selectedSpriteId);
   const selectedCategory = useEditorStore((state) => state.selectedCategory);
   const projectId = useEditorStore((state) => state.project.projectId);
+  const project = useEditorStore((state) => state.project);
+  const lesson = getLessonConfig(getAssignedCreationTask(project));
+  const { columns, rows } = getGridDimensions(project);
+  const [parameter, setParameter] = useState<BlockParameter | null>(null);
+  const [parameterChoices, setParameterChoices] = useState<
+    BlockParameter[] | null
+  >(null);
+  const [variableOpen, setVariableOpen] = useState(false);
   const isHydrated = useEditorStore((state) => state.isHydrated);
   const sprites = useEditorStore((state) => state.project.sprites);
   const scenes = useEditorStore((state) => state.project.scenes);
@@ -27,11 +52,14 @@ export function BlockWorkspaceHost() {
   const historyRevision = useEditorStore((state) => state.historyRevision);
   const setWorkspaceState = useEditorStore((state) => state.setWorkspaceState);
   const [loadError, setLoadError] = useState(false);
-  const { registerWorkspace } = useEditorRuntime();
+  const [workspaceReady, setWorkspaceReady] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const t = useTranslate();
+  const { registerWorkspace, stop } = useEditorRuntime();
   const createVariable = useCallback(() => {
-    const name = window.prompt("给变量起个名字（最多12个字）", "变量1");
-    if (name?.trim()) addVariable(name);
-  }, [addVariable]);
+    adapterRef.current?.cancelGesture();
+    setVariableOpen(true);
+  }, []);
   const [menuTarget, setMenuTarget] = useState<BlockMenuTarget | null>(null);
   const closeMenu = useCallback(() => setMenuTarget(null), []);
   const handleContextMenu = useCallback(
@@ -96,6 +124,10 @@ export function BlockWorkspaceHost() {
         name,
       })),
       onCreateVariable: createVariable,
+      ...(!fullTools && lesson
+        ? { allowedBlockTypes: lesson.allowedBlockTypes }
+        : {}),
+      coordinateGrid: { columns, rows },
     }),
     [
       assets,
@@ -105,6 +137,10 @@ export function BlockWorkspaceHost() {
       selectedSpriteId,
       sprites,
       variables,
+      fullTools,
+      lesson,
+      columns,
+      rows,
     ],
   );
 
@@ -113,7 +149,20 @@ export function BlockWorkspaceHost() {
     // A fresh workspace (sprite switch, undo restore) invalidates the menu.
     setMenuTarget(null);
     if (!host || !isHydrated) return;
+    let active = true;
+    setWorkspaceReady(false);
+    setLoadError(false);
+    registerWorkspace(null);
     const adapter = new BlockWorkspaceAdapter();
+    const fail = () => {
+      if (!active) return;
+      console.warn("[kids-code][load] workspace-restore-failed");
+      registerWorkspace(null);
+      adapterRef.current = null;
+      adapter.destroy();
+      setWorkspaceReady(false);
+      setLoadError(true);
+    };
     const workspaceState =
       useEditorStore.getState().project.workspaceStates[selectedSpriteId];
     try {
@@ -129,29 +178,42 @@ export function BlockWorkspaceHost() {
       );
       adapter.mount(
         host,
-        (nextWorkspaceState) =>
-          setWorkspaceState(selectedSpriteId, nextWorkspaceState),
+        (nextWorkspaceState) => {
+          if (!active || adapterRef.current !== adapter) return;
+          const previous =
+            useEditorStore.getState().project.workspaceStates[selectedSpriteId];
+          if (JSON.stringify(previous) === JSON.stringify(nextWorkspaceState))
+            return;
+          if (lesson) stop();
+          setWorkspaceState(selectedSpriteId, nextWorkspaceState);
+        },
         workspaceState && typeof workspaceState === "object"
           ? workspaceState
           : undefined,
-        !getAssignedTaskId(projectId),
+        !getAssignedTaskId(currentProject),
         {
           ...toolboxContext,
           maxBlocks: Math.max(0, 1_000 - otherBlockCount),
+        },
+        {
+          onReady: () => {
+            if (!active) return;
+            setWorkspaceReady(true);
+            registerWorkspace(adapter);
+          },
+          onError: fail,
         },
       );
       adapterRef.current = adapter;
       adapter.selectCategory(useEditorStore.getState().selectedCategory);
       setLoadError(false);
-      registerWorkspace(adapter);
-    } catch (error) {
-      console.error("Failed to mount the block workspace", error);
-      setLoadError(true);
-      return;
+    } catch {
+      fail();
     }
     const observer = new ResizeObserver(() => adapter.resize());
     observer.observe(host);
     return () => {
+      active = false;
       observer.disconnect();
       registerWorkspace(null);
       adapterRef.current = null;
@@ -159,12 +221,15 @@ export function BlockWorkspaceHost() {
     };
   }, [
     historyRevision,
+    loadAttempt,
     isHydrated,
     projectId,
     registerWorkspace,
     selectedSpriteId,
     setWorkspaceState,
     toolboxContext,
+    lesson,
+    stop,
   ]);
 
   useEffect(() => {
@@ -172,17 +237,96 @@ export function BlockWorkspaceHost() {
   }, [selectedCategory]);
 
   return (
-    <div className="block-workspace-shell" onContextMenu={handleContextMenu}>
+    <div
+      className="block-workspace-shell"
+      onContextMenu={handleContextMenu}
+      onPointerDownCapture={(event) => {
+        if (!lesson) return;
+        const target = adapterRef.current?.parameterAt(event.target);
+        if (!target) return;
+        event.preventDefault();
+        event.stopPropagation();
+        adapterRef.current?.cancelGesture();
+        setParameter(target);
+      }}
+      onMouseDownCapture={(event) => {
+        if (lesson && adapterRef.current?.parameterAt(event.target)) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }}
+    >
       <div
         ref={hostRef}
         className="block-workspace-host"
         aria-label="积木脚本工作区"
+        tabIndex={0}
       />
-      {loadError ? (
-        <div className="workspace-error" role="alert">
-          积木工作区暂时没有加载成功，请刷新后再试。
-        </div>
-      ) : null}
+      {lesson && workspaceReady && (
+        <button
+          type="button"
+          className="workspace-parameter-trigger"
+          aria-label="打开积木参数列表"
+          onClick={() => {
+            adapterRef.current?.cancelGesture();
+            setParameterChoices(adapterRef.current?.listParameters() ?? []);
+          }}
+        >
+          修改参数
+        </button>
+      )}
+      {parameterChoices && (
+        <ParameterListDialog
+          parameters={parameterChoices}
+          onChoose={(choice) => {
+            setParameterChoices(null);
+            setParameter(choice);
+          }}
+          onClose={() => setParameterChoices(null)}
+        />
+      )}
+      {parameter && (
+        <ParameterDialog
+          parameter={parameter}
+          project={project}
+          onSave={(value) => {
+            stop();
+            const edited =
+              adapterRef.current?.editParameter(parameter, value) ?? false;
+            const snapshot = edited ? adapterRef.current?.save() : undefined;
+            if (snapshot) setWorkspaceState(selectedSpriteId, snapshot);
+            return edited;
+          }}
+          onClose={() => {
+            adapterRef.current?.cancelGesture();
+            setParameter(null);
+            hostRef.current?.focus();
+          }}
+        />
+      )}
+      {variableOpen && (
+        <VariableNameDialog
+          existingNames={variables.map((item) => item.name)}
+          onCreate={addVariable}
+          onClose={() => {
+            setVariableOpen(false);
+            hostRef.current?.focus();
+          }}
+        />
+      )}
+      {!workspaceReady && (
+        <EditorSurfaceStatus
+          title={t(
+            loadError ? "editor.load.workspaceError" : "editor.load.workspace",
+          )}
+          {...(loadError
+            ? {
+                message: t("editor.load.surfaceHint"),
+                onRetry: () => setLoadAttempt((attempt) => attempt + 1),
+              }
+            : {})}
+        />
+      )}
       {menuTarget ? (
         <BlockContextMenu
           target={menuTarget}

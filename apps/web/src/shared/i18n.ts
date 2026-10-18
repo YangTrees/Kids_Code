@@ -6,7 +6,7 @@
  */
 
 const zhCN = {
-  "brand.title": "栗奇编程乐园",
+  "brand.title": "团团点点的好奇编程乐园",
   "brand.subtitle": "儿童创意编程工作室",
   "home.localStatus": "本地创作 · 自动保存",
   "home.nav.learn": "学习课程",
@@ -27,6 +27,21 @@ const zhCN = {
   "editor.save.dirty": "待保存",
   "editor.save.saving": "保存中…",
   "editor.save.retry": "重试",
+  "editor.load.reading": "正在读取你的作品…",
+  "editor.load.readHint":
+    "作品读取完成后，再打开积木和舞台。不会修改原来的作品。",
+  "editor.load.failed": "作品暂时没有读取成功",
+  "editor.load.timeout": "读取等待时间较长，请重试。原作品和恢复草稿都仍保留。",
+  "editor.load.errorHint":
+    "读取遇到问题，请重试或返回首页。不会用空白作品覆盖原作。",
+  "editor.load.retry": "重试读取作品",
+  "editor.load.back": "返回作品首页",
+  "editor.load.retrySurface": "重新加载",
+  "editor.load.workspace": "正在准备积木…",
+  "editor.load.workspaceError": "积木工作区没有加载完整",
+  "editor.load.surfaceHint": "可以重新加载此区域，已保存的积木和素材不会清空。",
+  "editor.load.stage": "正在准备舞台…",
+  "editor.load.stageError": "舞台暂时没有加载成功",
   "editor.status.IDLE": "编辑中",
   "editor.status.STARTING": "准备运行",
   "editor.status.RUNNING": "运行中",
@@ -61,7 +76,7 @@ export type TranslationKey = keyof typeof zhCN;
 export type Dictionary = Record<TranslationKey, string>;
 
 const en: Dictionary = {
-  "brand.title": "Liqi Code Studio",
+  "brand.title": "Tuantuan & Diandian's Curious Coding Park",
   "brand.subtitle": "Creative coding for kids",
   "home.localStatus": "On-device · Auto saved",
   "home.nav.learn": "Courses",
@@ -82,6 +97,23 @@ const en: Dictionary = {
   "editor.save.dirty": "Unsaved",
   "editor.save.saving": "Saving…",
   "editor.save.retry": "Retry",
+  "editor.load.reading": "Reading your project…",
+  "editor.load.readHint":
+    "Blocks and the stage open after your project is read. The original stays unchanged.",
+  "editor.load.failed": "The project could not be read",
+  "editor.load.timeout":
+    "Reading took too long. Please retry. Your saved project and recovery draft are kept.",
+  "editor.load.errorHint":
+    "Please retry or return home. An empty project will not replace your saved work.",
+  "editor.load.retry": "Retry reading project",
+  "editor.load.back": "Back to projects",
+  "editor.load.retrySurface": "Reload",
+  "editor.load.workspace": "Preparing blocks…",
+  "editor.load.workspaceError": "The block workspace did not finish loading",
+  "editor.load.surfaceHint":
+    "Reload this area without clearing saved blocks or assets.",
+  "editor.load.stage": "Preparing the stage…",
+  "editor.load.stageError": "The stage did not finish loading",
   "editor.status.IDLE": "Editing",
   "editor.status.STARTING": "Starting",
   "editor.status.RUNNING": "Running",

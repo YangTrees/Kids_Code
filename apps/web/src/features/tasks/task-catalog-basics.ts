@@ -629,11 +629,15 @@ export const basicsTasks: CreationTask[] = [
     taskId: "sound",
     chapter: "进阶创作",
     title: "声音导演",
-    description: "给一个开始事件配上清晰的游戏音效。",
+    description:
+      "用循环编排三组双音效：每组播放两种不同声音，并在声音之间稍作等待。",
     projectMode: "blank",
     blockGuide: [
       { label: "点击开始", category: "event", shape: "hat" },
+      { label: "重复 3 次", category: "control", shape: "loop" },
       { label: "播放声音 按钮声", category: "sound" },
+      { label: "等待 0.5 秒", category: "control" },
+      { label: "播放声音 叮", category: "sound" },
     ],
     rules: [
       {
@@ -642,15 +646,23 @@ export const basicsTasks: CreationTask[] = [
         anyOf: ["event_whenflagclicked", "event_whenthisspriteclicked"],
       },
       { id: "sound", label: "连接播放声音积木", anyOf: ["sound_play"] },
+      { id: "repeat", label: "重复编排三组", anyOf: ["control_repeat"] },
+      { id: "wait", label: "在音效之间等待", anyOf: ["control_wait"] },
     ],
     runtimeGoal: {
-      label: "运行作品并播放一次声音",
-      check: (report) => report.status === "COMPLETED",
+      label: "两种声音交替播放三组，共六声",
+      check: (report) =>
+        report.status === "COMPLETED" &&
+        report.playedSounds?.length === 6 &&
+        new Set(report.playedSounds).size === 2 &&
+        report.playedSounds.every(
+          (sound, index, sounds) => index === 0 || sound !== sounds[index - 1],
+        ),
     },
     hints: [
-      "粉红色积木属于“声音”分类。",
-      "把播放声音连接在黄色事件积木下面。",
-      "从下拉菜单选择一种声音，再点击运行。",
+      "每组有两种不同声音，不能用同一声音替代。",
+      "在重复 3 次中放：声音 A → 等待 0.5 秒 → 声音 B → 等待 0.5 秒。",
+      "运行后应听到 A、B、A、B、A、B，等待让两声不会挤在一起。",
     ],
   },
   {
@@ -904,12 +916,14 @@ export const basicsTasks: CreationTask[] = [
     taskId: "path_repeat",
     chapter: "路线挑战",
     title: "重复登高",
-    description: "用重复积木让栗奇向上走 4 次，抵达山顶终点。",
+    description:
+      "道路有两段相同的台阶；重复两次“向右 2 格，再向上 2 格”，用循环压缩整段路线。",
     projectMode: "blank",
     blockGuide: [
       { label: "点击开始", category: "event", shape: "hat" },
-      { label: "重复执行 4 次", category: "control", shape: "loop" },
-      { label: "向上移动 1 格", category: "motion" },
+      { label: "重复执行 2 次", category: "control", shape: "loop" },
+      { label: "向右移动 2 格", category: "motion" },
+      { label: "向上移动 2 格", category: "motion" },
     ],
     rules: [
       {
@@ -918,6 +932,7 @@ export const basicsTasks: CreationTask[] = [
         anyOf: ["event_whenflagclicked"],
       },
       { id: "repeat", label: "使用重复积木", anyOf: ["control_repeat"] },
+      { id: "right", label: "每层台阶先向右", anyOf: ["motion_movesteps"] },
       { id: "up", label: "在循环里向上走", anyOf: ["kids_move_up"] },
     ],
     runtimeGoal: {
@@ -928,9 +943,9 @@ export const basicsTasks: CreationTask[] = [
         !report.pathViolation,
     },
     hints: [
-      "一共有 4 个向上的步长，每一步都是 1 格。",
-      "把向上移动 1 格放进橙色“重复执行”里面。",
-      "把重复次数改成 4，并接在点击开始下面。",
+      "沿路描出第一层台阶，再找第二层，看看它们有什么相同。",
+      "两块动作作为一组：向右 2 格 → 向上 2 格。",
+      "把这一组放进重复 2 次；总共走 8 格，不能把整个 4 格横向或纵向合并。",
     ],
   },
   {

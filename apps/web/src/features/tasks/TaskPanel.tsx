@@ -5,9 +5,14 @@ import { useEditorStore } from "../editor/editor-store";
 import { useEditorRuntime } from "../editor/EditorRuntimeContext";
 import { useProjectPersistence } from "../editor/ProjectPersistenceContext";
 import { createTaskProject } from "./task-project";
+import { useDataPlayProgress } from "./data-play";
+import { TaskCompatibilityNotice } from "./TaskCompatibilityNotice";
+import { RealBlockGuide } from "./LessonGuide";
+import { completionStars, recordLearningSupport } from "./learning-support";
 import {
   creationTasks,
   evaluateCreationTask,
+  getAssignedCreationTask,
   getAssignedTaskId,
   getCompletedTaskIds,
   getTaskHintLevel,
@@ -35,11 +40,11 @@ const repository = new IndexedDbProjectRepository();
 export function TaskPanel({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
   const project = useEditorStore((state) => state.project);
-  const { lastRunReport } = useEditorRuntime();
+  const { lastRunReport, runId } = useEditorRuntime();
+  const interaction = useDataPlayProgress(project.projectId);
   const { saveNow } = useProjectPersistence();
   const [taskId, setTaskId] = useState<TaskId>(() => {
-    const assigned = getAssignedTaskId(project.projectId);
-    return assigned && isTaskUnlocked(assigned) ? assigned : "speak";
+    return getAssignedTaskId(project) ?? "speak";
   });
   const [hintLevel, setHintLevel] = useState(() =>
     getTaskHintLevel(project.projectId, taskId),
@@ -48,8 +53,11 @@ export function TaskPanel({ onClose }: { onClose: () => void }) {
   const [progress, setProgress] = useState(getTaskProgress);
   const [openingTaskId, setOpeningTaskId] = useState<TaskId | null>(null);
   const [openError, setOpenError] = useState<string | null>(null);
-  const task = creationTasks.find((item) => item.taskId === taskId)!;
-  const taskIndex = creationTasks.indexOf(task);
+  const task =
+    (getAssignedTaskId(project) === taskId
+      ? getAssignedCreationTask(project)
+      : undefined) ?? creationTasks.find((item) => item.taskId === taskId)!;
+  const taskIndex = creationTasks.findIndex((item) => item.taskId === taskId);
   const chapterGroups = useMemo(
     () =>
       Array.from(new Set(creationTasks.map((item) => item.chapter))).map(
@@ -66,8 +74,9 @@ export function TaskPanel({ onClose }: { onClose: () => void }) {
         project,
         task,
         lastRunReport?.taskId === taskId ? lastRunReport : null,
+        { progress: interaction, runId },
       ),
-    [lastRunReport, project, task, taskId],
+    [interaction, lastRunReport, project, runId, task, taskId],
   );
 
   useEffect(() => {
@@ -81,7 +90,7 @@ export function TaskPanel({ onClose }: { onClose: () => void }) {
 
   const selectTask = async (nextTaskId: TaskId) => {
     if (openingTaskId) return;
-    if (getAssignedTaskId(project.projectId) === nextTaskId) {
+    if (getAssignedTaskId(project) === nextTaskId) {
       setTaskId(nextTaskId);
       return;
     }
@@ -90,7 +99,7 @@ export function TaskPanel({ onClose }: { onClose: () => void }) {
     try {
       await saveNow();
       const existing = (await repository.list())
-        .filter((item) => getAssignedTaskId(item.projectId) === nextTaskId)
+        .filter((item) => getAssignedTaskId(item) === nextTaskId)
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
       if (existing) {
         navigate("/editor/" + existing.projectId);
@@ -181,6 +190,7 @@ export function TaskPanel({ onClose }: { onClose: () => void }) {
             ))}
           </nav>
           <article className="task-detail">
+            <TaskCompatibilityNotice />
             {openError ? <p role="alert">{openError}</p> : null}
             <div className="task-heading">
               <span>{String(taskIndex + 1).padStart(2, "0")}</span>
@@ -204,34 +214,42 @@ export function TaskPanel({ onClose }: { onClose: () => void }) {
                 <h3>积木搭法参考</h3>
                 <span>颜色与工作区分类一致</span>
               </header>
-              <div
-                className="task-block-sequence"
-                role="img"
-                aria-label={`参考积木顺序：${task.blockGuide.map((block) => block.label).join("，")}`}
-              >
-                {task.blockGuide.map((block, index) => (
-                  <div
-                    className="task-block-step"
-                    key={`${block.label}-${index}`}
-                  >
-                    {index > 0 ? <span className="block-connector" /> : null}
+              {task.visualSetId ? (
+                hintLevel >= 3 || evaluation.complete ? (
+                  <RealBlockGuide task={task} />
+                ) : (
+                  <p>先观察目标，再找积木。第三级提示可查看真实积木示意。</p>
+                )
+              ) : (
+                <div
+                  className="task-block-sequence"
+                  role="img"
+                  aria-label={`参考积木顺序：${task.blockGuide.map((block) => block.label).join("，")}`}
+                >
+                  {task.blockGuide.map((block, index) => (
                     <div
-                      className="task-block-sample"
-                      data-category={block.category}
-                      data-shape={block.shape ?? "stack"}
+                      className="task-block-step"
+                      key={`${block.label}-${index}`}
                     >
-                      <strong>{block.label}</strong>
-                      <small>{categoryLabels[block.category]}</small>
+                      {index > 0 ? <span className="block-connector" /> : null}
+                      <div
+                        className="task-block-sample"
+                        data-category={block.category}
+                        data-shape={block.shape ?? "stack"}
+                      >
+                        <strong>{block.label}</strong>
+                        <small>{categoryLabels[block.category]}</small>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </section>
             {evaluation.complete ? (
               <div className="task-success" role="status">
-                <span>完成评价 · {Math.max(1, 3 - hintLevel)} 星</span>
+                <span>完成奖励 · {completionStars(task, hintLevel)} 星</span>
                 <strong>任务完成！</strong>
-                <p>太棒了，你已经掌握了这些积木。</p>
+                <p>你完成了本关目标，还可以继续改编作品。</p>
                 <small>
                   {progress.find((record) => record.taskId === taskId)
                     ?.completedAt
@@ -254,6 +272,11 @@ export function TaskPanel({ onClose }: { onClose: () => void }) {
                     const nextLevel = Math.min(3, hintLevel + 1);
                     setHintLevel(nextLevel);
                     setTaskHintLevel(project.projectId, taskId, nextLevel);
+                    if (task.visualSetId)
+                      recordLearningSupport(project.projectId, task, {
+                        usedHints: true,
+                        maxHintLevel: nextLevel,
+                      });
                   }}
                 >
                   {hintLevel === 0

@@ -137,10 +137,17 @@ export interface RuntimeReport {
   result: "success" | "failure" | null;
   spritePositions: Record<string, { x: number; y: number }>;
   spriteRotations?: Record<string, number>;
+  spriteScales?: Record<string, number>;
+  spriteTrails?: Record<string, { x: number; y: number }[]>;
+  spokenTexts?: string[];
+  playedSounds?: string[];
+  visibleVariables?: string[];
   touchedPairs: string[];
   variables: Record<string, number>;
+  variableHistory?: Record<string, number[]>;
   projectId?: string;
   taskId?: string;
+  taskVersion?: string;
   executedBlockCounts?: Record<string, number>;
   executedBlockScenes?: Record<string, string[]>;
   sceneId?: string;
@@ -182,6 +189,7 @@ export class RuntimeSession {
   #activeTasks = 0;
   #score = 0;
   readonly #variables = new Map<string, number>();
+  readonly #variableHistory = new Map<string, number[]>();
   readonly #visibleVariables = new Set<string>();
   #result: "success" | "failure" | null = null;
   readonly #touchedPairs = new Set<string>();
@@ -189,6 +197,9 @@ export class RuntimeSession {
   #currentSceneId: string;
   readonly #executedBlockCounts = new Map<string, number>();
   readonly #executedBlockScenes = new Map<string, Set<string>>();
+  readonly #spriteTrails = new Map<string, { x: number; y: number }[]>();
+  readonly #spokenTexts: string[] = [];
+  readonly #playedSounds: string[] = [];
   #sceneChanges = 0;
   readonly #pathVisited = new Set<string>();
   readonly #pathTrace: string[] = [];
@@ -241,8 +252,16 @@ export class RuntimeSession {
       spriteRotations: Object.fromEntries(
         [...this.#state].map(([spriteId, state]) => [spriteId, state.rotation]),
       ),
+      spriteScales: Object.fromEntries(
+        [...this.#state].map(([spriteId, state]) => [spriteId, state.scale]),
+      ),
+      spriteTrails: Object.fromEntries(this.#spriteTrails),
+      spokenTexts: [...this.#spokenTexts],
+      playedSounds: [...this.#playedSounds],
+      visibleVariables: [...this.#visibleVariables],
       touchedPairs: [...this.#touchedPairs],
       variables: Object.fromEntries(this.#variables),
+      variableHistory: Object.fromEntries(this.#variableHistory),
       projectId: this.#project.projectId,
       executedBlockCounts: Object.fromEntries(this.#executedBlockCounts),
       executedBlockScenes: Object.fromEntries(
@@ -300,9 +319,11 @@ export class RuntimeSession {
     }
     this.#score = 0;
     this.#variables.clear();
+    this.#variableHistory.clear();
     this.#visibleVariables.clear();
     for (const variable of this.#project.variables) {
       this.#variables.set(variable.variableId, variable.initialValue);
+      this.#variableHistory.set(variable.variableId, [variable.initialValue]);
       if (variable.visible) this.#visibleVariables.add(variable.variableId);
       this.#syncVariable(variable.variableId);
     }
@@ -310,6 +331,11 @@ export class RuntimeSession {
     this.#touchedPairs.clear();
     this.#executedBlockCounts.clear();
     this.#executedBlockScenes.clear();
+    this.#spriteTrails.clear();
+    for (const [spriteId, state] of this.#state)
+      this.#spriteTrails.set(spriteId, [{ x: state.x, y: state.y }]);
+    this.#spokenTexts.length = 0;
+    this.#playedSounds.length = 0;
     this.#inputScripts.clear();
     this.#sceneChanges = 0;
     this.#pathVisited.clear();
@@ -522,8 +548,22 @@ export class RuntimeSession {
       await this.#awaitResume(cancellation);
       this.#countStep();
       this.#debug.highlightBlock(block.sourceBlockId);
-      await this.#block(spriteId, block, cancellation, broadcastDepth);
-      this.#recordBlock(block);
+      if (block.type === "CTL_STOP") this.#recordBlock(block);
+      try {
+        await this.#block(spriteId, block, cancellation, broadcastDepth);
+      } catch (error) {
+        if (
+          (error instanceof ScriptStoppedError ||
+            (error instanceof RuntimeCancelledError &&
+              this.#result !== null &&
+              block.type !== "GAME_RESULT")) &&
+          block.type !== "CTL_STOP" &&
+          block.type !== "CTL_FOREVER"
+        )
+          this.#recordBlock(block);
+        throw error;
+      }
+      if (block.type !== "CTL_STOP") this.#recordBlock(block);
     }
   }
   async #block(
@@ -545,10 +585,24 @@ export class RuntimeSession {
       case "EVT_SCENE_START":
         return;
       case "MOT_MOVE": {
+        const radians = (state.rotation * Math.PI) / 180;
+        const forwardX = Math.cos(radians);
+        const forwardY = Math.sin(radians);
+        const direction =
+          block.direction === "forward"
+            ? (["right", "down", "left", "up"] as const)[
+                ((Math.round(state.rotation / 90) % 4) + 4) % 4
+              ]
+            : block.direction;
         if (this.#project.pathMap?.actorSpriteId === spriteId) {
           const map = this.#project.pathMap;
           const allowed = new Set(map.tiles.map(pathCellKey));
-          if (!Number.isInteger(block.steps)) {
+          if (
+            !Number.isInteger(block.steps) ||
+            (block.direction === "forward" &&
+              Math.abs(state.rotation / 90 - Math.round(state.rotation / 90)) >
+                0.001)
+          ) {
             this.#pathViolation = true;
             return;
           }
@@ -558,18 +612,10 @@ export class RuntimeSession {
             const next = current && {
               column:
                 current.column +
-                (block.direction === "right"
-                  ? 1
-                  : block.direction === "left"
-                    ? -1
-                    : 0),
+                (direction === "right" ? 1 : direction === "left" ? -1 : 0),
               row:
                 current.row +
-                (block.direction === "down"
-                  ? 1
-                  : block.direction === "up"
-                    ? -1
-                    : 0),
+                (direction === "down" ? 1 : direction === "up" ? -1 : 0),
             };
             if (!next || !allowed.has(pathCellKey(next))) {
               this.#pathViolation = true;
@@ -590,6 +636,7 @@ export class RuntimeSession {
             );
             state.x = target.x;
             state.y = target.y;
+            this.#spriteTrails.get(spriteId)?.push({ x: state.x, y: state.y });
             this.#pathVisited.add(pathCellKey(next));
             this.#pathTrace.push(pathCellKey(next));
           }
@@ -606,11 +653,13 @@ export class RuntimeSession {
             Math.min(
               this.#project.settings.stageWidth - margin,
               state.x +
-                (block.direction === "right"
-                  ? delta
-                  : block.direction === "left"
-                    ? -delta
-                    : 0),
+                (block.direction === "forward"
+                  ? (Math.abs(forwardX) < 1e-10 ? 0 : forwardX) * delta
+                  : direction === "right"
+                    ? delta
+                    : direction === "left"
+                      ? -delta
+                      : 0),
             ),
           ),
           y: Math.max(
@@ -618,11 +667,13 @@ export class RuntimeSession {
             Math.min(
               this.#project.settings.stageHeight - margin,
               state.y +
-                (block.direction === "down"
-                  ? delta
-                  : block.direction === "up"
-                    ? -delta
-                    : 0),
+                (block.direction === "forward"
+                  ? (Math.abs(forwardY) < 1e-10 ? 0 : forwardY) * delta
+                  : direction === "down"
+                    ? delta
+                    : direction === "up"
+                      ? -delta
+                      : 0),
             ),
           ),
         };
@@ -642,6 +693,9 @@ export class RuntimeSession {
           cancellation,
         );
         this.#state.set(spriteId, { ...requested, ...resolved });
+        this.#spriteTrails
+          .get(spriteId)
+          ?.push({ x: resolved.x, y: resolved.y });
         return;
       }
       case "MOT_TURN":
@@ -701,6 +755,7 @@ export class RuntimeSession {
         return;
       }
       case "LOOK_SAY":
+        this.#spokenTexts.push(block.text);
         this.#stage.showSpeech(spriteId, block.text);
         try {
           await this.#clock.wait(block.duration * 1000, cancellation);
@@ -725,6 +780,7 @@ export class RuntimeSession {
         await this.#stage.setSpriteCostume?.(spriteId, block.costumeAssetId);
         return;
       case "SND_PLAY":
+        this.#playedSounds.push(block.soundId);
         this.#stage.playSound(block.soundId);
         return;
       case "SND_STOP_ALL":
@@ -801,6 +857,9 @@ export class RuntimeSession {
           block.variableId,
           this.#clampVariable(this.#number(block.value)),
         );
+        this.#variableHistory
+          .get(block.variableId)
+          ?.push(this.#variables.get(block.variableId)!);
         this.#syncVariable(block.variableId);
         return;
       case "GAME_CHANGE_VARIABLE": {
@@ -812,6 +871,9 @@ export class RuntimeSession {
             block.direction === "decrease" ? current - delta : current + delta,
           ),
         );
+        this.#variableHistory
+          .get(block.variableId)
+          ?.push(this.#variables.get(block.variableId)!);
         this.#syncVariable(block.variableId);
         return;
       }
@@ -916,8 +978,22 @@ export class RuntimeSession {
       await this.#awaitResume(cancellation);
       this.#countStep();
       this.#debug.highlightBlock(child.sourceBlockId);
-      await this.#block(spriteId, child, cancellation, broadcastDepth);
-      this.#recordBlock(child);
+      if (child.type === "CTL_STOP") this.#recordBlock(child);
+      try {
+        await this.#block(spriteId, child, cancellation, broadcastDepth);
+      } catch (error) {
+        if (
+          (error instanceof ScriptStoppedError ||
+            (error instanceof RuntimeCancelledError &&
+              this.#result !== null &&
+              child.type !== "GAME_RESULT")) &&
+          child.type !== "CTL_STOP" &&
+          child.type !== "CTL_FOREVER"
+        )
+          this.#recordBlock(child);
+        throw error;
+      }
+      if (child.type !== "CTL_STOP") this.#recordBlock(child);
     }
   }
   #recordBlock(block: RuntimeBlock): void {

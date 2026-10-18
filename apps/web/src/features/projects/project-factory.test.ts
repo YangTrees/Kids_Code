@@ -19,7 +19,7 @@ describe("project factory", () => {
   it("keeps the treasure template cast and layout", () => {
     const project = createProjectForMode("treasure-template", "template1");
     expect(project.sprites.map((sprite) => sprite.name)).toEqual([
-      "栗奇",
+      "团团",
       "宝箱",
       "星星金币",
     ]);
@@ -75,9 +75,9 @@ describe("project factory", () => {
   it("creates a two-character broadcast dialogue template", () => {
     const project = createProjectForMode("dialogue-template", "story001");
     expect(projectSchema.safeParse(project).success).toBe(true);
-    expect(project.scenes[0]?.backdropAssetId).toBe("bg_classroom_01");
+    expect(project.scenes[0]?.backdropAssetId).toBe("bg_story_garden_v1");
     expect(project.sprites.map((sprite) => sprite.name)).toEqual([
-      "栗奇",
+      "团团",
       "宝箱伙伴",
     ]);
     const sender = compileSerializedWorkspace(

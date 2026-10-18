@@ -1,0 +1,122 @@
+.editor-project-loading {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 24px;
+  background: #fdfbf7;
+  color: #263f40;
+}
+.editor-load-card {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  width: min(100%, 540px);
+  padding: clamp(24px, 5vw, 42px);
+  border: 2px solid #e0e5dc;
+  border-bottom-width: 5px;
+  border-radius: 24px;
+  background: white;
+  text-align: center;
+}
+.editor-load-card h1 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.4;
+}
+.editor-load-card p {
+  margin: 0;
+  color: #566b64;
+  font-size: 15px;
+  line-height: 1.8;
+}
+.editor-load-blocks {
+  display: flex;
+  gap: 6px;
+  padding-top: 8px;
+}
+.editor-load-blocks i {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 7px;
+  background: #f4b41a;
+  border-bottom: 3px solid #b77d0c;
+}
+.editor-load-blocks i::before {
+  position: absolute;
+  content: "";
+  width: 16px;
+  height: 6px;
+  top: -4px;
+  left: 12px;
+  border-radius: 3px;
+  background: inherit;
+}
+.editor-load-blocks i:nth-child(2) {
+  background: #428ef4;
+  border-color: #2866bc;
+}
+.editor-load-blocks i:nth-child(3) {
+  background: #8a55e8;
+  border-color: #6339ac;
+}
+.editor-load-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+.editor-load-actions button,
+.editor-load-actions a,
+.editor-surface-status button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 2px solid #d4dfd1;
+  border-bottom-width: 4px;
+  border-radius: 14px;
+  background: #edf5e9;
+  color: #285d42;
+  font: inherit;
+  font-weight: 750;
+  text-decoration: none;
+  cursor: pointer;
+}
+.editor-load-actions button:active,
+.editor-surface-status button:active {
+  transform: translateY(2px);
+}
+.editor-load-actions :focus-visible,
+.editor-surface-status button:focus-visible {
+  outline: 3px solid #287ba7;
+  outline-offset: 3px;
+}
+.editor-surface-status {
+  position: absolute;
+  z-index: 6;
+  inset: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  border: 2px solid #dce5d6;
+  border-radius: 16px;
+  background: #fdfbf7f5;
+  color: #324e46;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.stage-surface-root {
+  position: absolute;
+  inset: 0;
+}
+.editor-surface-status > span {
+  max-width: 36em;
+  color: #5c6d62;
+  font-size: 12px;
+}

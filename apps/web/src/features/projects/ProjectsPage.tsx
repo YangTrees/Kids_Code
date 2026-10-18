@@ -1,10 +1,12 @@
+import { chapterImage } from "../tasks/chapter-visuals";
+import "../../styles/story-series.css";
 import { projectSchema, type Project } from "@kids-code/domain";
 import {
   IndexedDbProjectRepository,
   type TrashRecord,
 } from "@kids-code/persistence";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   createProjectForMode,
   duplicateProject,
@@ -25,6 +27,11 @@ import {
   type TaskChapter,
 } from "../tasks/task-catalog";
 import { assetUrl } from "../../shared/base-url";
+import {
+  BlockCategories,
+  ProgrammingExample,
+} from "../../shared/ProgrammingBlocks";
+import { courseBlockCategories } from "../tasks/course-blocks";
 
 const repository = new IndexedDbProjectRepository();
 
@@ -33,43 +40,43 @@ const chapterCards: Record<
   { image: string; description: string }
 > = {
   基础入门: {
-    image: assetUrl("ui/home-blocks.png"),
+    image: chapterImage("基础入门"),
     description: "事件、移动、转向和重复，迈出编程第一步。",
   },
   互动游戏: {
-    image: assetUrl("ui/home-treasure.png"),
+    image: chapterImage("互动游戏"),
     description: "让角色碰撞、收集金币，做出胜利反馈。",
   },
   程序思维: {
-    image: assetUrl("ui/home-coin.png"),
+    image: chapterImage("程序思维"),
     description: "用场景、变量和条件，让程序自己判断。",
   },
   进阶创作: {
-    image: assetUrl("ui/home-dialogue.png"),
+    image: chapterImage("进阶创作"),
     description: "加入键盘、声音与故事，完成冒险小游戏。",
   },
   路线挑战: {
-    image: assetUrl("ui/home-route.png"),
+    image: chapterImage("路线挑战"),
     description: "看地图写程序，沿固定道路逐格走到终点。",
   },
   云岛远征: {
-    image: assetUrl("ui/home-sky-island.png"),
+    image: chapterImage("云岛远征"),
     description: "经过路标、收集星石，并在限定步数内找到捷径。",
   },
   数据小侦探: {
-    image: assetUrl("ui/home-coin.png"),
+    image: chapterImage("数据小侦探"),
     description: "记录、显示和比较数据，认识人工智能的燃料。",
   },
   规律与模式: {
-    image: assetUrl("ui/home-blocks.png"),
+    image: chapterImage("规律与模式"),
     description: "用循环表达节拍、形状和节奏里重复的规律。",
   },
   会判断的程序: {
-    image: assetUrl("ui/home-dialogue.png"),
+    image: chapterImage("会判断的程序"),
     description: "看特征、定分界线，搭出“如果…那么”的决策模型。",
   },
   "AI 小创客": {
-    image: assetUrl("ui/home-treasure.png"),
+    image: chapterImage("AI 小创客"),
     description: "做出会提醒、会回答的小助手，也看看它何时出错。",
   },
 };
@@ -188,21 +195,27 @@ export function ProjectsPage() {
     <main className="projects-page">
       <header className="projects-nav">
         <div className="projects-brand">
-          <span className="projects-brand-mark">栗</span>
+          <span className="projects-brand-mark" aria-hidden="true">
+            团
+          </span>
           <span>
             <strong>{t("brand.title")}</strong>
             <small>{t("brand.subtitle")}</small>
           </span>
         </div>
         <nav className="projects-nav-links" aria-label="首页导航">
-          <a href="/learn">{t("home.nav.learn")}</a>
+          <Link className="projects-nav-primary" to="/learn">
+            {t("home.nav.learn")}
+          </Link>
           <a href="#templates">{t("home.nav.templates")}</a>
           <a href="#challenges">{t("home.nav.challenges")}</a>
           <a href="#works">{t("home.nav.works")}</a>
           <button type="button" onClick={() => setHelpOpen(true)}>
             {t("home.nav.help")}
           </button>
-          <a href="/parent">{t("home.nav.parent")}</a>
+          <Link className="projects-nav-primary" to="/parent">
+            {t("home.nav.parent")}
+          </Link>
         </nav>
         <div className="projects-local-status">
           <span /> {t("home.localStatus")}
@@ -258,15 +271,15 @@ export function ProjectsPage() {
             <span>从零开始</span>
           </div>
         </div>
-        <div className="hero-preview" aria-hidden="true">
-          <span className="hero-preview-label">正在创作 · 森林寻宝</span>
-          <img src={assetUrl("characters/liji/liji-idle.png")} alt="" />
-          <span className="hero-code-card hero-code-motion">向右移动 3 格</span>
-          <span className="hero-code-card hero-code-looks">说 我找到啦！</span>
-          <span className="hero-play-mark">▶</span>
+        <div className="hero-preview story-home-hero" aria-hidden="true">
+          <span className="hero-preview-label">和团团、点点一起创作</span>
+          <img src={assetUrl("ui/story-ip/home-hero-v1.webp")} alt="" />
+          <div className="home-program-example">
+            <ProgrammingExample layout="stack" />
+          </div>
         </div>
         <div className="hero-mini-card" aria-hidden="true">
-          <img src={assetUrl("ui/home-blocks.png")} alt="" />
+          <img src={assetUrl("ui/story-ip/diandian-hint-v2.webp")} alt="" />
           <span>
             <strong>拖一拖</strong>
             像拼积木一样简单
@@ -292,7 +305,7 @@ export function ProjectsPage() {
           >
             <img
               className="template-icon"
-              src={assetUrl("ui/home-treasure.png")}
+              src={assetUrl("ui/story-ip/unit-interaction-v1.webp")}
               alt=""
             />
             <span className="template-copy">
@@ -306,7 +319,7 @@ export function ProjectsPage() {
           >
             <img
               className="template-icon"
-              src={assetUrl("ui/home-coin.png")}
+              src={assetUrl("objects/story-ip/star-coin-v1.webp")}
               alt=""
             />
             <span className="template-copy">
@@ -320,7 +333,7 @@ export function ProjectsPage() {
           >
             <img
               className="template-icon"
-              src={assetUrl("ui/home-dialogue.png")}
+              src={assetUrl("ui/story-ip/unit-creation-v1.webp")}
               alt=""
             />
             <span className="template-copy">
@@ -345,7 +358,7 @@ export function ProjectsPage() {
         <header>
           <div>
             <h2>课程挑战</h2>
-            <p>六个单元，从第一块积木走到云岛路线挑战。</p>
+            <p>十个单元，从第一块积木走到路线、数据与规则创作。</p>
           </div>
           <button
             className="import-project"
@@ -382,6 +395,11 @@ export function ProjectsPage() {
                 </small>
                 <strong>{chapter}</strong>
                 <p>{chapterCards[chapter].description}</p>
+                <BlockCategories
+                  categories={courseBlockCategories(tasks).slice(0, 4)}
+                  compact
+                  label={chapter + "积木线索"}
+                />
                 <b>
                   {finished}/{tasks.length} 已完成 · 查看课程 →
                 </b>

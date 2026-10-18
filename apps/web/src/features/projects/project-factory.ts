@@ -1,4 +1,9 @@
 import { createDefaultProject, type Project } from "@kids-code/domain";
+import {
+  spriteLibrary,
+  backgroundLibrary,
+  soundLibrary,
+} from "../editor/asset-catalog";
 
 export type ProjectMode =
   "blank" | "treasure-template" | "coin-template" | "dialogue-template";
@@ -327,6 +332,50 @@ const dialogueWorkspaceStates = {
 };
 
 export function createProjectForMode(
+  ...args: Parameters<typeof createProjectLayout>
+): Project {
+  const project = structuredClone(createProjectLayout(...args));
+  project.name = project.name.replaceAll("栗奇", "团团");
+  const costumes: Record<string, string> = {
+    spr_liji: "costume_story_tuantuan_idle_v1",
+    spr_box: "obj_story_treasure_chest_v1",
+    spr_coin: "obj_story_coin_v1",
+  };
+  project.sprites.forEach((sprite) => {
+    if (costumes[sprite.spriteId])
+      sprite.costumeAssetId = costumes[sprite.spriteId]!;
+    if (sprite.spriteId === "spr_liji") sprite.name = "团团";
+  });
+  project.scenes.forEach((scene, index) => {
+    scene.backdropAssetId =
+      index === 0 ? "bg_story_garden_v1" : "bg_story_workshop_v1";
+  });
+  const required = new Set([
+    ...Object.values(costumes),
+    ...project.scenes.map((scene) => scene.backdropAssetId),
+    "costume_story_tuantuan_right_v1",
+  ]);
+  for (const asset of [...spriteLibrary, ...backgroundLibrary])
+    if (
+      required.has(asset.assetId) &&
+      !project.assets.some((item) => item.assetId === asset.assetId)
+    )
+      project.assets.push({
+        assetId: asset.assetId,
+        type: asset.assetId.startsWith("bg_") ? "background" : "sprite",
+        path: asset.path,
+      });
+  for (const sound of soundLibrary)
+    if (!project.assets.some((asset) => asset.assetId === sound.assetId))
+      project.assets.push({
+        assetId: sound.assetId,
+        type: "audio",
+        path: sound.path,
+      });
+  return project;
+}
+
+function createProjectLayout(
   mode: ProjectMode,
   suffix = crypto.randomUUID().slice(0, 8),
   now = new Date(),

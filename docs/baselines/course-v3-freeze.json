@@ -1,0 +1,61 @@
+{
+  "version": "3",
+  "capturedAt": "2026-10-16",
+  "files": [
+    {
+      "source": "apps/web/src/features/tasks/task-catalog.ts",
+      "path": "apps/web/src/features/tasks/versions/v3/task-catalog.ts",
+      "sha256": "7e6c9f94556225f091ab74c1f14404d6518b8aec8de8d147f86fc36c20b2f518"
+    },
+    {
+      "source": "apps/web/src/features/tasks/task-catalog-basics.ts",
+      "path": "apps/web/src/features/tasks/versions/v3/task-catalog-basics.ts",
+      "sha256": "c1e6f3cd5f17f511313124f6a0f07579deb591a66fa6e48b5f78422716df96d2"
+    },
+    {
+      "source": "apps/web/src/features/tasks/task-catalog-ai.ts",
+      "path": "apps/web/src/features/tasks/versions/v3/task-catalog-ai.ts",
+      "sha256": "1f3110cb2cc44b30a441e0908efc08a778734c3cd285a81ad09250e2fa3e88ea"
+    },
+    {
+      "source": "apps/web/src/features/tasks/task-contract.ts",
+      "path": "apps/web/src/features/tasks/versions/v3/task-contract.ts",
+      "sha256": "efc4e8b66314ee96a1e22b5f670196c0e4294204fd0e351c65c88fc22d0ee516"
+    },
+    {
+      "source": "apps/web/src/features/tasks/task-project.ts",
+      "path": "apps/web/src/features/tasks/versions/v3/task-project.ts",
+      "sha256": "1f47b6d6965f3d1b4e313389a5fb382cc857dfbc0d699733ab06068f1d2a24cf"
+    },
+    {
+      "source": "apps/web/src/features/tasks/task-versions.ts",
+      "path": "apps/web/src/features/tasks/versions/v3/task-versions.ts",
+      "sha256": "c7161193cad25c84edf04731ddc482b077879d1b587b0b27ad0d1aa0a9fe53bd"
+    },
+    {
+      "source": "apps/web/src/features/tasks/task-program.ts",
+      "path": "apps/web/src/features/tasks/versions/v3/task-program.ts",
+      "sha256": "04ecc7ee9691a55b0c6f7d6b5654f9fcd5a76e426701be5ebc32fbcb7cd9ed56"
+    },
+    {
+      "source": "apps/web/src/features/tasks/task-answers.ts",
+      "path": "apps/web/src/features/tasks/versions/v3/task-answers.ts",
+      "sha256": "b5311d84554b69b8dd10fd09fd1514a9e0fea3effb556c752957dde4bddedace"
+    },
+    {
+      "source": "apps/web/src/features/tasks/data-play.ts",
+      "path": "apps/web/src/features/tasks/versions/v3/data-play.ts",
+      "sha256": "bdcae651d81aac8df0e835b466e7cf309955f32b51a5c32d026b41745f2218c0"
+    },
+    {
+      "source": "apps/web/src/features/tasks/task-types.ts",
+      "path": "apps/web/src/features/tasks/versions/v3/task-types.ts",
+      "sha256": "18252a988cd6c478e793ff5cb5ccb46b6538a186e148a3c9d72ed442d5c5850b"
+    },
+    {
+      "source": "apps/web/src/features/projects/project-factory.ts",
+      "path": "apps/web/src/features/tasks/versions/projects/project-factory.ts",
+      "sha256": "e078c8d5a13e04f98dde5dc8a6a239b9c6659bb8ddd3a0ddc89bb893da9a1de7"
+    }
+  ]
+}

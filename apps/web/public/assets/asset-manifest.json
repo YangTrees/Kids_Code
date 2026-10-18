@@ -1,6 +1,52 @@
 {
-  "version": "1.1.0",
+  "version": "1.4.0",
   "provenanceGroups": [
+    {
+      "assetIds": [
+        "ui_story_tuantuan_curious_v1",
+        "ui_story_tuantuan_pointing_v1",
+        "ui_story_tuantuan_happy_v1",
+        "ui_story_diandian_default_v1",
+        "ui_story_diandian_hint_v2",
+        "ui_story_diandian_encourage_v1",
+        "bg_story_cloud_v1",
+        "bg_story_workshop_v1",
+        "ui_story_home_hero_v1",
+        "obj_story_coin_v1",
+        "ui_story_unit_basics_v1",
+        "ui_story_unit_route_v1",
+        "ui_story_unit_data_v1",
+        "ui_story_unit_interaction_v1",
+        "ui_story_unit_thinking_v1",
+        "ui_story_unit_creation_v1",
+        "ui_story_unit_sky_v1",
+        "ui_story_unit_patterns_v1",
+        "ui_story_unit_decisions_v1",
+        "ui_story_unit_makers_v1"
+      ],
+      "sourceType": "ai-generated",
+      "sourcePath": "docs/baselines/story-ip-assets.json",
+      "license": "internal-prototype",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype",
+      "canUnpublish": true
+    },
+    {
+      "assetIds": [
+        "costume_story_tuantuan_idle_v1",
+        "costume_story_tuantuan_right_v1",
+        "costume_story_diandian_idle_v1",
+        "ui_story_diandian_hint_v1",
+        "bg_story_garden_v1",
+        "obj_story_treasure_chest_v1"
+      ],
+      "sourceType": "ai-generated",
+      "sourcePath": "docs/baselines/story-ip-assets.json",
+      "license": "internal-prototype",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype",
+      "canUnpublish": true
+    },
     {
       "assetIds": [
         "sfx_jump",
@@ -30,9 +76,123 @@
       "commercialUseReview": "pending",
       "reviewStatus": "approved-prototype",
       "canUnpublish": true
+    },
+    {
+      "assetIds": [
+        "ui_home_blocks",
+        "ui_home_coin",
+        "ui_home_dialogue",
+        "ui_home_route",
+        "ui_home_sky_island",
+        "ui_home_treasure",
+        "ui_unit_data",
+        "ui_unit_pattern",
+        "ui_unit_decision",
+        "ui_unit_smart_rules"
+      ],
+      "sourceType": "ai-generated",
+      "license": "internal-prototype",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype",
+      "canUnpublish": true
     }
   ],
   "assets": [
+    {
+      "id": "ui_story_tuantuan_curious_v1",
+      "type": "ui",
+      "path": "ui/story-ip/tuantuan-curious-v1.webp"
+    },
+    {
+      "id": "ui_story_tuantuan_pointing_v1",
+      "type": "ui",
+      "path": "ui/story-ip/tuantuan-pointing-v1.webp"
+    },
+    {
+      "id": "ui_story_tuantuan_happy_v1",
+      "type": "ui",
+      "path": "ui/story-ip/tuantuan-happy-v1.webp"
+    },
+    {
+      "id": "ui_story_diandian_default_v1",
+      "type": "ui",
+      "path": "ui/story-ip/diandian-default-v1.webp"
+    },
+    {
+      "id": "ui_story_diandian_hint_v2",
+      "type": "ui",
+      "path": "ui/story-ip/diandian-hint-v2.webp"
+    },
+    {
+      "id": "ui_story_diandian_encourage_v1",
+      "type": "ui",
+      "path": "ui/story-ip/diandian-encourage-v1.webp"
+    },
+    {
+      "id": "bg_story_cloud_v1",
+      "type": "background",
+      "path": "backgrounds/story-ip/cloud-island-v1.webp"
+    },
+    {
+      "id": "bg_story_workshop_v1",
+      "type": "background",
+      "path": "backgrounds/story-ip/data-workshop-v1.webp"
+    },
+    {
+      "id": "ui_story_home_hero_v1",
+      "type": "ui",
+      "path": "ui/story-ip/home-hero-v1.webp"
+    },
+    {
+      "id": "obj_story_coin_v1",
+      "type": "sprite",
+      "path": "objects/story-ip/star-coin-v1.webp"
+    },
+    {
+      "id": "ui_story_unit_basics_v1",
+      "type": "ui",
+      "path": "ui/story-ip/unit-basics-v1.webp"
+    },
+    {
+      "id": "ui_story_unit_route_v1",
+      "type": "ui",
+      "path": "ui/story-ip/unit-route-v1.webp"
+    },
+    {
+      "id": "ui_story_unit_data_v1",
+      "type": "ui",
+      "path": "ui/story-ip/unit-data-v1.webp"
+    },
+    {
+      "id": "costume_story_tuantuan_idle_v1",
+      "type": "sprite",
+      "path": "characters/story-ip/tuantuan-stage-front-v1.webp"
+    },
+    {
+      "id": "costume_story_tuantuan_right_v1",
+      "type": "sprite",
+      "path": "characters/story-ip/tuantuan-stage-right-v1.webp"
+    },
+    {
+      "id": "costume_story_diandian_idle_v1",
+      "type": "sprite",
+      "path": "characters/story-ip/diandian-stage-default-v1.webp"
+    },
+    {
+      "id": "ui_story_diandian_hint_v1",
+      "type": "ui",
+      "path": "ui/story-ip/diandian-hint-v1.webp"
+    },
+    {
+      "id": "bg_story_garden_v1",
+      "type": "background",
+      "path": "backgrounds/story-ip/garden-v1.webp"
+    },
+    {
+      "id": "obj_story_treasure_chest_v1",
+      "type": "sprite",
+      "path": "objects/story-ip/treasure-chest-v1.webp"
+    },
     {
       "id": "costume_liji_idle",
       "type": "sprite",
@@ -296,6 +456,72 @@
         "reviewStatus": "approved-prototype",
         "canUnpublish": true
       }
+    },
+    {
+      "id": "bg_sky_islands_map",
+      "type": "background",
+      "path": "backgrounds/sky-islands-map.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "bg_data_discovery_lab",
+      "type": "background",
+      "path": "backgrounds/data-discovery-lab.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "bg_pattern_garden",
+      "type": "background",
+      "path": "backgrounds/pattern-garden.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    {
+      "id": "bg_decision_workshop",
+      "type": "background",
+      "path": "backgrounds/decision-workshop.png",
+      "provenance": {
+        "sourceType": "ai-generated",
+        "license": "internal-prototype",
+        "commercialUseReview": "pending",
+        "reviewStatus": "approved-prototype",
+        "canUnpublish": true
+      }
+    },
+    { "id": "ui_home_blocks", "type": "ui", "path": "ui/home-blocks.png" },
+    { "id": "ui_home_coin", "type": "ui", "path": "ui/home-coin.png" },
+    { "id": "ui_home_dialogue", "type": "ui", "path": "ui/home-dialogue.png" },
+    { "id": "ui_home_route", "type": "ui", "path": "ui/home-route.png" },
+    {
+      "id": "ui_home_sky_island",
+      "type": "ui",
+      "path": "ui/home-sky-island.png"
+    },
+    { "id": "ui_home_treasure", "type": "ui", "path": "ui/home-treasure.png" },
+    { "id": "ui_unit_data", "type": "ui", "path": "ui/unit-data.png" },
+    { "id": "ui_unit_pattern", "type": "ui", "path": "ui/unit-pattern.png" },
+    { "id": "ui_unit_decision", "type": "ui", "path": "ui/unit-decision.png" },
+    {
+      "id": "ui_unit_smart_rules",
+      "type": "ui",
+      "path": "ui/unit-smart-rules.png"
     },
     { "id": "sfx_ui_click", "type": "audio", "path": "sounds/ui-click.wav" },
     {

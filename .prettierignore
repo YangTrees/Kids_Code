@@ -6,6 +6,9 @@ playwright-report/
 artifacts/
 pnpm-lock.yaml
 kids-code-minimal-assets/
+参考资料/
+apps/web/src/features/tasks/versions/v3/
+apps/web/src/features/tasks/versions/projects/
 *.docx
 *.png
 *.webp

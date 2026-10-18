@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import { EditorPage } from "./EditorPage";
 import { EditorRuntimeProvider } from "./EditorRuntimeContext";
 import { ProjectPersistenceProvider } from "./ProjectPersistenceContext";
+import { APP_BASE_URL } from "../../shared/base-url";
 
 class EditorLoadBoundary extends Component<
   { children: ReactNode },
@@ -25,7 +26,7 @@ class EditorLoadBoundary extends Component<
           <strong>创作空间没有加载完整</strong>
           <span>作品仍保存在本机，可以安全地重新加载。</span>
           <button onClick={() => window.location.reload()}>重新加载</button>
-          <button onClick={() => window.location.assign("/")}>
+          <button onClick={() => window.location.assign(APP_BASE_URL)}>
             返回作品首页
           </button>
         </main>

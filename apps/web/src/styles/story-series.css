@@ -1,0 +1,119 @@
+/* Shared picture-book surfaces; functional controls and data remain crisp. */
+.projects-page .projects-brand,
+.course-brand {
+  min-width: 0;
+}
+.projects-page .projects-brand-mark,
+.course-brand > span {
+  flex-shrink: 0;
+}
+.projects-page .projects-brand > span:last-child,
+.course-brand strong {
+  min-width: 0;
+}
+.projects-page .projects-brand strong,
+.course-brand strong {
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.projects-page .projects-nav-links {
+  flex-shrink: 0;
+}
+@media (max-width: 760px) {
+  .projects-page .projects-brand strong {
+    font-size: clamp(13px, 3.7vw, 18px);
+  }
+}
+.projects-page .hero-actions {
+  flex-wrap: wrap;
+}
+.projects-page .hero-actions button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding-inline: 20px;
+}
+.projects-page .story-home-hero {
+  background: #f5f2e6;
+  transform: rotate(-1deg);
+}
+.projects-page .story-home-hero > img {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
+  object-position: center;
+}
+.story-home-hero .hero-code-card {
+  z-index: 2;
+}
+.story-home-hero .hero-preview-label {
+  background: #fffdf6ed;
+  color: #25364a;
+}
+.story-home-hero .home-program-example {
+  position: absolute;
+  right: 14px;
+  bottom: 16px;
+  z-index: 2;
+  padding: 9px 10px 11px;
+  border: 1px solid #e3dfd4;
+  border-bottom-width: 3px;
+  border-radius: 16px;
+  background: #fffdf5f5;
+  transform: rotate(2deg);
+  pointer-events: none;
+}
+.home-program-example .program-example-label {
+  font-size: 10px;
+  color: #5b6d72;
+}
+.projects-page .task-challenges button > .program-categories {
+  margin-top: 6px;
+  margin-bottom: 10px;
+  row-gap: 8px;
+}
+@media (max-width: 580px) {
+  .story-home-hero .home-program-example {
+    right: 8px;
+    bottom: 10px;
+    padding: 7px;
+  }
+  .home-program-example
+    .program-example[data-layout="stack"]
+    .program-display-block {
+    width: 158px;
+    min-height: 37px;
+    font-size: 11px;
+  }
+  .home-program-example .program-example-label {
+    max-width: 158px;
+    font-size: 9px;
+  }
+}
+.projects-page .template-icon,
+.course-chapter header img {
+  object-fit: cover;
+  border-radius: 18px;
+}
+.course-chapter header img {
+  border: 2px solid #e3e4d6;
+  background: #fdfbf7;
+}
+.category-variable[data-active="true"] {
+  background: #fff0da;
+  color: #713b00;
+}
+.category-operator[data-active="true"] {
+  background: #e5f5e0;
+  color: #245522;
+}
+.lesson-role-picker button:focus-visible {
+  outline: 3px solid #287fbd;
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .projects-page .story-home-hero {
+    transform: none;
+  }
+}

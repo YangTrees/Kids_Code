@@ -1,8 +1,15 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { IndexedDbProjectRepository } from "@kids-code/persistence";
 import { useSettingsStore } from "../../shared/settings-store";
 import { useTranslate } from "../../shared/use-translate";
+import {
+  captureScopedStorage,
+  clearAppStorage,
+  createLocalBackup,
+  readLocalBackup,
+  restoreScopedStorage,
+} from "./local-backup";
 
 /**
  * 家长区（设计说明书第 16 章）。
@@ -28,47 +35,86 @@ export function ParentPage() {
   } = useSettingsStore();
   const t = useTranslate();
   const [exporting, setExporting] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const backupInputRef = useRef<HTMLInputElement>(null);
+  const busy = exporting || restoring || deleting;
 
   const exportAllProjects = async () => {
     setExporting(true);
     setNotice(null);
     try {
-      const projects = await repository.list();
-      const bundle = {
-        kind: "kids-code-studio/export-all",
-        schemaVersion: "1.0",
-        exportedAt: new Date().toISOString(),
-        projects,
-      };
-      const blob = new Blob([JSON.stringify(bundle, null, 2)], {
-        type: "application/json",
+      const snapshot = await repository.snapshotAll();
+      const blob = createLocalBackup({
+        snapshot,
+        storage: captureScopedStorage(),
       });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `我的全部作品-${new Date().toISOString().slice(0, 10)}.json`;
+      link.download = `我的全部作品-${new Date().toISOString().slice(0, 10)}.kidbackup`;
       link.click();
-      URL.revokeObjectURL(url);
-      setNotice(`已导出 ${projects.length} 个作品到下载文件夹。`);
-    } catch {
-      setNotice("导出失败，请稍后再试。");
+      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      setNotice(
+        `已生成完整备份：${snapshot.projects.length} 个作品、${snapshot.trash.length} 个回收站作品及本地素材。请确认文件已下载。`,
+      );
+    } catch (error) {
+      console.error("Failed to export local backup", error);
+      setNotice("备份失败，请检查浏览器存储空间后重试。");
     } finally {
       setExporting(false);
+    }
+  };
+
+  const restoreAllProjects = async (file: File) => {
+    setRestoring(true);
+    setNotice(null);
+    try {
+      const backup = await readLocalBackup(file);
+      if (
+        !window.confirm(
+          `将用备份中的 ${backup.snapshot.projects.length} 个作品替换这台设备当前的全部作品、回收站、素材和课程进度。当前数据会被覆盖，建议先导出一份现有备份。确定恢复吗？`,
+        )
+      )
+        return;
+      await repository.replaceAll(backup.snapshot);
+      restoreScopedStorage(backup.storage);
+      useSettingsStore.getState().reloadSettings();
+      window.dispatchEvent(new Event("kids-code:task-change"));
+      setNotice("完整备份已恢复。返回首页即可查看作品和课程进度。");
+    } catch (error) {
+      console.error("Failed to restore local backup", error);
+      setNotice(
+        "恢复失败：备份文件不完整、格式不支持或存储空间不足。原有作品不会因文件校验失败而被清除。",
+      );
+    } finally {
+      setRestoring(false);
     }
   };
 
   const deleteEverything = async () => {
     if (
       !window.confirm(
-        "这会删掉这台设备上的全部作品、回收站和素材，且无法恢复。\n建议先点“导出全部作品”。确定要继续吗？",
+        "这会删掉这台设备上的全部作品、回收站、素材和课程进度。建议先下载并确认完整备份。确定要继续吗？",
       )
     )
       return;
-    if (!window.confirm("请再确认一次：真的删除全部数据？")) return;
-    await repository.clearAll();
-    window.localStorage.removeItem("kids-code:settings");
-    setNotice("本机数据已删除。");
+    if (!window.confirm("请再确认一次：真的删除全部本机数据？")) return;
+    setDeleting(true);
+    setNotice(null);
+    try {
+      await repository.clearAll();
+      useSettingsStore.getState().resetSettings();
+      clearAppStorage();
+      window.dispatchEvent(new Event("kids-code:task-change"));
+      setNotice("本机作品、素材、草稿和课程进度已删除。");
+    } catch (error) {
+      console.error("Failed to delete local data", error);
+      setNotice("删除失败，请重试；部分本机数据可能仍然存在。");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -159,14 +205,33 @@ export function ParentPage() {
       <section className="parent-section">
         <h2>{t("parent.section.data")}</h2>
         <div className="parent-actions">
-          <button disabled={exporting} onClick={() => void exportAllProjects()}>
-            {exporting ? "正在导出…" : "导出全部作品"}
+          <button disabled={busy} onClick={() => void exportAllProjects()}>
+            {exporting ? "正在备份…" : "导出完整备份"}
+          </button>
+          <input
+            ref={backupInputRef}
+            type="file"
+            accept=".kidbackup,application/zip"
+            aria-label="选择完整备份文件"
+            hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (file) void restoreAllProjects(file);
+            }}
+          />
+          <button
+            disabled={busy}
+            onClick={() => backupInputRef.current?.click()}
+          >
+            {restoring ? "正在恢复…" : "恢复完整备份"}
           </button>
           <button
             className="parent-danger"
+            disabled={busy}
             onClick={() => void deleteEverything()}
           >
-            删除本机全部数据
+            {deleting ? "正在删除…" : "删除本机全部数据"}
           </button>
         </div>
         {notice ? (

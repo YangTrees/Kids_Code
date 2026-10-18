@@ -33,6 +33,7 @@ export interface LibraryAssetBase {
   name: string;
   path: string;
   provenance: AssetProvenance;
+  collection?: "story-ip";
 }
 
 export interface SpriteLibraryAsset extends LibraryAssetBase {
@@ -77,6 +78,56 @@ const generated = (sourcePath: string): AssetProvenance => ({
 });
 
 export const spriteLibrary: SpriteLibraryAsset[] = [
+  {
+    assetId: "obj_story_coin_v1",
+    name: "绘本星星金币",
+    path: "objects/story-ip/star-coin-v1.webp",
+    scale: 1,
+    collection: "story-ip",
+    provenance: generated(
+      "docs/baselines/story-ip-assets.json#obj_story_coin_v1",
+    ),
+  },
+  {
+    assetId: "costume_story_tuantuan_idle_v1",
+    name: "团团（小男孩）",
+    path: "characters/story-ip/tuantuan-stage-front-v1.webp",
+    scale: 1,
+    collection: "story-ip",
+    provenance: generated(
+      "docs/baselines/story-ip-assets.json#costume_story_tuantuan_idle_v1",
+    ),
+  },
+  {
+    assetId: "costume_story_tuantuan_right_v1",
+    name: "团团（朝右）",
+    path: "characters/story-ip/tuantuan-stage-right-v1.webp",
+    scale: 1,
+    collection: "story-ip",
+    provenance: generated(
+      "docs/baselines/story-ip-assets.json#costume_story_tuantuan_right_v1",
+    ),
+  },
+  {
+    assetId: "costume_story_diandian_idle_v1",
+    name: "点点（云朵机器人）",
+    path: "characters/story-ip/diandian-stage-default-v1.webp",
+    scale: 1,
+    collection: "story-ip",
+    provenance: generated(
+      "docs/baselines/story-ip-assets.json#costume_story_diandian_idle_v1",
+    ),
+  },
+  {
+    assetId: "obj_story_treasure_chest_v1",
+    name: "绘本宝箱",
+    path: "objects/story-ip/treasure-chest-v1.webp",
+    scale: 1,
+    collection: "story-ip",
+    provenance: generated(
+      "docs/baselines/story-ip-assets.json#obj_story_treasure_chest_v1",
+    ),
+  },
   {
     assetId: "costume_liji_idle",
     name: "栗奇",
@@ -177,6 +228,33 @@ export const spriteLibrary: SpriteLibraryAsset[] = [
 
 export const backgroundLibrary: BackgroundLibraryAsset[] = [
   {
+    assetId: "bg_story_cloud_v1",
+    name: "绘本云岛",
+    path: "backgrounds/story-ip/cloud-island-v1.webp",
+    collection: "story-ip",
+    provenance: generated(
+      "docs/baselines/story-ip-assets.json#bg_story_cloud_v1",
+    ),
+  },
+  {
+    assetId: "bg_story_workshop_v1",
+    name: "绘本数据工坊",
+    path: "backgrounds/story-ip/data-workshop-v1.webp",
+    collection: "story-ip",
+    provenance: generated(
+      "docs/baselines/story-ip-assets.json#bg_story_workshop_v1",
+    ),
+  },
+  {
+    assetId: "bg_story_garden_v1",
+    name: "绘本花园",
+    path: "backgrounds/story-ip/garden-v1.webp",
+    collection: "story-ip",
+    provenance: generated(
+      "docs/baselines/story-ip-assets.json#bg_story_garden_v1",
+    ),
+  },
+  {
     assetId: "bg_forest_01",
     name: "阳光森林",
     path: "backgrounds/forest-960x720.webp",
@@ -254,6 +332,38 @@ export const backgroundLibrary: BackgroundLibraryAsset[] = [
     path: "backgrounds/snow-960x720.webp",
     provenance: generated(
       "kids-code-minimal-assets/backgrounds/snow-960x720.webp",
+    ),
+  },
+  {
+    assetId: "bg_sky_islands_map",
+    name: "云岛地图",
+    path: "backgrounds/sky-islands-map.png",
+    provenance: generated(
+      "apps/web/public/assets/backgrounds/sky-islands-map.png",
+    ),
+  },
+  {
+    assetId: "bg_data_discovery_lab",
+    name: "数据发现室",
+    path: "backgrounds/data-discovery-lab.png",
+    provenance: generated(
+      "apps/web/public/assets/backgrounds/data-discovery-lab.png",
+    ),
+  },
+  {
+    assetId: "bg_pattern_garden",
+    name: "规律活动台",
+    path: "backgrounds/pattern-garden.png",
+    provenance: generated(
+      "apps/web/public/assets/backgrounds/pattern-garden.png",
+    ),
+  },
+  {
+    assetId: "bg_decision_workshop",
+    name: "判断工坊",
+    path: "backgrounds/decision-workshop.png",
+    provenance: generated(
+      "apps/web/public/assets/backgrounds/decision-workshop.png",
     ),
   },
 ];

@@ -119,18 +119,29 @@ export function AssetLibraryDialog({
             {uploadError}
           </p>
         ) : null}
-        <div className="library-grid">
-          {assets.map((asset) => (
-            <button
-              key={asset.assetId}
-              className="library-card"
-              onClick={() => onSelect(asset)}
-            >
-              <img src={assetUrl(asset.path)} alt="" />
-              <span>{asset.name}</span>
-            </button>
-          ))}
-        </div>
+        {(["story-ip", "classic"] as const).map((collection) => (
+          <section className="library-collection" key={collection}>
+            <h3>
+              {collection === "story-ip" ? "团团与点点 · 绘本系列" : "经典素材"}
+            </h3>
+            <div className="library-grid">
+              {assets
+                .filter(
+                  (asset) => (asset.collection ?? "classic") === collection,
+                )
+                .map((asset) => (
+                  <button
+                    key={asset.assetId}
+                    className="library-card"
+                    onClick={() => onSelect(asset)}
+                  >
+                    <img src={assetUrl(asset.path)} alt="" loading="lazy" />
+                    <span>{asset.name}</span>
+                  </button>
+                ))}
+            </div>
+          </section>
+        ))}
       </section>
     </div>
   );

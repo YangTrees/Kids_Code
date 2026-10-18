@@ -120,4 +120,96 @@ describe("IndexedDbProjectRepository", () => {
       new Uint8Array([137, 80, 78, 71]),
     );
   });
+  it("backs up and restores projects, trash, thumbnails, and uploaded bytes", async () => {
+    const source = new IndexedDbProjectRepository(
+      `test-${crypto.randomUUID()}`,
+    );
+    const active = createDefaultProject();
+    active.assets.push({
+      assetId: "upload_sprite_example",
+      type: "sprite",
+      path: "uploads/example.png",
+    });
+    const trashed = createDefaultProject();
+    trashed.projectId = "prj_trashed";
+    await source.save(active, 1);
+    await source.save(trashed, 1);
+    await source.remove(trashed.projectId);
+    await source.saveAsset(
+      "uploads/example.png",
+      new Blob([new Uint8Array([1, 2, 3])], { type: "image/png" }),
+    );
+    await source.saveThumbnail(
+      active.projectId,
+      new Blob(["preview"], { type: "image/webp" }),
+    );
+
+    const backup = await source.snapshotAll();
+    const target = new IndexedDbProjectRepository(
+      `test-${crypto.randomUUID()}`,
+    );
+    await target.replaceAll(backup);
+
+    expect((await target.get(active.projectId))?.name).toBe(active.name);
+    expect((await target.listTrash())[0]?.projectId).toBe(trashed.projectId);
+    expect((await target.getThumbnail(active.projectId))?.blob.type).toBe(
+      "image/webp",
+    );
+    const asset = await target.getAsset("uploads/example.png");
+    expect(new Uint8Array(await asset!.arrayBuffer())).toEqual(
+      new Uint8Array([1, 2, 3]),
+    );
+  });
+
+  it("removes uploaded bytes on permanent deletion but preserves shared assets", async () => {
+    const repository = new IndexedDbProjectRepository(
+      `test-${crypto.randomUUID()}`,
+    );
+    const deleted = createDefaultProject();
+    const survivor = createDefaultProject();
+    survivor.projectId = "prj_survivor";
+    for (const project of [deleted, survivor])
+      project.assets.push({
+        assetId: "upload_shared",
+        type: "sprite",
+        path: "uploads/shared.png",
+      });
+    await repository.saveAsset(
+      "uploads/shared.png",
+      new Blob(["shared"], { type: "image/png" }),
+    );
+    await repository.save(deleted, 1);
+    await repository.save(survivor, 1);
+    await repository.remove(deleted.projectId);
+    await repository.purge(deleted.projectId);
+    expect(await repository.getAsset("uploads/shared.png")).toBeDefined();
+
+    await repository.remove(survivor.projectId);
+    await repository.purge(survivor.projectId);
+    expect(await repository.getAsset("uploads/shared.png")).toBeUndefined();
+  });
+
+  it("prunes uploaded bytes when trash expires", async () => {
+    const now = vi
+      .spyOn(Date, "now")
+      .mockReturnValue(Date.parse("2026-08-01T00:00:00.000Z"));
+    const repository = new IndexedDbProjectRepository(
+      `test-${crypto.randomUUID()}`,
+    );
+    const project = createDefaultProject();
+    project.assets.push({
+      assetId: "upload_expired",
+      type: "sprite",
+      path: "uploads/expired.png",
+    });
+    await repository.saveAsset(
+      "uploads/expired.png",
+      new Blob(["expired"], { type: "image/png" }),
+    );
+    await repository.save(project, 1);
+    await repository.remove(project.projectId);
+    now.mockReturnValue(Date.parse("2026-08-08T00:00:00.001Z"));
+    await repository.listTrash();
+    expect(await repository.getAsset("uploads/expired.png")).toBeUndefined();
+  });
 });

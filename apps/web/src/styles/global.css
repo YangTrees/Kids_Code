@@ -1030,6 +1030,14 @@ button:disabled {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 14px;
 }
+.library-collection + .library-collection {
+  margin-top: 24px;
+}
+.library-collection h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  color: #25364a;
+}
 .library-card {
   display: grid;
   place-items: center;
@@ -2928,6 +2936,9 @@ button:focus-visible {
 
 @media (max-width: 1050px) {
   .projects-nav-links {
+    display: flex;
+  }
+  .projects-nav-links > :not(.projects-nav-primary) {
     display: none;
   }
   .projects-hero {

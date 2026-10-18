@@ -67,13 +67,42 @@ function basePathPlugin(base: string): Plugin {
 
 export default defineConfig({
   base: BASE,
-  plugins: [react(), basePathPlugin(BASE)],
-  server: { host: "127.0.0.1", port: 4173 },
+  plugins: [
+    react(),
+    basePathPlugin(BASE),
+    {
+      name: "kids-code-workspace-source-watch",
+      configureServer(server) {
+        server.watcher.add(
+          [
+            "domain",
+            "runtime",
+            "stage",
+            "persistence",
+            "block-adapter",
+            "ui",
+          ].map((name) =>
+            path.resolve(server.config.root, "../../packages", name, "src"),
+          ),
+        );
+      },
+    },
+  ],
+  server: {
+    host: "127.0.0.1",
+    port: 4173,
+    strictPort: true,
+    // Windows junctions can miss native change events for linked workspace packages.
+    watch: { usePolling: process.platform === "win32" },
+  },
   build: {
     target: "es2022",
     rollupOptions: {
       output: {
         manualChunks(id) {
+          // This helper is also used by the entry's lazy route. If Rollup folds
+          // it into Pixi, the entry imports the whole renderer just to preload.
+          if (id.includes("vite/preload-helper")) return "preload-helper";
           if (id.includes("scratch-blocks") || id.includes("/blockly@")) {
             return "scratch-blocks";
           }

@@ -25,8 +25,22 @@ import {
   snapStagePositionToGrid,
   stagePositionToGrid,
 } from "@kids-code/domain";
-import { CurrentTaskCard } from "../tasks/CurrentTaskCard";
-import { getAssignedTaskId } from "../tasks/task-catalog";
+import {
+  CurrentTaskCard,
+  CurrentTaskObjective,
+} from "../tasks/CurrentTaskCard";
+import { DataPlayBoard } from "../tasks/DataPlayBoard";
+import {
+  getAssignedTaskId,
+  getAssignedCreationTask,
+} from "../tasks/task-catalog";
+import { getLessonConfig } from "../tasks/lesson-config";
+import { BLOCK_PALETTE } from "@kids-code/block-adapter";
+import { LessonToolActions } from "../tasks/LessonToolActions";
+import { LessonRolePicker } from "../tasks/LessonRolePicker";
+import { LessonRouteTrace } from "../tasks/LessonRouteTrace";
+import type { CSSProperties } from "react";
+import "../../styles/teaching.css";
 import { HelpDialog } from "../help/HelpDialog";
 import { TouchDpad } from "./TouchDpad";
 import { useTranslate } from "../../shared/use-translate";
@@ -47,6 +61,8 @@ const categoryItems: Array<{ id: BlockCategory; icon: string; label: string }> =
     { id: "sound", icon: "♪", label: "声音" },
     { id: "control", icon: "⟳", label: "控制" },
     { id: "game", icon: "🎮", label: "游戏" },
+    { id: "variable", icon: "x", label: "变量" },
+    { id: "operator", icon: "=", label: "运算" },
   ];
 
 const commonShortcuts: Array<{
@@ -95,6 +111,8 @@ function StepIcon() {
 export function EditorPage() {
   const navigate = useNavigate();
   const importInputRef = useRef<HTMLInputElement>(null);
+  const stagePanelRef = useRef<HTMLElement>(null);
+  const [fullTools, setFullTools] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [playMode, setPlayMode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -168,7 +186,7 @@ export function EditorPage() {
   const addSoundAsset = useEditorStore((state) => state.addSoundAsset);
   const removeSoundAsset = useEditorStore((state) => state.removeSoundAsset);
   const running = status === "STARTING" || status === "RUNNING";
-  const courseTaskId = getAssignedTaskId(project.projectId);
+  const courseTaskId = getAssignedTaskId(project);
   const step = getMovementStep(project);
   const selectedSprite = project.sprites.find(
     (sprite) => sprite.spriteId === selectedSpriteId,
@@ -255,8 +273,31 @@ export function EditorPage() {
     return () => window.removeEventListener("keydown", handleHistoryShortcut);
   }, [projectFuture.length, projectHistory.length, redoProject, undoProject]);
 
+  const lesson = getLessonConfig(getAssignedCreationTask(project));
+  const lessonMode = Boolean(lesson && !fullTools);
+  const visibleCategories = categoryItems.filter(
+    (item) => !lessonMode || lesson?.categories.includes(item.id),
+  );
+  useEffect(() => {
+    setFullTools(false);
+  }, [project.projectId]);
+  useEffect(() => {
+    if (lessonMode && lesson && !lesson.categories.includes(selectedCategory))
+      selectCategory(lesson.categories[0]!);
+  }, [lessonMode, lesson, selectedCategory, selectCategory]);
+  useEffect(() => {
+    // A different work starts at its objective, even when the upgrade button
+    // scrolled the previous work's stage sidebar down.
+    stagePanelRef.current?.scrollTo({ top: 0, left: 0 });
+  }, [project.projectId]);
+
   return (
-    <main className="editor-page" data-play-mode={playMode}>
+    <main
+      className="editor-page"
+      data-play-mode={playMode}
+      data-lesson-mode={lessonMode}
+      style={{ "--block-variable": BLOCK_PALETTE.variable } as CSSProperties}
+    >
       <header className="topbar">
         <button
           className="round-button home-button toolbar-icon-button"
@@ -431,7 +472,7 @@ export function EditorPage() {
       </header>
 
       <section className="editor-main">
-        <section className="stage-panel">
+        <section className="stage-panel" ref={stagePanelRef}>
           <div className="stage-heading">
             <div>
               <small>看见你的创作</small>
@@ -441,6 +482,7 @@ export function EditorPage() {
               {statusLabel}
             </span>
           </div>
+          <CurrentTaskObjective />
           <div className="stage-actions">
             <button
               className="stage-run"
@@ -465,13 +507,16 @@ export function EditorPage() {
             >
               换背景
             </button>
-            <button onClick={() => setPlayMode(true)} aria-label="全屏试玩">
+            <button
+              onClick={() => setPlayMode(true)}
+              aria-label="全屏试玩，平板方向键在试玩模式显示"
+            >
               全屏试玩 ↗
             </button>
           </div>
           <div className="stage-frame">
             <StageHost gridVisible={gridVisible} />
-            <TouchDpad visible={playMode || coarsePointer} />
+            <TouchDpad visible={playMode && coarsePointer} />
             <button
               className="stage-tool stage-expand"
               aria-label="退出舞台试玩"
@@ -589,24 +634,43 @@ export function EditorPage() {
               ? "碰到宝箱会停下；金币可穿过并触发接触事件。"
               : `拖动角色会吸附到格子中心；X 为 0–${gridSize.columns - 1} 列，Y 为 0–${gridSize.rows - 1} 行。`}
           </p>
+          <DataPlayBoard />
+          <LessonRouteTrace />
           <CurrentTaskCard onOpen={() => setTaskPanelOpen(true)} />
         </section>
 
         <section className="workspace-panel">
           <div className="workspace-heading">
+            {lesson && fullTools && <LessonToolActions />}
             <div>
               <small>正在给谁编程？</small>
               <strong>{selectedSprite?.name}</strong>
+              {lessonMode && <LessonRolePicker />}
             </div>
-            <span>先选事件，再接动作</span>
+            {lesson ? (
+              <button
+                className="lesson-tools-toggle"
+                aria-pressed={fullTools}
+                onClick={() => setFullTools((value) => !value)}
+              >
+                {fullTools ? "返回本课工具" : "展开完整工具"}
+              </button>
+            ) : (
+              <span>先选事件，再接动作</span>
+            )}
           </div>
           <nav className="category-rail" aria-label="积木分类">
-            {categoryItems.map((item) => (
+            {visibleCategories.map((item) => (
               <button
                 key={item.id}
                 className={`category-button category-${item.id}`}
                 data-active={selectedCategory === item.id}
                 aria-pressed={selectedCategory === item.id}
+                style={
+                  {
+                    "--block-color": BLOCK_PALETTE[item.id],
+                  } as CSSProperties
+                }
                 onClick={() => selectCategory(item.id)}
               >
                 <span>{item.icon}</span>
@@ -614,18 +678,23 @@ export function EditorPage() {
               </button>
             ))}
           </nav>
-          <BlockWorkspaceHost />
+          <BlockWorkspaceHost fullTools={fullTools} />
           <div className="common-blocks" aria-label="常用积木入口">
-            {commonShortcuts.map((item) => (
-              <button
-                key={item.label}
-                className={`common-shortcut category-${item.category}`}
-                onClick={() => selectCategory(item.category)}
-              >
-                <span>{item.icon}</span>
-                {item.label}
-              </button>
-            ))}
+            {commonShortcuts
+              .filter(
+                (item) =>
+                  !lessonMode || lesson?.categories.includes(item.category),
+              )
+              .map((item) => (
+                <button
+                  key={item.label}
+                  className={`common-shortcut category-${item.category}`}
+                  onClick={() => selectCategory(item.category)}
+                >
+                  <span>{item.icon}</span>
+                  {item.label}
+                </button>
+              ))}
           </div>
           <div className="workspace-badge" aria-label="工作区状态">
             <strong>

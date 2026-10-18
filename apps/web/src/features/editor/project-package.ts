@@ -4,8 +4,8 @@ import { assetUrl } from "../../shared/base-url";
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 export const MAX_PROJECT_PACKAGE_BYTES = 50 * 1024 * 1024;
-const MAX_PROJECT_PACKAGE_ENTRIES = 2_000;
-const MAX_PROJECT_ENTRY_BYTES = 25 * 1024 * 1024;
+export const MAX_PROJECT_PACKAGE_ENTRIES = 2_000;
+export const MAX_PROJECT_ENTRY_BYTES = 25 * 1024 * 1024;
 
 function crc32(data: Uint8Array): number {
   let crc = 0xffffffff;
@@ -94,8 +94,11 @@ export function encodeZip(files: Map<string, Uint8Array>): Uint8Array {
   return join([...localParts, central, end]);
 }
 
-export function decodeZip(data: Uint8Array): Map<string, Uint8Array> {
-  if (data.length < 22 || data.length > MAX_PROJECT_PACKAGE_BYTES)
+export function decodeZip(
+  data: Uint8Array,
+  maxBytes = MAX_PROJECT_PACKAGE_BYTES,
+): Map<string, Uint8Array> {
+  if (data.length < 22 || data.length > maxBytes)
     throw new Error("KIDGAME_PACKAGE_TOO_LARGE_OR_INVALID");
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   let endOffset = data.length - 22;
@@ -142,7 +145,7 @@ export function decodeZip(data: Uint8Array): Map<string, Uint8Array> {
     if (size > MAX_PROJECT_ENTRY_BYTES)
       throw new Error("KIDGAME_ENTRY_TOO_LARGE");
     totalContentSize += size;
-    if (totalContentSize > MAX_PROJECT_PACKAGE_BYTES)
+    if (totalContentSize > maxBytes)
       throw new Error("KIDGAME_CONTENT_TOO_LARGE");
     if (localOffset + 30 > data.length)
       throw new Error("INVALID_KIDGAME_ENTRY");

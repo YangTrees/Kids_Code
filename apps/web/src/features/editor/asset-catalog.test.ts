@@ -1,4 +1,7 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import manifest from "../../../public/assets/asset-manifest.json";
 import {
   allLibraryAssets,
   backgroundLibrary,
@@ -62,5 +65,25 @@ describe("asset catalog", () => {
         asset.provenance.commercialUseReview !== "approved",
     );
     expect(unreviewed).toEqual([]);
+  });
+
+  it("keeps every bundled visual and sound file registered with provenance", () => {
+    const ids = manifest.assets.map((asset) => asset.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    const withProvenance = new Set([
+      ...manifest.assets
+        .filter((asset) => "provenance" in asset)
+        .map((asset) => asset.id),
+      ...manifest.provenanceGroups.flatMap((group) => group.assetIds),
+    ]);
+    for (const asset of manifest.assets) {
+      expect(withProvenance.has(asset.id), asset.id).toBe(true);
+      expect(
+        existsSync(resolve(process.cwd(), "public/assets", asset.path)),
+        asset.path,
+      ).toBe(true);
+    }
+    for (const background of backgroundLibrary)
+      expect(ids).toContain(background.assetId);
   });
 });

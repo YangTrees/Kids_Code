@@ -14,7 +14,7 @@ const zhKeys: TranslationKey[] = [
 
 describe("i18n", () => {
   it("serves Chinese as the primary language", () => {
-    expect(translate("zh-CN", "brand.title")).toBe("栗奇编程乐园");
+    expect(translate("zh-CN", "brand.title")).toBe("团团点点的好奇编程乐园");
   });
 
   it("provides an English translation for every Chinese key", () => {
@@ -26,7 +26,7 @@ describe("i18n", () => {
   });
 
   it("falls back to Chinese for unknown locales", () => {
-    expect(translate("ja-JP", "brand.title")).toBe("栗奇编程乐园");
+    expect(translate("ja-JP", "brand.title")).toBe("团团点点的好奇编程乐园");
   });
 });
 

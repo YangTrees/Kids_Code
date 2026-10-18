@@ -1,5 +1,5 @@
-import { setMediaBaseUrl } from "@kids-code/block-adapter";
-import { setAssetBaseUrl } from "@kids-code/stage";
+import { setMediaBaseUrl } from "@kids-code/block-adapter/media";
+import { setAssetBaseUrl } from "@kids-code/stage/assets";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";

@@ -95,6 +95,8 @@ export type CollisionProfile =
 
 export interface SpritePresentationProfile {
   baseScale: number;
+  /** Optional source-resolution-independent height for versioned artwork. */
+  logicalHeight?: number;
   anchorX: number;
   anchorY: number;
   collision: CollisionProfile;
@@ -121,6 +123,76 @@ export const builtInSpritePresentationProfiles: Record<
   string,
   SpritePresentationProfile
 > = {
+  costume_story_tuantuan_idle_v1: {
+    // The logical coordinate is the cell center, not the bottom of the feet.
+    baseScale: 1,
+    logicalHeight: 40,
+    anchorX: 0.5,
+    anchorY: 0.5,
+    collision: {
+      shape: "rect",
+      insetLeft: 0.32,
+      insetRight: 0.32,
+      insetTop: 0.12,
+      insetBottom: 0.05,
+    },
+    solid: false,
+    collectible: false,
+  },
+  costume_story_tuantuan_right_v1: {
+    baseScale: 1,
+    logicalHeight: 40,
+    anchorX: 0.5,
+    anchorY: 0.5,
+    collision: {
+      shape: "rect",
+      insetLeft: 0.32,
+      insetRight: 0.32,
+      insetTop: 0.12,
+      insetBottom: 0.05,
+    },
+    solid: false,
+    collectible: false,
+  },
+  costume_story_diandian_idle_v1: {
+    baseScale: 1,
+    logicalHeight: 40,
+    anchorX: 0.5,
+    anchorY: 0.5,
+    collision: {
+      shape: "rect",
+      insetLeft: 0.24,
+      insetRight: 0.24,
+      insetTop: 0.18,
+      insetBottom: 0.16,
+    },
+    solid: false,
+    collectible: false,
+  },
+  obj_story_treasure_chest_v1: {
+    baseScale: 1,
+    logicalHeight: 38,
+    anchorX: 0.5,
+    anchorY: 0.52,
+    collision: {
+      shape: "rect",
+      insetLeft: 0.1,
+      insetRight: 0.1,
+      insetTop: 0.18,
+      insetBottom: 0.12,
+    },
+    solid: true,
+    collectible: false,
+  },
+  obj_story_coin_v1: {
+    baseScale: 1,
+    logicalHeight: 26,
+    anchorX: 0.5,
+    anchorY: 0.5,
+    collision: { shape: "circle", diameterRatio: 0.78 },
+    solid: false,
+    collectible: true,
+  },
   costume_liji_idle: {
     baseScale: 0.18,
     anchorX: 0.5,
@@ -288,13 +360,14 @@ export function getSpriteBaseScale(
   textureHeight: number,
 ): number {
   const height =
-    costumeAssetId === "obj_star_coin"
+    builtInSpritePresentationProfiles[costumeAssetId]?.logicalHeight ??
+    (costumeAssetId === "obj_star_coin"
       ? 26
       : costumeAssetId === "obj_treasure_chest"
         ? 38
         : costumeAssetId === "object_magic_door"
           ? 64
-          : 52;
+          : 52);
   return height / Math.max(1, textureHeight);
 }
 
@@ -334,6 +407,37 @@ export const projectSchema = z
         .default(1),
     }),
     pathMap: pathMapSchema.optional(),
+    // Optional for old and free-creation projects; travels with exported works.
+    course: z
+      .object({
+        taskId: z.string().min(1).max(80),
+        contentVersion: z.string().min(1).max(40),
+        bindings: z.object({
+          actor: z.string().startsWith("spr_"),
+          target: z.string().startsWith("spr_").optional(),
+          coin: z.string().startsWith("spr_").optional(),
+          data: z.string().min(1).max(80).optional(),
+        }),
+        setup: z
+          .object({
+            movementStep: z.union([z.literal(10), z.literal(40)]),
+            sceneIds: z.array(z.string().startsWith("scn_")).min(1).max(5),
+            pathMap: pathMapSchema.optional(),
+            instances: z
+              .array(
+                z.object({
+                  sceneId: z.string().startsWith("scn_"),
+                  spriteId: z.string().startsWith("spr_"),
+                  costumeAssetId: z.string(),
+                  transform: transformSchema,
+                  visible: z.boolean(),
+                }),
+              )
+              .max(100),
+          })
+          .optional(),
+      })
+      .optional(),
     scenes: z
       .array(
         z.object({

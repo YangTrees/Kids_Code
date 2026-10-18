@@ -1,0 +1,487 @@
+{
+  "version": 3,
+  "date": "2026-10-17",
+  "generator": "built-in image_gen",
+  "status": "full-course-automated-acceptance; commercial-review-pending",
+  "assets": [
+    {
+      "id": "ui_story_tuantuan_curious_v1",
+      "batch": "AS-03",
+      "path": "ui/story-ip/tuantuan-curious-v1.webp",
+      "generatedFile": "exec-5be095ba-b2e9-4e41-8deb-570d97b7c39b.png",
+      "delivery": {
+        "size": [256, 234],
+        "bytes": 17266,
+        "alphaBounds": [57, 11, 206, 229]
+      },
+      "master": "artifacts/story-ip/masters/tuantuan-curious-v1.png",
+      "references": ["参考资料/形象/团团.png"],
+      "prompt": "Use case: illustration-story. Asset type: ONE transparent half-body UI portrait for a children's coding website. Input image is the authoritative Tuantuan character sheet. Preserve exact identity: 7-year-old boy, tousled charcoal short hair, rosy round cheeks, orange long-sleeve shirt, blue denim overalls, brown backpack straps. Same warm hand-drawn watercolor picture-book paint with clear contours and subtle texture. Frame ONE waist-up character centered, large head readable at 64px; complete top of hair, face and arms, torso ends softly at bottom, ample transparent margin. True alpha background. No paper, text, speech bubbles, icons, other people, extra poses, 3D or photorealism. Expression: curious and thinking, one hand lightly touching chin, gentle inquisitive smile, looking toward viewer.",
+      "transparent": true,
+      "maxSize": [256, 256],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_tuantuan_pointing_v1",
+      "batch": "AS-03",
+      "path": "ui/story-ip/tuantuan-pointing-v1.webp",
+      "generatedFile": "exec-4dc3cd5a-e235-4bd4-93e3-a7cc8d3c19b3.png",
+      "delivery": {
+        "size": [256, 220],
+        "bytes": 16554,
+        "alphaBounds": [58, 14, 228, 212]
+      },
+      "master": "artifacts/story-ip/masters/tuantuan-pointing-v1.png",
+      "references": ["参考资料/形象/团团.png"],
+      "prompt": "Use case: illustration-story. Asset type: ONE transparent half-body UI portrait for a children's coding website. Input image is the authoritative Tuantuan character sheet. Preserve exact identity: 7-year-old boy, tousled charcoal short hair, rosy round cheeks, orange long-sleeve shirt, blue denim overalls, brown backpack straps. Same warm hand-drawn watercolor picture-book paint with clear contours and subtle texture. Frame ONE waist-up character centered, large head readable at 64px; complete top of hair, face and arms, torso ends softly at bottom, ample transparent margin. True alpha background. No paper, text, speech bubbles, icons, other people, extra poses, 3D or photorealism. Expression: friendly and attentive, one hand points gently to the right outside the portrait to indicate a task, small smile, both eyes open.",
+      "transparent": true,
+      "maxSize": [256, 256],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_tuantuan_happy_v1",
+      "batch": "AS-03",
+      "path": "ui/story-ip/tuantuan-happy-v1.webp",
+      "generatedFile": "exec-d14f7f37-e7c9-4055-af26-06adba3fa1b3.png",
+      "delivery": {
+        "size": [256, 235],
+        "bytes": 20980,
+        "alphaBounds": [47, 9, 225, 232]
+      },
+      "master": "artifacts/story-ip/masters/tuantuan-happy-v1.png",
+      "references": ["参考资料/形象/团团.png"],
+      "prompt": "Use case: illustration-story. ONE transparent waist-up UI portrait of the SAME Tuantuan boy as the supplied authoritative character sheet. 7-year-old, tousled charcoal hair, round rosy face, orange long sleeves, blue denim overalls, brown backpack straps. A warm happy expression celebrating a finished coding task, both eyes open, one hand giving a small thumbs-up, gentle open smile. Same hand-drawn watercolor picture-book medium and clear outlines. Large readable head, single centered waist-up figure, complete hair and hands with generous margin. True alpha transparent background; no text, speech bubbles, extra fingers, medals, confetti, other characters, panel layout, white paper or 3D.",
+      "transparent": true,
+      "maxSize": [256, 256],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_diandian_default_v1",
+      "batch": "AS-04",
+      "path": "ui/story-ip/diandian-default-v1.webp",
+      "generatedFile": "exec-10f91d2b-7efd-4490-9b78-e360e1a32323.png",
+      "delivery": {
+        "size": [256, 213],
+        "bytes": 15098,
+        "alphaBounds": [41, 2, 215, 213]
+      },
+      "master": "artifacts/story-ip/masters/diandian-default-v1.png",
+      "references": ["参考资料/形象/点点.png"],
+      "prompt": "Use case: illustration-story. ONE transparent UI PORTRAIT of Diandian using the supplied authoritative character sheet. Frame from the complete purple ball antenna to just below the HEART chest screen, no feet and no hover ring. Friendly default pose, both little arms relaxed. Keep white lobed cloud head, deep navy screen face, cyan oval eyes and smile, white and light-blue body, heart-shaped cyan chest display, tiny orange gear and yellow star sticker. Same warm watercolor picture-book paint, subtle paper texture inside paint, clear friendly contours. Centered large head for readability at 44 to64 CSS pixels, ample transparent margin, whole antenna and arms intact. True alpha transparent background, no paper, words, borders, extra poses, extra robots, rectangular star screen or plastic 3D.",
+      "transparent": true,
+      "maxSize": [256, 256],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_diandian_hint_v2",
+      "batch": "AS-04",
+      "path": "ui/story-ip/diandian-hint-v2.webp",
+      "generatedFile": "exec-c546335e-644f-42a4-965f-434f4b289e69.png",
+      "delivery": {
+        "size": [256, 234],
+        "bytes": 17980,
+        "alphaBounds": [24, 11, 222, 229]
+      },
+      "master": "artifacts/story-ip/masters/diandian-hint-v2.png",
+      "references": ["参考资料/形象/点点.png"],
+      "prompt": "Use case: illustration-story. ONE transparent waist-up UI portrait of Diandian, using the authoritative cloud robot reference sheet. Keep identity exactly: white lobed CLOUD head, dark navy screen face, cyan eyes and smile, purple ball antenna, white/light blue body, large HEART-shaped cyan chest screen, tiny orange gear and yellow star sticker. Same hand-drawn watercolor picture-book style, clean soft contours and subtle paint texture. Complete antenna and hands, frame to just BELOW chest with no feet or hover ring, ample margin on all sides, single centered portrait on TRUE alpha transparent background. No paper, text, icons, extra robots, panel layout, 3D or rectangular star screen. Attentive teaching pose: both cyan oval eyes open, gentle smile, one small hand raised with one finger pointing up as a kind hint. Large readable face at44px.",
+      "transparent": true,
+      "maxSize": [256, 256],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_diandian_encourage_v1",
+      "batch": "AS-04",
+      "path": "ui/story-ip/diandian-encourage-v1.webp",
+      "generatedFile": "exec-f4bb5004-c1a5-4270-8132-264ba5f3d625.png",
+      "delivery": {
+        "size": [256, 256],
+        "bytes": 17550,
+        "alphaBounds": [18, 14, 238, 244]
+      },
+      "master": "artifacts/story-ip/masters/diandian-encourage-v1.png",
+      "references": ["参考资料/形象/点点.png"],
+      "prompt": "Use case: illustration-story. Asset type: a SINGLE clean TRANSPARENT UI mascot portrait. Use image1 as the exact Diandian character identity and watercolor paint reference. Draw Diandian from purple antenna to the bottom of the heart chest screen, front view, smiling happy curved cyan eyes, both small hands held open in a gentle encouraging pose. White cloud-shaped head, navy screen face, cyan features, white-blue body, cyan HEART chest, gear and star stickers. Keep the exact same watercolor series robot. Treat this like a clean sticker cutout with a CRISP silhouette: NOTHING is painted outside the character outline. NO outer glow, NO halo, NO white mist, NO diffuse lighting, NO bloom, NO shadows, NO gradient background, NO paper sheet. Background outside the complete character silhouette must be 100% transparent alpha. Square1024-like composition with 10% completely empty transparent margin. No feet or hover ring. No writing, extra characters, symbols or panel layout. Only the isolated waist-up painted character with a clean alpha contour.",
+      "editHistory": {
+        "reason": "Regenerated from authoritative sheet after two variants retained exterior haze",
+        "rejectedFiles": [
+          "exec-39271d97-e7f0-44f6-b002-774609c54242.png",
+          "exec-05a9754c-fdd4-4110-8da8-0142ead11495.png"
+        ]
+      },
+      "transparent": true,
+      "maxSize": [256, 256],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "bg_story_cloud_v1",
+      "batch": "AS-06",
+      "path": "backgrounds/story-ip/cloud-island-v1.webp",
+      "generatedFile": "exec-fdfec1e7-24d8-4395-a2b2-0c36bf3ade61.png",
+      "delivery": { "size": [960, 720], "bytes": 34110, "alphaBounds": null },
+      "master": "artifacts/story-ip/masters/cloud-island-v1.png",
+      "references": ["参考资料/关键帧参考/Lesson10/lesson_10_keyframe_01.png"],
+      "prompt": "Use case: illustration-story. Asset type: EMPTY 4:3 game background for a child's orthographic grid coding challenge. Input image is STYLE ONLY: crisp children's watercolor picture-book paint, subtle pigment texture, warm bright gentle daylight; do not copy bathroom, people or props. A calm pale sky-blue and warm-cream cloud-island atmosphere. The entire CENTRAL 80% is a continuous extremely pale mint/cream flat clearing, very low detail and uniform value, safe for a code-rendered12x9 grid over it. Thin framing only at perimeter: soft cloud puffs in upper corners, small airy shrubs and warm flowers near lower outside corners. Do NOT paint an actual island edge through the play area. No perspective roads, paths, paving tiles, bridges, grid lines, floating platforms, obstacles, goal markings, coins, treasure, people, robots, letters, symbols, charts or UI. No dark colors or high-contrast detail behind the play area. Landscape4:3, opaque background, same watercolor series as reference.",
+      "transparent": false,
+      "maxSize": [960, 720],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "bg_story_workshop_v1",
+      "batch": "AS-06",
+      "path": "backgrounds/story-ip/data-workshop-v1.webp",
+      "generatedFile": "exec-d2820b70-09ca-4483-b0c0-b6f2332bd905.png",
+      "delivery": { "size": [960, 720], "bytes": 89294, "alphaBounds": null },
+      "master": "artifacts/story-ip/masters/data-workshop-v1.png",
+      "references": ["参考资料/关键帧参考/Lesson11/lesson_11_keyframe_06.png"],
+      "prompt": "Use case: illustration-story. Asset type: EMPTY 4:3 coding-stage background, a bright children's data workshop. Reference image is STYLE ONLY: clear watercolor picture-book paint and warm natural wood, NOT its dark kitchen, humans, pizza or sequence cards. View a pale cream wooden work surface nearly top-down and orthographic. CENTRAL80% must be empty, flat, very light, low-detail, so program-rendered charts, grid and small characters are clear. Restrained perimeter framing only: a little watercolor mint storage pot and blank pastel cards in far corners, a soft sunlit window hint across very top edge, tiny warm-orange/pale-blue accents. No numbers, letters, real chart bars, grid lines, paths, filled cards, classification answers, UI, people, robot, treasure or coins. Do not pre-draw any data or interaction. Opaque 4:3 landscape, warm and bright, subtle texture, no strong perspective or plastic3D.",
+      "transparent": false,
+      "maxSize": [960, 720],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_home_hero_v1",
+      "batch": "AS-05",
+      "path": "ui/story-ip/home-hero-v1.webp",
+      "generatedFile": "exec-e25b2216-dc13-4444-a49f-037794399234.png",
+      "delivery": { "size": [1599, 900], "bytes": 387908, "alphaBounds": null },
+      "master": "artifacts/story-ip/masters/home-hero-v1.png",
+      "references": ["参考资料/形象/团团.png", "参考资料/形象/点点.png"],
+      "prompt": "Use case: illustration-story. Asset type: warm wide homepage story illustration for a children's coding learning site, landscape16:9. Input1 is the authoritative Tuantuan boy identity sheet, input2 is the authoritative Diandian cloud robot identity sheet. Both must retain exact identities and original watercolor picture-book style. Tuantuan in orange long sleeves, blue denim overalls, brown backpack, charcoal tousled hair, stands in a bright garden clearing, curious and smiling while pointing ahead. Diandian floats beside him, white cloud head, navy face, cyan eyes and smile, purple ball antenna, HEART-shaped cyan chest screen, friendly raised hand. Gentle watercolor trees, tiny flowers and warm sunlight frame a wide open meadow, softly textured paper paint. The pair form a clear engaging focal group with ample airy space around them; no other people or characters, no brand logo. No words, UI, programming blocks, diagrams, grids, numbers, roads, charts, buttons or text inside the image. Bright warm inviting daylight, no heavy shadows or plastic3D. Complete hair, feet and antenna, not a character sheet.",
+      "transparent": false,
+      "maxSize": [1600, 900],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "obj_story_coin_v1",
+      "batch": "AS-07",
+      "path": "objects/story-ip/star-coin-v1.webp",
+      "generatedFile": "exec-95369831-c523-497c-89e3-2094ac8ae604.png",
+      "delivery": {
+        "size": [512, 512],
+        "bytes": 68280,
+        "alphaBounds": [25, 23, 486, 485]
+      },
+      "master": "artifacts/story-ip/masters/star-coin-v1.png",
+      "references": ["参考资料/形象/团团.png"],
+      "prompt": "Use case: illustration-story. Asset type: ONE transparent game collectible prop for a children's watercolor coding game. Reference image supplies watercolor storybook paint style ONLY, do not paint the boy. A single round golden coin facing straight toward viewer, warm honey-yellow rim and a simple embossed five-pointed STAR in center, gentle orange-gold shading, hand-painted watercolor pigment and clean brown-gold outline. Readable at24px. Full circular coin centered occupying about75% of a square canvas with generous margin. TRUE alpha transparent background; no ground, shadow, glow, sparkles, text, numbers, faces, other objects, logo, badge framing or plastic3D.",
+      "transparent": true,
+      "maxSize": [512, 512],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_unit_basics_v1",
+      "batch": "AS-08",
+      "path": "ui/story-ip/unit-basics-v1.webp",
+      "generatedFile": "exec-eb6d0a19-5f8d-4935-a230-c03a7be9e775.png",
+      "delivery": { "size": [512, 512], "bytes": 88276, "alphaBounds": null },
+      "master": "artifacts/story-ip/masters/unit-basics-v1.png",
+      "references": ["参考资料/形象/团团.png", "参考资料/形象/点点.png"],
+      "prompt": "Use case: illustration-story. Asset type: ONE square course-unit cover image for a children's coding site. Input1 is authoritative Tuantuan boy sheet; input2 authoritative Diandian robot sheet. Preserve exact series: boy with tousled charcoal hair, orange long sleeves, blue denim overalls, brown backpack; cloud robot with white cloud head, navy face, cyan eyes and smile, purple antenna, HEART chest display. Same warm clear hand-painted watercolor picture-book style, subtle pigment texture, defined friendly outlines, not plastic3D. Square composition, main figures within center75%, full heads, feet and antenna not clipped, gentle attractive color with quiet margin. No text, numbers, labels, logos, rendered webpage, buttons, actual programming blocks, exact graphs or UI. Theme: first exploration in a sunny green garden. Boy and floating cloud robot face each other, smiling, boy gently waving. A few tiny flowers at lower corners, warm mint and orange accents, open cream background. Only two established main characters.",
+      "transparent": false,
+      "maxSize": [512, 512],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_unit_route_v1",
+      "batch": "AS-08",
+      "path": "ui/story-ip/unit-route-v1.webp",
+      "generatedFile": "exec-33659886-036f-4745-9c37-b90c2c15fbc2.png",
+      "delivery": { "size": [512, 512], "bytes": 75792, "alphaBounds": null },
+      "master": "artifacts/story-ip/masters/unit-route-v1.png",
+      "references": ["参考资料/形象/团团.png", "参考资料/形象/点点.png"],
+      "prompt": "Use case: illustration-story. Asset type: ONE square course-unit cover image for a children's coding site. Input1 is authoritative Tuantuan boy sheet; input2 authoritative Diandian robot sheet. Preserve exact series: boy with tousled charcoal hair, orange long sleeves, blue denim overalls, brown backpack; cloud robot with white cloud head, navy face, cyan eyes and smile, purple antenna, HEART chest display. Same warm clear hand-painted watercolor picture-book style, subtle pigment texture, defined friendly outlines, not plastic3D. Square composition, main figures within center75%, full heads, feet and antenna not clipped, gentle attractive color with quiet margin. No text, numbers, labels, logos, rendered webpage, buttons, actual programming blocks, exact graphs or UI. Theme: route exploration among airy clouds. Boy holds a small blank folded map while Diandian gently points ahead, pale sky blue and warm cream cloud garden around them, a few soft greenery accents. Map has NO drawn paths or marks, no lesson solutions or grid. Only two established main characters.",
+      "transparent": false,
+      "maxSize": [512, 512],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_unit_data_v1",
+      "batch": "AS-08",
+      "path": "ui/story-ip/unit-data-v1.webp",
+      "generatedFile": "exec-006d81a2-87d4-46ec-8615-32dc9cc7a755.png",
+      "delivery": { "size": [512, 512], "bytes": 75562, "alphaBounds": null },
+      "master": "artifacts/story-ip/masters/unit-data-v1.png",
+      "references": ["参考资料/形象/团团.png", "参考资料/形象/点点.png"],
+      "prompt": "Use case: illustration-story. Asset type: ONE square course-unit cover image for a children's coding site. Input1 is authoritative Tuantuan boy sheet; input2 authoritative Diandian robot sheet. Preserve exact series: boy with tousled charcoal hair, orange long sleeves, blue denim overalls, brown backpack; cloud robot with white cloud head, navy face, cyan eyes and smile, purple antenna, HEART chest display. Same warm clear hand-painted watercolor picture-book style, subtle pigment texture, defined friendly outlines, not plastic3D. Square composition, main figures within center75%, full heads, feet and antenna not clipped, gentle attractive color with quiet margin. No text, numbers, labels, logos, rendered webpage, buttons, actual programming blocks, exact graphs or UI. Theme: data detective workshop. Boy thoughtfully examines three BLANK pastel cards on a small pale wooden table; cloud robot beside him gently gestures. Sunny warm window glow, mint and lavender corner accents. Cards blank, no printed numbers, diagrams, graphs, answers or grid; the cover illustrates curiosity rather than actual task data. Only two established main characters.",
+      "transparent": false,
+      "maxSize": [512, 512],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "costume_story_tuantuan_idle_v1",
+      "batch": "AS-01",
+      "path": "characters/story-ip/tuantuan-stage-front-v1.webp",
+      "generatedFile": "exec-2507300b-f272-471a-af8e-238b5bbc025b.png",
+      "delivery": {
+        "size": [512, 512],
+        "bytes": 42334,
+        "alphaBounds": [158, 28, 350, 488]
+      },
+      "master": "artifacts/story-ip/masters/tuantuan-stage-front-v1.png",
+      "references": ["参考资料/形象/团团.png"],
+      "prompt": "Use case: illustration-story. Asset type: transparent 2D game sprite for a children's coding website. Input image 1 is the authoritative existing character identity reference (Tuantuan character sheet), NOT a layout to reproduce. Generate ONE single full-body boy in a calm FRONT-FACING standing pose. Preserve the exact series identity: 7-year-old boy, tousled charcoal short hair, rounded rosy cheeks, orange long-sleeve sweatshirt, blue denim overalls with rolled cuffs, brown backpack straps visible, brown-and-white shoes. Same warm watercolor children's picture-book medium, subtle paper pigment texture INSIDE the painted figure, clean dark-soft outlines, no 3D. Arms resting by sides, feet on same baseline, readable silhouette at 36 pixels body height. Square composition, complete head and feet, figure fills about 80% of canvas height, centered horizontally, foot midpoint at roughly x50% y90%. TRUE ALPHA TRANSPARENT background outside figure; no paper sheet, ground, floor, cast shadow, text, labels, extra poses, other characters, panel borders or props. It must be the boy from the reference, not a panda or a new child design.",
+      "transparent": true,
+      "maxSize": [512, 512],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "costume_story_tuantuan_right_v1",
+      "batch": "AS-01",
+      "path": "characters/story-ip/tuantuan-stage-right-v1.webp",
+      "generatedFile": "exec-65c4b069-889d-4c58-83cf-ae767b29075f.png",
+      "delivery": {
+        "size": [512, 512],
+        "bytes": 40304,
+        "alphaBounds": [164, 25, 352, 489]
+      },
+      "master": "artifacts/story-ip/masters/tuantuan-stage-right-v1.png",
+      "references": [
+        "参考资料/形象/团团.png",
+        "artifacts/story-ip/masters/tuantuan-stage-front-v1.png"
+      ],
+      "prompt": "Use case: illustration-story. Asset type: ONE transparent 2D game sprite, a right-facing variant of Tuantuan for a children's coding website. Image 1 is the authoritative original character sheet; image 2 is the approved new front sprite, use it to keep identical head/body proportions, clothing, watercolor medium and outline weight. Turn this same boy into a calm standing three-quarter SIDE pose facing the RIGHT side of the image. Same 7-year-old boy, tousled charcoal hair, round rosy face, orange long sleeves, blue denim overalls with rolled cuffs, brown backpack visible on his back and brown-white shoes. Arms relaxed, complete feet on same baseline, no walking motion, no extra objects. Square frame, center the full-body silhouette, about 85% height, foot midpoint at x50% y94%, generous margin. TRUE transparent alpha outside the figure, no paper background, ground, cast shadow, text or character sheet labels, no panel layout, no panda. Preserve the established watercolor picture-book IP exactly.",
+      "transparent": true,
+      "maxSize": [512, 512],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "costume_story_diandian_idle_v1",
+      "batch": "AS-02",
+      "path": "characters/story-ip/diandian-stage-default-v1.webp",
+      "generatedFile": "exec-0e8a941a-8eca-446b-b9b7-e82d3dd50faf.png",
+      "delivery": {
+        "size": [512, 512],
+        "bytes": 43080,
+        "alphaBounds": [103, 24, 409, 501]
+      },
+      "master": "artifacts/story-ip/masters/diandian-stage-default-v1.png",
+      "references": [
+        "参考资料/形象/点点.png",
+        "artifacts/story-ip/masters/diandian-hint-v1.png"
+      ],
+      "prompt": "Use case: illustration-story. Asset type: ONE transparent default mascot sprite for a children's coding website. Image 1 is the authoritative Diandian cloud robot sheet, Image 2 is the approved pointing variant to match paint texture and proportions. Create this SAME robot facing front with BOTH arms relaxed down, neutral friendly cyan eyes and smile. White lobed CLOUD head, dark navy face screen, cyan oval eyes, purple ball antenna, white/pale-blue body, large cyan HEART chest screen, small gear and star motifs per original. Full body, two floating feet, restrained small hover ring below. Soft hand-drawn watercolor picture-book medium, clear readable contour, not plastic or photorealistic. Square composition centered, roughly85% height, ample margin, antenna and arms intact. True alpha transparent background, no paper, no ground, no text, no badges or other characters, no sheet layout. Keep original cloud silhouette and heart chest; it is not a rabbit or toothbrush robot.",
+      "transparent": true,
+      "maxSize": [512, 512],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_diandian_hint_v1",
+      "batch": "AS-04",
+      "path": "ui/story-ip/diandian-hint-v1.webp",
+      "generatedFile": "exec-77a85a68-97d5-4989-a177-6df23c82002c.png",
+      "delivery": {
+        "size": [256, 256],
+        "bytes": 17886,
+        "alphaBounds": [42, 12, 208, 248]
+      },
+      "master": "artifacts/story-ip/masters/diandian-hint-v1.png",
+      "references": ["参考资料/形象/点点.png"],
+      "prompt": "Use case: illustration-story. Asset type: ONE transparent helper mascot sprite for a children's coding website. Input image 1 is the authoritative existing Diandian character sheet, preserve its identity exactly. Render the SINGLE cloud robot in a friendly instructional pose, facing front with one short arm gently lifted and pointing upward, calm cyan eyes and smiling mouth. White softly lobed CLOUD head, dark navy electronic face, cyan oval eyes, purple round antenna on short stalk, rounded white and pale blue body, large HEART-shaped cyan chest screen, small orange/blue gear motifs and small yellow star sticker as in reference, two little floating feet and very restrained cyan hover ring immediately below. Watercolor picture-book paint, subtle watercolor texture, clear hand-drawn contours, not plastic 3D. Full body centered in a square canvas, about 80% height, generous margin, complete antenna and arms. TRUE alpha transparent background, no paper rectangle or scenery, no words, question marks, exclamation marks, badges, extra robots, panel layout or thumbnails. Keep the HEART chest screen, not a rectangular star display. Readable face at 48 CSS pixels. Exact same series robot as reference; not a rabbit or a wheeled toothbrush robot.",
+      "transparent": true,
+      "maxSize": [256, 256],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "bg_story_garden_v1",
+      "batch": "AS-06",
+      "path": "backgrounds/story-ip/garden-v1.webp",
+      "generatedFile": "exec-2eba8ff5-d47f-4d7a-a535-c1d780fc7c65.png",
+      "delivery": { "size": [960, 720], "bytes": 94884, "alphaBounds": null },
+      "master": "artifacts/story-ip/masters/garden-v1.png",
+      "references": ["参考资料/关键帧参考/Lesson10/lesson_10_keyframe_01.png"],
+      "prompt": "Use case: illustration-story. Asset type: EMPTY 4:3 game-stage background for a children's coding website. Input image 1 is STYLE ONLY, showing warm watercolor picture-book paint, sunlit gentle colors, subtle paper pigment, crisp illustrative contours; do not copy its bathroom or people. Create a quiet cheerful garden clearing, viewed straight-on with an almost orthographic flat play area. The CENTRAL 80% of the canvas is a very pale warm mint/cream flat low-detail clearing so code-rendered grid cells and small characters are clearly visible over it. Thin framing only at the extreme perimeter: soft watercolor shrubs and tiny wildflowers in lower corners, a few tree leaves near upper corners, a light warm sky hint at top. Very sparse, uncluttered, softly lit, delicate watercolor textures. No perspective roads, paving stones, tiles, grid lines, board squares, paths, platforms, rivers, walls, treasure, coins, goals, characters, robot, text, symbols, charts or UI. The actual grid, routes and obstacles are rendered by the app. Landscape aspect ratio 4:3, background fills entire canvas, opaque.",
+      "transparent": false,
+      "maxSize": [960, 720],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "obj_story_treasure_chest_v1",
+      "batch": "AS-07",
+      "path": "objects/story-ip/treasure-chest-v1.webp",
+      "generatedFile": "exec-dd36b1ac-f232-426f-8a5a-9b702ece2f60.png",
+      "delivery": {
+        "size": [512, 427],
+        "bytes": 53444,
+        "alphaBounds": [29, 65, 483, 377]
+      },
+      "master": "artifacts/story-ip/masters/treasure-chest-v1.png",
+      "references": ["参考资料/形象/团团.png"],
+      "prompt": "Use case: illustration-story. Asset type: ONE small game target prop, a closed treasure chest, for a children's coding stage. Input image is style reference only for warm watercolor picture-book rendering; do not include the boy. A single friendly CLOSED chest viewed nearly front-on with a very slight top view: warm honey-brown wood, rounded lid, two muted golden bands and a small central golden latch, bold clear silhouette. Width about 1.2 times height, centered, prop fills about70% canvas width with generous transparent padding. Soft hand-painted watercolor texture and clean warm brown contours, visually belongs with the supplied Tuantuan watercolor series. True ALPHA TRANSPARENT background, no ground, cast shadow, characters, coins, jewels, sparkles, text, faces, emojis, full scene or icon badge. No 3D plastic or photorealism. It must remain readable as a target at 32px display height.",
+      "transparent": true,
+      "maxSize": [512, 512],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_unit_interaction_v1",
+      "batch": "AS-09",
+      "path": "ui/story-ip/unit-interaction-v1.webp",
+      "generatedFile": "exec-dacf6976-e271-4913-a6a7-cabf3aac41bf.png",
+      "delivery": { "size": [512, 512], "bytes": 107366, "alphaBounds": null },
+      "master": "artifacts/story-ip/masters/unit-interaction-v1.png",
+      "references": [
+        "参考资料/形象/团团.png",
+        "参考资料/形象/点点.png",
+        "apps/web/public/assets/ui/story-ip/unit-basics-v1.webp"
+      ],
+      "prompt": "Use case: illustration-story. Create ONE square course-unit cover for a children's block-coding learning website. Reference image 1 is the authoritative Tuantuan boy sheet; image 2 is the authoritative Diandian robot sheet; image 3 is the approved first unit cover and sets matching watercolor style, framing, readable scale and softly textured cream-paper palette. Preserve identities: Tuantuan age 7, charcoal tousled short hair, orange long sleeves, blue denim overalls, brown backpack; Diandian cloud-shaped white head, navy screen with cyan eyes, purple ball antenna, heart chest screen, white-blue floating body. Both characters appear once, clear joyful faces. Hand-painted warm watercolor, crisp readable silhouettes, not glossy 3D. Same balanced square crop and generous safe margins. No words, letters, numerals, labels, chart axes, programming blocks, UI frames, logos or watermarks. This is a decorative thematic cover only, not an answer or precise exercise diagram. Scene: Tuantuan reaching towards a small wooden treasure chest in a bright garden clearing while Diandian watches with an encouraging gesture. Chest, boy and robot are the only focal subjects; a few pale flowers around the border.",
+      "transparent": false,
+      "maxSize": [512, 512],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_unit_thinking_v1",
+      "batch": "AS-09",
+      "path": "ui/story-ip/unit-thinking-v1.webp",
+      "generatedFile": "exec-4adeec76-2672-44a1-97e4-e76ad6328db5.png",
+      "delivery": { "size": [512, 512], "bytes": 102554, "alphaBounds": null },
+      "master": "artifacts/story-ip/masters/unit-thinking-v1.png",
+      "references": [
+        "参考资料/形象/团团.png",
+        "参考资料/形象/点点.png",
+        "apps/web/public/assets/ui/story-ip/unit-basics-v1.webp"
+      ],
+      "prompt": "Use case: illustration-story. Create ONE square course-unit cover for a children's block-coding learning website. Reference image 1 is the authoritative Tuantuan boy sheet; image 2 is the authoritative Diandian robot sheet; image 3 is the approved first unit cover and sets matching watercolor style, framing, readable scale and softly textured cream-paper palette. Preserve identities: Tuantuan age 7, charcoal tousled short hair, orange long sleeves, blue denim overalls, brown backpack; Diandian cloud-shaped white head, navy screen with cyan eyes, purple ball antenna, heart chest screen, white-blue floating body. Both characters appear once, clear joyful faces. Hand-painted warm watercolor, crisp readable silhouettes, not glossy 3D. Same balanced square crop and generous safe margins. No words, letters, numerals, labels, chart axes, programming blocks, UI frames, logos or watermarks. This is a decorative thematic cover only, not an answer or precise exercise diagram. Scene: Tuantuan thoughtfully arranging two simple blank wooden tokens on a low craft table; Diandian gently points to a third token. Cozy garden workshop, pale mint and warm amber, visual feeling of making a decision without written symbols.",
+      "transparent": false,
+      "maxSize": [512, 512],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_unit_creation_v1",
+      "batch": "AS-09",
+      "path": "ui/story-ip/unit-creation-v1.webp",
+      "generatedFile": "exec-add9a261-e14d-42f8-848f-54140e6c5209.png",
+      "delivery": { "size": [512, 512], "bytes": 87094, "alphaBounds": null },
+      "master": "artifacts/story-ip/masters/unit-creation-v1.png",
+      "references": [
+        "参考资料/形象/团团.png",
+        "参考资料/形象/点点.png",
+        "apps/web/public/assets/ui/story-ip/unit-basics-v1.webp"
+      ],
+      "prompt": "Use case: illustration-story. Create ONE square course-unit cover for a children's block-coding learning website. Reference image 1 is the authoritative Tuantuan boy sheet; image 2 is the authoritative Diandian robot sheet; image 3 is the approved first unit cover and sets matching watercolor style, framing, readable scale and softly textured cream-paper palette. Preserve identities: Tuantuan age 7, charcoal tousled short hair, orange long sleeves, blue denim overalls, brown backpack; Diandian cloud-shaped white head, navy screen with cyan eyes, purple ball antenna, heart chest screen, white-blue floating body. Both characters appear once, clear joyful faces. Hand-painted warm watercolor, crisp readable silhouettes, not glossy 3D. Same balanced square crop and generous safe margins. No words, letters, numerals, labels, chart axes, programming blocks, UI frames, logos or watermarks. This is a decorative thematic cover only, not an answer or precise exercise diagram. Scene: Tuantuan and Diandian staging a tiny handmade puppet theatre with a simple curtain and plain cardboard scenery. Boy proudly presenting his own story, robot observing. Lilac curtain, warm cream light, restrained props.",
+      "transparent": false,
+      "maxSize": [512, 512],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_unit_sky_v1",
+      "batch": "AS-09",
+      "path": "ui/story-ip/unit-sky-v1.webp",
+      "generatedFile": "exec-297e9135-73ff-4221-8050-2b17b805e153.png",
+      "delivery": { "size": [512, 512], "bytes": 93320, "alphaBounds": null },
+      "master": "artifacts/story-ip/masters/unit-sky-v1.png",
+      "references": [
+        "参考资料/形象/团团.png",
+        "参考资料/形象/点点.png",
+        "apps/web/public/assets/ui/story-ip/unit-basics-v1.webp"
+      ],
+      "prompt": "Use case: illustration-story. Create ONE square course-unit cover for a children's block-coding learning website. Reference image 1 is the authoritative Tuantuan boy sheet; image 2 is the authoritative Diandian robot sheet; image 3 is the approved first unit cover and sets matching watercolor style, framing, readable scale and softly textured cream-paper palette. Preserve identities: Tuantuan age 7, charcoal tousled short hair, orange long sleeves, blue denim overalls, brown backpack; Diandian cloud-shaped white head, navy screen with cyan eyes, purple ball antenna, heart chest screen, white-blue floating body. Both characters appear once, clear joyful faces. Hand-painted warm watercolor, crisp readable silhouettes, not glossy 3D. Same balanced square crop and generous safe margins. No words, letters, numerals, labels, chart axes, programming blocks, UI frames, logos or watermarks. This is a decorative thematic cover only, not an answer or precise exercise diagram. Scene: Tuantuan and Diandian looking out over soft floating cloud islands with small plants, a magical bright sky and calm pale-blue distance. Do NOT include a precise path, stepping route, arrows, checkpoints or finish flags.",
+      "transparent": false,
+      "maxSize": [512, 512],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_unit_patterns_v1",
+      "batch": "AS-09",
+      "path": "ui/story-ip/unit-patterns-v1.webp",
+      "generatedFile": "exec-5762e6e4-69e9-4c1e-9982-5b42a14f4c4b.png",
+      "delivery": { "size": [512, 512], "bytes": 97612, "alphaBounds": null },
+      "master": "artifacts/story-ip/masters/unit-patterns-v1.png",
+      "references": [
+        "参考资料/形象/团团.png",
+        "参考资料/形象/点点.png",
+        "apps/web/public/assets/ui/story-ip/unit-basics-v1.webp"
+      ],
+      "prompt": "Use case: illustration-story. Create ONE square course-unit cover for a children's block-coding learning website. Reference image 1 is the authoritative Tuantuan boy sheet; image 2 is the authoritative Diandian robot sheet; image 3 is the approved first unit cover and sets matching watercolor style, framing, readable scale and softly textured cream-paper palette. Preserve identities: Tuantuan age 7, charcoal tousled short hair, orange long sleeves, blue denim overalls, brown backpack; Diandian cloud-shaped white head, navy screen with cyan eyes, purple ball antenna, heart chest screen, white-blue floating body. Both characters appear once, clear joyful faces. Hand-painted warm watercolor, crisp readable silhouettes, not glossy 3D. Same balanced square crop and generous safe margins. No words, letters, numerals, labels, chart axes, programming blocks, UI frames, logos or watermarks. This is a decorative thematic cover only, not an answer or precise exercise diagram. Scene: Tuantuan and Diandian experimenting with a small hand drum and a few colored wooden beads at a sunny craft table, suggesting rhythm and repeated patterns. No exact bead sequence to solve, no visible musical notation.",
+      "transparent": false,
+      "maxSize": [512, 512],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_unit_decisions_v1",
+      "batch": "AS-09",
+      "path": "ui/story-ip/unit-decisions-v1.webp",
+      "generatedFile": "exec-c8826098-48bf-4b7d-b017-f1b468694b95.png",
+      "delivery": { "size": [512, 512], "bytes": 94398, "alphaBounds": null },
+      "master": "artifacts/story-ip/masters/unit-decisions-v1.png",
+      "references": [
+        "参考资料/形象/团团.png",
+        "参考资料/形象/点点.png",
+        "apps/web/public/assets/ui/story-ip/unit-basics-v1.webp"
+      ],
+      "prompt": "Use case: illustration-story. Create ONE square course-unit cover for a children's block-coding learning website. Reference image 1 is the authoritative Tuantuan boy sheet; image 2 is the authoritative Diandian robot sheet; image 3 is the approved first unit cover and sets matching watercolor style, framing, readable scale and softly textured cream-paper palette. Preserve identities: Tuantuan age 7, charcoal tousled short hair, orange long sleeves, blue denim overalls, brown backpack; Diandian cloud-shaped white head, navy screen with cyan eyes, purple ball antenna, heart chest screen, white-blue floating body. Both characters appear once, clear joyful faces. Hand-painted warm watercolor, crisp readable silhouettes, not glossy 3D. Same balanced square crop and generous safe margins. No words, letters, numerals, labels, chart axes, programming blocks, UI frames, logos or watermarks. This is a decorative thematic cover only, not an answer or precise exercise diagram. Scene: Tuantuan testing a few plain differently sized wooden shapes beside two shallow trays while Diandian observes curiously in a cozy workshop. Show a sense of testing and comparing, no labels, written rules or solved classification layout.",
+      "transparent": false,
+      "maxSize": [512, 512],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    },
+    {
+      "id": "ui_story_unit_makers_v1",
+      "batch": "AS-09",
+      "path": "ui/story-ip/unit-makers-v1.webp",
+      "generatedFile": "exec-c85d834d-a245-4393-b0b7-43535a972adc.png",
+      "delivery": { "size": [512, 512], "bytes": 93754, "alphaBounds": null },
+      "master": "artifacts/story-ip/masters/unit-makers-v1.png",
+      "references": [
+        "参考资料/形象/团团.png",
+        "参考资料/形象/点点.png",
+        "apps/web/public/assets/ui/story-ip/unit-basics-v1.webp"
+      ],
+      "prompt": "Use case: illustration-story. Create ONE square course-unit cover for a children's block-coding learning website. Reference image 1 is the authoritative Tuantuan boy sheet; image 2 is the authoritative Diandian robot sheet; image 3 is the approved first unit cover and sets matching watercolor style, framing, readable scale and softly textured cream-paper palette. Preserve identities: Tuantuan age 7, charcoal tousled short hair, orange long sleeves, blue denim overalls, brown backpack; Diandian cloud-shaped white head, navy screen with cyan eyes, purple ball antenna, heart chest screen, white-blue floating body. Both characters appear once, clear joyful faces. Hand-painted warm watercolor, crisp readable silhouettes, not glossy 3D. Same balanced square crop and generous safe margins. No words, letters, numerals, labels, chart axes, programming blocks, UI frames, logos or watermarks. This is a decorative thematic cover only, not an answer or precise exercise diagram. Scene: Tuantuan proudly presenting a small handmade cardboard invention with a single soft lamp, Diandian smiling beside him. Creative workshop showcase, joyful but calm, no extra robot character, no screens containing text, no trophies or interface panels.",
+      "transparent": false,
+      "maxSize": [512, 512],
+      "sourceType": "ai-generated-from-user-reference",
+      "commercialUseReview": "pending",
+      "reviewStatus": "approved-prototype"
+    }
+  ]
+}

@@ -8,7 +8,7 @@ test("opens the course map and resumes the current level", async ({ page }) => {
   await page.getByRole("button", { name: "▶ 开始学习" }).click();
   await expect(page).toHaveURL(/\/learn$/);
   await expect(
-    page.getByRole("heading", { name: "小小程序员的冒险地图" }),
+    page.getByRole("heading", { name: "好奇心的编程旅行" }),
   ).toBeVisible();
   await expect(page.locator(".course-chapter")).toHaveCount(10);
   await expect(page.locator(".course-level")).toHaveCount(64);
@@ -18,7 +18,7 @@ test("opens the course map and resumes the current level", async ({ page }) => {
   await page.getByRole("button", { name: /开始第一关/ }).click();
   await expect(page).toHaveURL(/\/editor\/prj_/);
   const firstProjectUrl = page.url();
-  await expect(page.getByLabel("当前挑战")).toContainText("让栗奇说话");
+  await expect(page.getByLabel("当前挑战")).toContainText("让团团说话");
   await page.getByRole("button", { name: "返回课程地图" }).click();
   await expect(page).toHaveURL(/\/learn$/);
   await page.getByRole("button", { name: /继续学习/ }).click();
@@ -60,6 +60,32 @@ test("opens the new sky-island unit with its dedicated map and goals", async ({
   await expect(page.getByLabel("当前挑战")).toContainText("经过紫色路标");
   await expect(page.locator(".pixi-stage-canvas")).toBeVisible();
   await page.screenshot({ path: "artifacts/sky-islands-challenge.png" });
+});
+
+test("shows distinct artwork for the four later learning units", async ({
+  page,
+}) => {
+  await page.goto("./learn");
+  for (const [chapterIndex, filename] of [
+    [6, "story-ip/unit-data-v1.webp"],
+    [7, "story-ip/unit-patterns-v1.webp"],
+    [8, "story-ip/unit-decisions-v1.webp"],
+    [9, "story-ip/unit-makers-v1.webp"],
+  ] as const) {
+    const chapter = page.locator(".course-chapter").nth(chapterIndex);
+    await chapter.locator("header img").scrollIntoViewIfNeeded();
+    await expect(chapter.locator("header img")).toHaveAttribute(
+      "src",
+      new RegExp(`/assets/ui/${filename.replace(".", "\\.")}$`),
+    );
+    await expect
+      .poll(() =>
+        chapter
+          .locator("header img")
+          .evaluate((element) => (element as HTMLImageElement).naturalWidth),
+      )
+      .toBeGreaterThan(0);
+  }
 });
 
 test("opens a clean challenge project from a free template", async ({

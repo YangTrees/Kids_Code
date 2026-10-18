@@ -360,7 +360,7 @@ describe("creation tasks", () => {
   });
 
   it("requires a real condition inside the AI decision levels", () => {
-    const task = creationTasks.find((item) => item.taskId === "think_if")!;
+    const task = creationTasks.find((item) => item.taskId === "data_compare")!;
     const project = createTaskProject(task);
     const report = {
       status: "COMPLETED",
@@ -369,6 +369,7 @@ describe("creation tasks", () => {
       spritePositions: {},
       touchedPairs: [],
       variables: { var_1: 5 },
+      spokenTexts: ["数据够多了"],
       executedBlockCounts: { flag: 1, set: 1, branch: 1, compare: 1, say: 1 },
     } as unknown as RuntimeReport;
     const buildWorkspace = (condition: unknown) => ({
@@ -473,6 +474,162 @@ describe("creation tasks", () => {
     ).toBe(true);
   });
 
+  it("requires both hands-on sorting and a matching coded classification", () => {
+    const task = creationTasks.find((item) => item.taskId === "data_sort")!;
+    const project = createTaskProject(task);
+    project.workspaceStates.spr_coin = {
+      blocks: {
+        blocks: [
+          {
+            type: "event_whenthisspriteclicked",
+            id: "click",
+            next: {
+              block: {
+                type: "kids_variable_set",
+                id: "set",
+                inputs: {
+                  VALUE: {
+                    block: { type: "kids_random_number", id: "random" },
+                  },
+                },
+                next: {
+                  block: {
+                    type: "kids_if_else",
+                    id: "branch",
+                    inputs: {
+                      CONDITION: {
+                        block: {
+                          type: "kids_variable_compare",
+                          id: "compare",
+                        },
+                      },
+                      SUBSTACK: {
+                        block: { type: "looks_sayforsecs", id: "sayBig" },
+                      },
+                      SUBSTACK2: {
+                        block: { type: "looks_sayforsecs", id: "saySmall" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+    };
+    const report = {
+      status: "COMPLETED",
+      score: 0,
+      result: null,
+      spritePositions: {},
+      touchedPairs: [],
+      variables: { var_1: 5 },
+      spokenTexts: ["放进大堆"],
+      executedBlockCounts: {
+        click: 1,
+        set: 1,
+        branch: 1,
+        sayBig: 1,
+      },
+    } as RuntimeReport;
+    const sorted = {
+      sortAssignments: {
+        "1": "small",
+        "2": "small",
+        "3": "small",
+        "4": "large",
+        "5": "large",
+        "6": "large",
+      } as const,
+      chartSelection: null,
+      chartRunId: null,
+    };
+    expect(evaluateCreationTask(project, task, report).complete).toBe(false);
+    expect(
+      evaluateCreationTask(project, task, report, {
+        progress: sorted,
+        runId: 1,
+      }).complete,
+    ).toBe(true);
+    expect(
+      evaluateCreationTask(
+        project,
+        task,
+        { ...report, spokenTexts: ["放进小堆"] },
+        { progress: sorted, runId: 1 },
+      ).complete,
+    ).toBe(false);
+  });
+
+  it("requires five actual observations and a current-run chart answer", () => {
+    const task = creationTasks.find((item) => item.taskId === "data_chart")!;
+    const project = createTaskProject(task);
+    project.workspaceStates.spr_liji = {
+      blocks: {
+        blocks: [
+          {
+            type: "event_whenflagclicked",
+            id: "flag",
+            next: {
+              block: {
+                type: "kids_variable_show",
+                id: "show",
+                next: {
+                  block: {
+                    type: "control_repeat",
+                    id: "loop",
+                    inputs: {
+                      SUBSTACK: {
+                        block: { type: "kids_variable_increase", id: "inc" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+    };
+    const report = {
+      status: "COMPLETED",
+      score: 0,
+      result: null,
+      spritePositions: {},
+      touchedPairs: [],
+      variables: { var_1: 5 },
+      variableHistory: { var_1: [0, 1, 2, 3, 4, 5] },
+      executedBlockCounts: { flag: 1, show: 1, loop: 1, inc: 5 },
+    } as RuntimeReport;
+    const answer = {
+      progress: {
+        sortAssignments: {},
+        chartSelection: 4,
+        chartRunId: 2,
+      },
+      runId: 2,
+    };
+    expect(evaluateCreationTask(project, task, report).complete).toBe(false);
+    expect(evaluateCreationTask(project, task, report, answer).complete).toBe(
+      true,
+    );
+    expect(
+      evaluateCreationTask(project, task, report, {
+        ...answer,
+        runId: 3,
+      }).complete,
+    ).toBe(false);
+    expect(
+      evaluateCreationTask(
+        project,
+        task,
+        { ...report, variableHistory: { var_1: [0, 2, 3, 4, 5] } },
+        answer,
+      ).complete,
+    ).toBe(false);
+  });
+
   it("builds the dedicated sky maps with distinct objectives", () => {
     for (const taskId of [
       "sky_waypoint",
@@ -483,7 +640,7 @@ describe("creation tasks", () => {
       const task = creationTasks.find((item) => item.taskId === taskId)!;
       const project = createTaskProject(task);
       expect(project.pathMap?.theme).toBe("sky");
-      expect(project.scenes[0]?.backdropAssetId).toBe("bg_sky_islands_map");
+      expect(project.scenes[0]?.backdropAssetId).toBe("bg_story_cloud_v1");
       expect(project.assets).toContainEqual({
         assetId: "bg_sky_islands_map",
         type: "background",
@@ -548,7 +705,7 @@ describe("creation tasks", () => {
     expect(project.pathMap?.tiles).toHaveLength(5);
     expect(project.settings.movementStep).toBe(40);
     expect(project.scenes[0]?.instances.map((item) => item.spriteId)).toEqual([
-      "spr_liji",
+      project.course!.bindings.actor,
     ]);
     project.workspaceStates.spr_liji = {
       blocks: {
@@ -797,5 +954,99 @@ describe("creation tasks", () => {
         touchedPairs: ["spr_liji:spr_box"],
       }).complete,
     ).toBe(true);
+  });
+  it("requires a closed, correctly sized square rather than any completed run", () => {
+    const task = creationTasks.find(
+      (item) => item.taskId === "pattern_square",
+    )!;
+    const project = createTaskProject(task);
+    const actor = project.scenes[0]!.instances.find(
+      (instance) => instance.spriteId === project.course!.bindings.actor,
+    )!;
+    expect(actor.transform).toMatchObject({ x: 180, y: 180 });
+    expect(project.scenes[0]?.backdropAssetId).toBe("bg_story_workshop_v1");
+    const report: RuntimeReport = {
+      status: "COMPLETED",
+      score: 0,
+      result: null,
+      spritePositions: { spr_liji: { x: 180, y: 180 } },
+      spriteTrails: {
+        spr_liji: [
+          { x: 180, y: 180 },
+          { x: 300, y: 180 },
+          { x: 300, y: 300 },
+          { x: 180, y: 300 },
+          { x: 180, y: 180 },
+        ],
+      },
+      touchedPairs: [],
+      variables: {},
+    };
+    expect(task.runtimeGoal.check(report)).toBe(true);
+    expect(
+      task.runtimeGoal.check({
+        ...report,
+        spriteTrails: {
+          spr_liji: [
+            { x: 180, y: 180 },
+            { x: 300, y: 180 },
+            { x: 420, y: 180 },
+            { x: 420, y: 180 },
+            { x: 420, y: 180 },
+          ],
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it("requires the forever-loop score to pass its taught threshold", () => {
+    const task = creationTasks.find(
+      (item) => item.taskId === "pattern_forever",
+    )!;
+    const report: RuntimeReport = {
+      status: "COMPLETED",
+      score: 5,
+      result: null,
+      spritePositions: {},
+      touchedPairs: [],
+      variables: {},
+    };
+    expect(task.runtimeGoal.check(report)).toBe(true);
+    expect(task.runtimeGoal.check({ ...report, score: 1 })).toBe(false);
+    expect(task.runtimeGoal.check({ ...report, status: "STOPPED" })).toBe(
+      false,
+    );
+  });
+
+  it("distinguishes a missing answer from a repaired two-case rule", () => {
+    const incomplete = creationTasks.find(
+      (item) => item.taskId === "ai_limit",
+    )!;
+    const repaired = creationTasks.find((item) => item.taskId === "ai_fair")!;
+    const report: RuntimeReport = {
+      status: "COMPLETED",
+      score: 0,
+      result: null,
+      spritePositions: {},
+      touchedPairs: [],
+      variables: { var_1: 1 },
+      variableHistory: { var_1: [0, 5, 1, 1] },
+      spokenTexts: ["数据够多"],
+    };
+    expect(incomplete.runtimeGoal.check(report)).toBe(true);
+    expect(repaired.runtimeGoal.check(report)).toBe(false);
+    expect(
+      repaired.runtimeGoal.check({
+        ...report,
+        spokenTexts: ["数据够多", "还要再收集"],
+      }),
+    ).toBe(true);
+    expect(
+      repaired.runtimeGoal.check({
+        ...report,
+        variableHistory: { var_1: [0, 1] },
+        spokenTexts: ["还要再收集", "还要再收集"],
+      }),
+    ).toBe(false);
   });
 });

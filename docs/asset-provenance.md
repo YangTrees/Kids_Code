@@ -1,9 +1,22 @@
 # 内置素材溯源清单
 
-本文件由 `asset-catalog.ts` 自动生成（设计说明书 10.2.1、附录 F.3），与 `apps/web/public/assets/asset-manifest.json` 保持一致。
+本文件记录编辑器素材库中的资源（设计说明书 10.2.1、附录 F.3）；课程和首页专用插图另见 `apps/web/public/assets/asset-manifest.json` 的 `ui` 条目。
 每个内置素材都必须携带来源、许可证与审查状态；未通过商业授权审查的素材不得进入正式发行版。
 
-总计 37 项素材。
+编辑器素材库总计 49 项（17 个角色/道具造型、17 张背景、15 个声音）；manifest 另登记 21 项 UI 插图。
+
+2026-10-17 已依据 [原系列 IP 与素材规范](ip-reference-and-asset-spec.md) 注册 26 张系列图：首批最小包及先导变体 19 张（库内八项、UI 十一项），另新增 AS-09 七张单元封面（UI）。全部由内置 image_gen 基于用户角色板或风格参考生成；原图、完整提示词、透明边界和文件尺寸见 [素材台账](baselines/story-ip-assets.json)。团团为小男孩、点点为云朵机器人，使用独立 ID；经典素材、参考源和母版保留。当前教学覆盖全部 64 关，验收范围见 [执行记录](p1-execution-log.md) 第 9 节。全部系列图仍仅获内部原型审查，不代表商用发行许可。
+
+以下列出先导六项，后续补齐的 13 项 ID、路径和来源全部登记在素材台账及 manifest 的 provenanceGroups 中；未列进此摘要表不代表未登记。
+
+| 新资源 ID                       | 名称     | 用途          | 来源                          | 许可证             | 商用审查 | 审查状态           |
+| ------------------------------- | -------- | ------------- | ----------------------------- | ------------------ | -------- | ------------------ |
+| costume_story_tuantuan_idle_v1  | 团团正面 | 舞台 / 素材库 | 用户角色板参考生成            | internal-prototype | pending  | approved-prototype |
+| costume_story_tuantuan_right_v1 | 团团朝右 | 舞台 / 素材库 | 用户角色板与首张立绘参考生成  | internal-prototype | pending  | approved-prototype |
+| costume_story_diandian_idle_v1  | 点点默认 | 舞台 / 素材库 | 用户角色板与提示像参考生成    | internal-prototype | pending  | approved-prototype |
+| obj_story_treasure_chest_v1     | 绘本宝箱 | 舞台 / 素材库 | 团团角色板的画风参考生成      | internal-prototype | pending  | approved-prototype |
+| bg_story_garden_v1              | 绘本花园 | 舞台 / 素材库 | Lesson10 关键帧的画风参考生成 | internal-prototype | pending  | approved-prototype |
+| ui_story_diandian_hint_v1       | 点点提示 | UI / 素材验收 | 用户角色板参考生成            | internal-prototype | pending  | approved-prototype |
 
 | 资源 ID                 | 名称       | 类型        | 来源        | 许可证               | 商用审查 | 审查状态           | 可下架 |
 | ----------------------- | ---------- | ----------- | ----------- | -------------------- | -------- | ------------------ | ------ |
@@ -29,6 +42,10 @@
 | `bg_farm_01`            | 快乐农场   | 背景        | AI 生成     | `internal-prototype` | pending  | approved-prototype | 是     |
 | `bg_desert_01`          | 沙漠绿洲   | 背景        | AI 生成     | `internal-prototype` | pending  | approved-prototype | 是     |
 | `bg_snow_01`            | 冰雪山谷   | 背景        | AI 生成     | `internal-prototype` | pending  | approved-prototype | 是     |
+| `bg_sky_islands_map`    | 云岛地图   | 背景        | AI 生成     | `internal-prototype` | pending  | approved-prototype | 是     |
+| `bg_data_discovery_lab` | 数据发现室 | 背景        | AI 生成     | `internal-prototype` | pending  | approved-prototype | 是     |
+| `bg_pattern_garden`     | 规律活动台 | 背景        | AI 生成     | `internal-prototype` | pending  | approved-prototype | 是     |
+| `bg_decision_workshop`  | 判断工坊   | 背景        | AI 生成     | `internal-prototype` | pending  | approved-prototype | 是     |
 | `sfx_ui_click`          | 按钮声     | 音效        | 自有 / 自研 | `project-owned`      | pending  | approved-prototype | 是     |
 | `sfx_collect_coin`      | 收集金币   | 音效        | 自有 / 自研 | `project-owned`      | pending  | approved-prototype | 是     |
 | `sfx_game_success`      | 闯关成功   | 音效        | 自有 / 自研 | `project-owned`      | pending  | approved-prototype | 是     |

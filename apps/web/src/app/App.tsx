@@ -9,8 +9,12 @@ import { Navigate, Route, Routes } from "react-router";
 import { ProjectsPage } from "../features/projects/ProjectsPage";
 import { CoursePage } from "../features/tasks/CoursePage";
 import { ParentPage } from "../features/parent/ParentPage";
+import { APP_BASE_URL } from "../shared/base-url";
 
 const EditorRoute = lazy(() => import("../features/editor/EditorRoute"));
+const StoryIpPreview = import.meta.env.DEV
+  ? lazy(() => import("../features/preview/StoryIpPreviewPage"))
+  : null;
 
 function EditorLoading() {
   return (
@@ -45,7 +49,7 @@ class EditorChunkBoundary extends Component<
         <strong>编辑器资源没有加载完整</strong>
         <span>请检查网络后重试，已保存的作品不会丢失。</span>
         <button onClick={() => window.location.reload()}>重新加载</button>
-        <button onClick={() => window.location.assign("/")}>
+        <button onClick={() => window.location.assign(APP_BASE_URL)}>
           返回作品首页
         </button>
       </main>
@@ -59,6 +63,16 @@ export function App() {
       <Route path="/" element={<ProjectsPage />} />
       <Route path="/learn" element={<CoursePage />} />
       <Route path="/parent" element={<ParentPage />} />
+      {StoryIpPreview ? (
+        <Route
+          path="/design/story-ip"
+          element={
+            <Suspense fallback={<p>正在加载素材样片…</p>}>
+              <StoryIpPreview />
+            </Suspense>
+          }
+        />
+      ) : null}
       <Route
         path="/editor/:projectId"
         element={

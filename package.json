@@ -13,6 +13,11 @@
     "test": "pnpm -r --if-present test",
     "test:e2e": "playwright test",
     "test:e2e:list": "playwright test --list",
+    "course:baseline": "node scripts/course-baseline.mjs --check",
+    "test:offline:story": "node scripts/check-story-offline.mjs",
+    "test:performance:entry": "node scripts/measure-entry-loading.mjs",
+    "test:pilot:summary": "node scripts/pilot-acceptance-summary.mjs",
+    "test:course:summary": "node scripts/full-course-summary.mjs",
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
